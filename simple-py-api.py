@@ -59,16 +59,26 @@ def style(**kwargs):
         else:
             _default_style[k] = str(v)
 
-def circle(r, cx=0, cy=0, **kwargs):
+def circle(center, r, **kwargs):
     'Create a circle.'
-    obj = inkex.Circle(r=str(r), cx=str(cx), cy=str(cy),
+    obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r),
                        style=_construct_style(kwargs))
     _simple_objs.append(obj)
 
-def ellipse(rx, ry, cx=0, cy=0, **kwargs):
+def ellipse(center, rx, ry, **kwargs):
     'Create an ellipse.'
-    obj = inkex.Ellipse(rx=str(rx), ry=str(ry), cx=str(cx), cy=str(cy),
-                       style=_construct_style(kwargs))
+    obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
+                        rx=str(rx), ry=str(ry),
+                        style=_construct_style(kwargs))
+    _simple_objs.append(obj)
+
+def rect(ul, lr, **kwargs):
+    'Create a rectangle.'
+    wd = lr[0] - ul[0]
+    ht = lr[1] - ul[1]
+    obj = inkex.Rectangle(x=str(ul[0]), y=str(ul[1]),
+                          width=str(wd), height=str(ht),
+                          style=_construct_style(kwargs))
     _simple_objs.append(obj)
 
 # ----------------------------------------------------------------------
