@@ -106,6 +106,15 @@ def polygon(*coords, **style):
     obj = inkex.Polygon(points=pts, style=_construct_style(style))
     _simple_objs.append(obj)
 
+def path(*elts, **style):
+    'Draw an arbitrary path.'
+    if len(elts) == 0:
+        inkex.utils.errormsg('A path must contain at least one path element.')
+        return
+    d = ' '.join([str(e) for e in elts])
+    obj = inkex.PathElement(d=d, style=_construct_style(style))
+    _simple_objs.append(obj)
+
 # ----------------------------------------------------------------------
 
 class SimplePyAPI(inkex.GenerateExtension):
