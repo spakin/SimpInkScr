@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <name>Simple Python API</name>
+  <id>org.pakin.filter.simple-py-api</id>
+  <param name="tab" type="notebook">
+    <page name="Code" gui-text="Code">
+      <param name="program" type="string" appearance="multiline"
+             gui-text="Python program to draw objects"
+             gui-description="See the help tab for more information"></param>
+    </page>
+    <page name="Help" gui-text="Help">
+      <label>
+        TODO
+      </label>
+    </page>
+  </param>
+
+  <effect needs-live-preview="false">
+    <object-type>all</object-type>
+    <effects-menu>
+      <submenu name="Render" />
+    </effects-menu>
+  </effect>
+  <script>
+    <command location="inx" interpreter="python">simple-py-api.py</command>
+  </script>
+</inkscape-extension>
