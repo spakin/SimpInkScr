@@ -94,9 +94,16 @@ def ellipse(center, rx, ry, transform=None, **style):
 
 def rect(ul, lr, transform=None, **style):
     'Draw a rectangle.'
-    wd = lr[0] - ul[0]
-    ht = lr[1] - ul[1]
-    obj = inkex.Rectangle(x=str(ul[0]), y=str(ul[1]),
+    # Convert ul and lr to a starting point and rectangle dimensions.
+    x0 = min(ul[0], lr[0])
+    y0 = min(ul[1], lr[1])
+    x1 = max(ul[0], lr[0])
+    y1 = max(ul[1], lr[1])
+    wd = x1 - x0
+    ht = y1 - y0
+
+    # Draw the rectangle.
+    obj = inkex.Rectangle(x=str(x0), y=str(y0),
                           width=str(wd), height=str(ht))
     _finalize_object(obj, transform, style)
 
