@@ -24,6 +24,11 @@ import inkex
 import os
 import sys
 
+# The following imports are provided for user convenience.
+from math import *
+from random import *
+
+
 # ----------------------------------------------------------------------
 
 # The following definitions are utilized by the user convenience
@@ -35,16 +40,19 @@ _simple_objs = []
 # Store the default style in _default_style.
 _default_style = {}
 
+
 def _construct_style(new_style):
-    'Combine new styles with the default style and return the result as a string.'
+    '''Combine new styles with the default style and return the result as
+    a string.'''
     style = _default_style.copy()
     for k, v in new_style.items():
         k = k.replace('_', '-')
-        if v == None:
+        if v is None:
             del style[k]
         else:
             style[k] = str(v)
     return ';'.join(['%s:%s' % kv for kv in style.items()])
+
 
 def _finalize_object(obj, transform, style):
     'Assign a transform and a style then record the object in the object list.'
@@ -55,32 +63,34 @@ def _finalize_object(obj, transform, style):
         obj.style = ext_style
     _simple_objs.append(obj)
 
+
 # ----------------------------------------------------------------------
 
-# The following imports and functions are provided for user convenience.
-
-from math import *
-from random import *
+# The following functions represent the Simple Python API and are
+# intended to be called by user code.
 
 def style(**kwargs):
     'Modify the default style.'
     for k, v in kwargs.items():
         k = k.replace('_', '-')
-        if v == None:
+        if v is None:
             del _default_style[k]
         else:
             _default_style[k] = str(v)
+
 
 def circle(center, r, transform=None, **style):
     'Draw a circle.'
     obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r))
     _finalize_object(obj, transform, style)
 
+
 def ellipse(center, rx, ry, transform=None, **style):
     'Draw an ellipse.'
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
                         rx=str(rx), ry=str(ry))
     _finalize_object(obj, transform, style)
+
 
 def rect(ul, lr, transform=None, **style):
     'Draw a rectangle.'
@@ -90,11 +100,13 @@ def rect(ul, lr, transform=None, **style):
                           width=str(wd), height=str(ht))
     _finalize_object(obj, transform, style)
 
+
 def line(pt1, pt2, transform=None, **style):
     'Draw a line.'
     obj = inkex.Line(x1=str(pt1[0]), y1=str(pt1[1]),
                      x2=str(pt2[0]), y2=str(pt2[1]))
     _finalize_object(obj, transform, style)
+
 
 def polyline(*coords, transform=None, **style):
     'Draw a polyline.'
@@ -105,6 +117,7 @@ def polyline(*coords, transform=None, **style):
     obj = inkex.Polyline(points=pts)
     _finalize_object(obj, transform, style)
 
+
 def polygon(*coords, transform=None, **style):
     'Draw a polygon.'
     if len(coords) < 3:
@@ -113,6 +126,7 @@ def polygon(*coords, transform=None, **style):
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
     _finalize_object(obj, transform, style)
+
 
 def path(*elts, transform=None, **style):
     'Draw an arbitrary path.'
@@ -123,6 +137,7 @@ def path(*elts, transform=None, **style):
     obj = inkex.PathElement(d=d)
     _finalize_object(obj, transform, style)
 
+
 def text(msg, base, transform=None, **style):
     'Typeset a piece of text.'
     obj = inkex.TextElement(x=str(base[0]), y=str(base[1]))
@@ -130,10 +145,13 @@ def text(msg, base, transform=None, **style):
     obj.text = msg
     _finalize_object(obj, transform, style)
 
+
 def more_text(msg, base=None, **style):
     'Append text to the preceding object, which must be text.'
-    if len(_simple_objs) == 0 or not isinstance(_simple_objs[-1], inkex.TextElement):
-        inkex.utils.errormsg('more_text must immediately follow text or another more_text')
+    if len(_simple_objs) == 0 or \
+       not isinstance(_simple_objs[-1], inkex.TextElement):
+        inkex.utils.errormsg('more_text must immediately follow'
+                             ' text or another more_text')
         return
     tspan = inkex.Tspan()
     tspan.text = msg
@@ -142,6 +160,7 @@ def more_text(msg, base=None, **style):
         tspan.set('x', str(base[0]))
         tspan.set('y', str(base[1]))
     _simple_objs[-1].append(tspan)
+
 
 # ----------------------------------------------------------------------
 
@@ -158,7 +177,8 @@ class SimplePyAPI(inkex.GenerateExtension):
                           help='Python source file to execute')
 
     def container_transform(self):
-        'Return an empty tranform so as to preserve user-specified coordinates.'
+        '''Return an empty tranform so as to preserve user-specified
+        coordinates.'''
         return inkex.Transform()
 
     def generate(self):
@@ -167,8 +187,8 @@ class SimplePyAPI(inkex.GenerateExtension):
         code = ""
         py_source = self.options.py_source
         if py_source != "" and not os.path.isdir(py_source):
-            # The preceding test is explained in
-            # https://gitlab.com/inkscape/inbox/-/issues/5679
+            # The preceding test for isdir is explained in
+            # https://gitlab.com/inkscape/inkscape/-/issues/2822
             with open(self.options.py_source) as fd:
                 code += fd.read()
             code += "\n"
@@ -177,6 +197,7 @@ class SimplePyAPI(inkex.GenerateExtension):
         exec(code)
         for obj in _simple_objs:
             yield obj
+
 
 if __name__ == '__main__':
     SimplePyAPI().run()
