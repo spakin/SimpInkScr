@@ -120,11 +120,25 @@ def path(*elts, transform=None, **style):
     obj = inkex.PathElement(d=d)
     _finalize_object(obj, transform, style)
 
-def text(base, msg, transform=None, **style):
+def text(msg, base, transform=None, **style):
     'Typeset a piece of text.'
     obj = inkex.TextElement(x=str(base[0]), y=str(base[1]))
+    obj.set('xml:space', 'preserve')
     obj.text = msg
     _finalize_object(obj, transform, style)
+
+def more_text(msg, base=None, **style):
+    'Append text to the preceding object, which must be text.'
+    if len(_simple_objs) == 0 or not isinstance(_simple_objs[-1], inkex.TextElement):
+        inkex.utils.errormsg('more_text must immediately follow text or another more_text')
+        return
+    tspan = inkex.Tspan()
+    tspan.text = msg
+    tspan.style = _construct_style(style)
+    if base is not None:
+        tspan.set('x', str(base[0]))
+        tspan.set('y', str(base[1]))
+    _simple_objs[-1].append(tspan)
 
 # ----------------------------------------------------------------------
 
