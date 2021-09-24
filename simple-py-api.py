@@ -160,6 +160,7 @@ class SimplePyAPI(inkex.GenerateExtension):
     def generate(self):
         'Generate objects from user-provided Python code.'
         code = self.options.program.replace(r'\n', '\n')
+        width, height = self.svg.width, self.svg.height  # For user convenience
         exec(code)
         for obj in _simple_objs:
             yield obj
