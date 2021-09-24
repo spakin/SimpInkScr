@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 '''
 
 import inkex
+import os
+import sys
 
 # ----------------------------------------------------------------------
 
@@ -152,6 +154,8 @@ class SimplePyAPI(inkex.GenerateExtension):
                           help='The selected UI tab when OK was pressed')
         pars.add_argument('--program', type=str,
                           help='Python code to execute')
+        pars.add_argument('--py-source', type=str,
+                          help='Python source file to execute')
 
     def container_transform(self):
         'Return an empty tranform so as to preserve user-specified coordinates.'
@@ -159,8 +163,17 @@ class SimplePyAPI(inkex.GenerateExtension):
 
     def generate(self):
         'Generate objects from user-provided Python code.'
-        code = self.options.program.replace(r'\n', '\n')
         width, height = self.svg.width, self.svg.height  # For user convenience
+        code = ""
+        py_source = self.options.py_source
+        if py_source != "" and not os.path.isdir(py_source):
+            # The preceding test is explained in
+            # https://gitlab.com/inkscape/inbox/-/issues/5679
+            with open(self.options.py_source) as fd:
+                code += fd.read()
+            code += "\n"
+        if self.options.program is not None:
+            code += self.options.program.replace(r'\n', '\n')
         exec(code)
         for obj in _simple_objs:
             yield obj

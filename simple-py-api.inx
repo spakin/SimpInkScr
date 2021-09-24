@@ -4,10 +4,19 @@
   <id>org.pakin.filter.simple-py-api</id>
   <param name="tab" type="notebook">
     <page name="Code" gui-text="Code">
+      <param type="path" name="py-source" mode="file"
+             gui-text="Python file"
+             gui-description="See the help tab for more information" />
+      <hbox>
+        <spacer size="expand" />
+        <label>– or –</label>
+        <spacer size="expand" />
+      </hbox>
       <param name="program" type="string" appearance="multiline"
-             gui-text="Python program to draw objects"
-             gui-description="See the help tab for more information"></param>
+             gui-text="Python code"
+             gui-description="See the help tab for more information" />
     </page>
+
     <page name="Help" gui-text="Help">
       <label appearance="header">Description</label>
       <label>
