@@ -153,6 +153,10 @@ class SimplePyAPI(inkex.GenerateExtension):
         pars.add_argument('--program', type=str,
                           help='Python code to execute')
 
+    def container_transform(self):
+        'Return an empty tranform so as to preserve user-specified coordinates.'
+        return inkex.Transform()
+
     def generate(self):
         'Generate objects from user-provided Python code.'
         code = self.options.program.replace(r'\n', '\n')
