@@ -44,6 +44,15 @@ def _construct_style(new_style):
             style[k] = str(v)
     return ';'.join(['%s:%s' % kv for kv in style.items()])
 
+def _finalize_object(obj, transform, style):
+    'Assign a transform and a style then record the object in the object list.'
+    if transform is not None:
+        obj.transform = transform
+    ext_style = _construct_style(style)
+    if ext_style != '':
+        obj.style = ext_style
+    _simple_objs.append(obj)
+
 # ----------------------------------------------------------------------
 
 # The following imports and functions are provided for user convenience.
@@ -59,61 +68,63 @@ def style(**kwargs):
         else:
             _default_style[k] = str(v)
 
-def circle(center, r, transform="", **style):
+def circle(center, r, transform=None, **style):
     'Draw a circle.'
-    obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r),
-                       transform=transform, style=_construct_style(style))
-    _simple_objs.append(obj)
+    obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r))
+    _finalize_object(obj, transform, style)
 
-def ellipse(center, rx, ry, transform="", **style):
+def ellipse(center, rx, ry, transform=None, **style):
     'Draw an ellipse.'
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
-                        rx=str(rx), ry=str(ry),
-                        transform=transform, style=_construct_style(style))
-    _simple_objs.append(obj)
+                        rx=str(rx), ry=str(ry))
+    _finalize_object(obj, transform, style)
 
-def rect(ul, lr, transform="", **style):
+def rect(ul, lr, transform=None, **style):
     'Draw a rectangle.'
     wd = lr[0] - ul[0]
     ht = lr[1] - ul[1]
     obj = inkex.Rectangle(x=str(ul[0]), y=str(ul[1]),
-                          width=str(wd), height=str(ht),
-                          transform=transform, style=_construct_style(style))
-    _simple_objs.append(obj)
+                          width=str(wd), height=str(ht))
+    _finalize_object(obj, transform, style)
 
-def line(p1, p2, transform, **style):
+def line(p1, p2, transform=None, **style):
     'Draw a line.'
     obj = inkex.Line(x1=str(p1[0]), y1=str(p1[1]),
-                     x2=str(p2[0]), y2=str(p2[1]),
-                     transform=transform, style=_construct_style(style))
-    _simple_objs.append(obj)
+                     x2=str(p2[0]), y2=str(p2[1]))
+    _finalize_object(obj, transform, style)
 
-def polyline(*coords, transform="", **style):
+def polyline(*coords, transform=None, **style):
     'Draw a polyline.'
     if len(coords) < 2:
         inkex.utils.errormsg('A polyline must contain at least two points.')
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
-    obj = inkex.Polyline(points=pts, transform=transform, style=_construct_style(style))
-    _simple_objs.append(obj)
+    obj = inkex.Polyline(points=pts)
+    _finalize_object(obj, transform, style)
 
-def polygon(*coords, transform="", **style):
+def polygon(*coords, transform=None, **style):
     'Draw a polygon.'
     if len(coords) < 3:
         inkex.utils.errormsg('A polygon must contain at least three points.')
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
-    obj = inkex.Polygon(points=pts, transform=transform, style=_construct_style(style))
-    _simple_objs.append(obj)
+    obj = inkex.Polygon(points=pts)
+    _finalize_object(obj, transform, style)
 
-def path(*elts, transform="", **style):
+def path(*elts, transform=None, **style):
     'Draw an arbitrary path.'
     if len(elts) == 0:
         inkex.utils.errormsg('A path must contain at least one path element.')
         return
     d = ' '.join([str(e) for e in elts])
-    obj = inkex.PathElement(d=d, transform=transform, style=_construct_style(style))
-    _simple_objs.append(obj)
+    obj = inkex.PathElement(d=d)
+    _finalize_object(obj, transform, style)
+
+def text(base, msg, transform=None, **style):
+    'Typeset a piece of text.'
+    obj = inkex.TextElement(x=str(base[0]), y=str(base[1]))
+    obj.text = msg
+    _finalize_object(obj, transform, style)
 
 # ----------------------------------------------------------------------
 
