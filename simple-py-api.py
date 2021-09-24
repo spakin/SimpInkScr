@@ -40,6 +40,9 @@ _simple_objs = []
 # Store the default style in _default_style.
 _default_style = {}
 
+# Store the default transform in _default_transform.
+_default_transform = None
+
 
 def _construct_style(new_style):
     '''Combine new styles with the default style and return the result as
@@ -56,11 +59,21 @@ def _construct_style(new_style):
 
 def _finalize_object(obj, transform, style):
     'Assign a transform and a style then record the object in the object list.'
-    if transform is not None:
-        obj.transform = transform
+    # Combine the current and default transforms.
+    ts = []
+    if transform is not None and transform != '':
+        ts.append(transform)
+    if _default_transform is not None and _default_transform != '':
+        ts.append(_default_transform)
+    if ts != []:
+        obj.transform = ' '.join(ts)
+
+    # Combine the current and default styles.
     ext_style = _construct_style(style)
     if ext_style != '':
         obj.style = ext_style
+
+    # Store the modified object.
     _simple_objs.append(obj)
 
 
@@ -71,12 +84,19 @@ def _finalize_object(obj, transform, style):
 
 def style(**kwargs):
     'Modify the default style.'
+    global _default_style
     for k, v in kwargs.items():
         k = k.replace('_', '-')
         if v is None:
             del _default_style[k]
         else:
             _default_style[k] = str(v)
+
+
+def transform(t):
+    'Set the default transform.'
+    global _default_transform
+    _default_transform = t.strip()
 
 
 def circle(center, r, transform=None, **style):
@@ -92,13 +112,14 @@ def ellipse(center, rx, ry, transform=None, **style):
     _finalize_object(obj, transform, style)
 
 
-def rect(ul, lr, transform=None, **style):
+def rect(pt1, pt2, transform=None, **style):
     'Draw a rectangle.'
-    # Convert ul and lr to a starting point and rectangle dimensions.
-    x0 = min(ul[0], lr[0])
-    y0 = min(ul[1], lr[1])
-    x1 = max(ul[0], lr[0])
-    y1 = max(ul[1], lr[1])
+    # Convert pt1 and pt2 to an upper-left starting point and
+    # rectangle dimensions.
+    x0 = min(pt1[0], pt2[0])
+    y0 = min(pt1[1], pt2[1])
+    x1 = max(pt1[0], pt2[0])
+    y1 = max(pt1[1], pt2[1])
     wd = x1 - x0
     ht = y1 - y0
 
