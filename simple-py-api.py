@@ -57,7 +57,8 @@ def _finalize_object(obj, transform, style):
 
 # The following imports and functions are provided for user convenience.
 
-import random
+from math import *
+from random import *
 
 def style(**kwargs):
     'Modify the default style.'
@@ -87,10 +88,10 @@ def rect(ul, lr, transform=None, **style):
                           width=str(wd), height=str(ht))
     _finalize_object(obj, transform, style)
 
-def line(p1, p2, transform=None, **style):
+def line(pt1, pt2, transform=None, **style):
     'Draw a line.'
-    obj = inkex.Line(x1=str(p1[0]), y1=str(p1[1]),
-                     x2=str(p2[0]), y2=str(p2[1]))
+    obj = inkex.Line(x1=str(pt1[0]), y1=str(pt1[1]),
+                     x2=str(pt2[0]), y2=str(pt2[1]))
     _finalize_object(obj, transform, style)
 
 def polyline(*coords, transform=None, **style):
