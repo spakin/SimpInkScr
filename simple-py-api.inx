@@ -9,9 +9,45 @@
              gui-description="See the help tab for more information"></param>
     </page>
     <page name="Help" gui-text="Help">
+      <label appearance="header">Description</label>
       <label>
-        TODO
+        This extension makes it easy to automate Inkscape object
+        creation via small Python scripts.
       </label>
+      <label appearance="header">Usage</label>
+      <label>
+        Although any valid Python code can be entered into the Code
+        box, the intention is that it largely will comprise calls to
+        the following object-creation functions:
+      </label>
+      <label xml:space="preserve">
+• circle(center, r)
+• ellipse(center, rx, ry)
+• rect(ul, lr)
+• line(pt1, pt2)
+• polyline(pt, …)
+• polygon(pt, …)
+• path(elt, …)
+• text(msg, base)
+• more_text(msg, [base])
+      </label>
+      <label>
+        In the above, center, ul, lr, pt1, pt2, pt, and base are (x,
+        y) coordinates, expressed as 2-tuples.  r, rx, and ry, are
+        floats.  Each elt is either a string or a float.  msg is a
+        string.
+      </label>
+      <label />
+      <label>
+        Each function also accepts a transform="…" argument.  Any
+        trailing key=value arguments are added to the object's style.
+        (Underscores in key are converted to dashes.)
+      </label>
+      <label />
+      <label>
+        For more usage details and examples, please visit
+      </label>
+      <label appearance="url">https://github.com/spakin/simple-py-api</label>
     </page>
   </param>
 
