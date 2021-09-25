@@ -51,7 +51,8 @@ def _construct_style(new_style):
     for k, v in new_style.items():
         k = k.replace('_', '-')
         if v is None:
-            del style[k]
+            if k in style:
+                del style[k]
         else:
             style[k] = str(v)
     return ';'.join(['%s:%s' % kv for kv in style.items()])
@@ -88,7 +89,8 @@ def style(**kwargs):
     for k, v in kwargs.items():
         k = k.replace('_', '-')
         if v is None:
-            del _default_style[k]
+            if k in _default_style:
+                del _default_style[k]
         else:
             _default_style[k] = str(v)
 
