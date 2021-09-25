@@ -122,9 +122,22 @@ for i in range(5):
 ```
 The above draws the shapes using coordinates near the origin then applies a transform to shift them to (100, 200).  The transform also skews all the shapes to the right by 15°.
 
+### Connector avoidance
+
+All of the functions presented under [Shape API](#shape-api) accept an additional `conn_avoid` parameter.  `conn_avoid` takes a Boolean argument.  If `True`, connectors created with `connector` will route around the shape.  If `False` (the default), connectors will ignore the shape and route through it.
+
+*Example*:
+```Python
+style(stroke='black', stroke_width=3, fill='none')
+r1 = rect((100, 0), (150, 50), fill='#fff6d5')
+r2 = rect((200, 400), (250, 450), fill='#fff6d5')
+connector(r1, r2, ctype='orthogonal', curve=100)
+circle((225, 225), 25, fill='red', conn_avoid=True)
+```
+
 ### Styles
 
-Trailing *key=value* arguments passed to any of the functions presented under [Shape API](#shape-api) are treated as style parameters.  Use `_` instead of `_` in *key*.  For example, write `stroke_width=2` to represent the SVG style `stroke-width:2`.)
+Trailing *key=value* arguments passed to any of the functions presented under [Shape API](#shape-api) are treated as style parameters.  Use `_` instead of `-` in *key*.  For example, write `stroke_width=2` to represent the SVG style `stroke-width:2`.)
 
 A shortcut for applying the same style to multiple objects is to invoke
 

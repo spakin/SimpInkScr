@@ -60,7 +60,7 @@ def _construct_style(new_style):
     return ';'.join(['%s:%s' % kv for kv in style.items()])
 
 
-def _finalize_object(obj, transform, style):
+def _finalize_object(obj, transform, conn_avoid, style):
     'Assign a transform and a style then record the object in the object list.'
     # Combine the current and default transforms.
     ts = []
@@ -70,6 +70,10 @@ def _finalize_object(obj, transform, style):
         ts.append(_default_transform)
     if ts != []:
         obj.transform = ' '.join(ts)
+
+    # Optionally indicate that connectors are to avoid this object.
+    if conn_avoid:
+        obj.set('inkscape:connector-avoid', 'true')
 
     # Combine the current and default styles.
     ext_style = _construct_style(style)
@@ -89,6 +93,7 @@ def _get_bbox_center(obj):
     "Return the center of an object's bounding box."
     bbox = obj.bounding_box()
     return (bbox.center_x, bbox.center_y)
+
 
 # ----------------------------------------------------------------------
 
@@ -113,22 +118,22 @@ def transform(t):
     _default_transform = t.strip()
 
 
-def circle(center, r, transform=None, **style):
+def circle(center, r, transform=None, conn_avoid=False, **style):
     'Draw a circle.'
     obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r))
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def ellipse(center, rx, ry, transform=None, **style):
+def ellipse(center, rx, ry, transform=None, conn_avoid=False, **style):
     'Draw an ellipse.'
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
                         rx=str(rx), ry=str(ry))
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def rect(pt1, pt2, transform=None, **style):
+def rect(pt1, pt2, transform=None, conn_avoid=False, **style):
     'Draw a rectangle.'
     # Convert pt1 and pt2 to an upper-left starting point and
     # rectangle dimensions.
@@ -142,52 +147,53 @@ def rect(pt1, pt2, transform=None, **style):
     # Draw the rectangle.
     obj = inkex.Rectangle(x=str(x0), y=str(y0),
                           width=str(wd), height=str(ht))
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def line(pt1, pt2, transform=None, **style):
+def line(pt1, pt2, transform=None, conn_avoid=False, **style):
     'Draw a line.'
     obj = inkex.Line(x1=str(pt1[0]), y1=str(pt1[1]),
                      x2=str(pt2[0]), y2=str(pt2[1]))
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def polyline(*coords, transform=None, **style):
+def polyline(*coords, transform=None, conn_avoid=False, **style):
     'Draw a polyline.'
     if len(coords) < 2:
         inkex.utils.errormsg('A polyline must contain at least two points.')
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polyline(points=pts)
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def polygon(*coords, transform=None, **style):
+def polygon(*coords, transform=None, conn_avoid=False, **style):
     'Draw a polygon.'
     if len(coords) < 3:
         inkex.utils.errormsg('A polygon must contain at least three points.')
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def path(*elts, transform=None, **style):
+def path(*elts, transform=None, conn_avoid=False, **style):
     'Draw an arbitrary path.'
     if len(elts) == 0:
         inkex.utils.errormsg('A path must contain at least one path element.')
         return
     d = ' '.join([str(e) for e in elts])
     obj = inkex.PathElement(d=d)
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def connector(id1, id2, ctype='polyline', curve=0, transform=None, **style):
+def connector(id1, id2, ctype='polyline', curve=0,
+              transform=None, conn_avoid=False, **style):
     'Connect two objects with a path.'
     # Create a path that links the two objects' centers.
     obj1 = _id_to_obj[id1]
@@ -204,20 +210,20 @@ def connector(id1, id2, ctype='polyline', curve=0, transform=None, **style):
     path.set('inkscape:connection-end', '#%s' % id2)
 
     # Store the connector as its own object.
-    _finalize_object(path, transform, style)
+    _finalize_object(path, transform, conn_avoid, style)
     return path.get_id()
 
 
-def text(msg, base, transform=None, **style):
+def text(msg, base, transform=None, conn_avoid=False, **style):
     'Typeset a piece of text.'
     obj = inkex.TextElement(x=str(base[0]), y=str(base[1]))
     obj.set('xml:space', 'preserve')
     obj.text = msg
-    _finalize_object(obj, transform, style)
+    _finalize_object(obj, transform, conn_avoid, style)
     return obj.get_id()
 
 
-def more_text(msg, base=None, **style):
+def more_text(msg, base=None, conn_avoid=False, **style):
     'Append text to the preceding object, which must be text.'
     if len(_simple_objs) == 0 or \
        not isinstance(_simple_objs[-1], inkex.TextElement):

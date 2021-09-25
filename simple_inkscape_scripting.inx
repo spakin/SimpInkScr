@@ -51,9 +51,10 @@
       </label>
       <label />
       <label>
-        Each function also accepts a transform="…" argument.  Any
-        trailing key=value arguments are added to the object's style.
-        (Underscores in key are converted to dashes.)
+        Each function also accepts a transform="…" argument and a
+        conn_avoid=True|False argument.  Any trailing key=value
+        arguments are added to the object's style.  (Underscores in
+        key are converted to dashes.)
       </label>
       <label />
       <label>
