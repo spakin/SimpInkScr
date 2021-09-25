@@ -34,8 +34,10 @@ from random import *
 # The following definitions are utilized by the user convenience
 # functions.
 
-# Store all objects the users creates in _simple_objs.
+# Store all objects the users creates in _simple_objs.  Map an object
+# ID to an object with _id_to_obj.
 _simple_objs = []
+_id_to_obj = {}
 
 # Store the default style in _default_style.
 _default_style = {}
@@ -75,11 +77,18 @@ def _finalize_object(obj, transform, style):
         obj.style = ext_style
 
     # Assign the object a unique ID.
-    obj.set_id('SimpInkScr_%d' % (1 + len(_simple_objs)))
+    tag = 'SimpInkScr_%d' % (1 + len(_simple_objs))
+    obj.set_id(tag)
 
     # Store the modified object.
     _simple_objs.append(obj)
+    _id_to_obj[tag] = obj
 
+
+def _get_bbox_center(obj):
+    "Return the center of an object's bounding box."
+    bbox = obj.bounding_box()
+    return (bbox.center_x, bbox.center_y)
 
 # ----------------------------------------------------------------------
 
@@ -176,6 +185,27 @@ def path(*elts, transform=None, **style):
     obj = inkex.PathElement(d=d)
     _finalize_object(obj, transform, style)
     return obj.get_id()
+
+
+def connector(id1, id2, ctype='polyline', curve=0, transform=None, **style):
+    'Connect two objects with a path.'
+    # Create a path that links the two objects' centers.
+    obj1 = _id_to_obj[id1]
+    obj2 = _id_to_obj[id2]
+    center1 = _get_bbox_center(obj1)
+    center2 = _get_bbox_center(obj2)
+    d = 'M %g,%g L %g,%g' % (center1[0], center1[1], center2[0], center2[1])
+    path = inkex.PathElement(d=d)
+
+    # Mark the path as a connector.
+    path.set('inkscape:connector-type', str(ctype))
+    path.set('inkscape:connector-curvature', str(curve))
+    path.set('inkscape:connection-start', '#%s' % id1)
+    path.set('inkscape:connection-end', '#%s' % id2)
+
+    # Store the connector as its own object.
+    _finalize_object(path, transform, style)
+    return path.get_id()
 
 
 def text(msg, base, transform=None, **style):

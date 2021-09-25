@@ -91,6 +91,10 @@ Draw a polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 
 
 Draw a path from a list of path commands (strings) and arguments (floats).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`.
 
+* `connector(id1, id2, ctype, curve)`
+
+Draw a path that routes automatically between two objects, given their object IDs.  (All functions in the shape API return an object ID.)  `ctype` specifies the connector type and must be either `polyline` (any angle, the default) or `orthogonal` (only 90° bends).  `curve` specifies the curvature amount (default `0`).  *Example*: `r = rect((50, 50), (100, 100)); c = circle((200, 200), 25); connector(r, c, ctype='orthogonal', curve=15, stroke='black', fill='none')`.
+
 * `text(msg, (x, y))`
 
 Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Inkscape Scripting', (0, height), font_size='36pt')`.
