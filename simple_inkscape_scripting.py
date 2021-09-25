@@ -34,6 +34,11 @@ from random import *
 # The following definitions are utilized by the user convenience
 # functions.
 
+# Define a prefix for all IDs we assign.  This contains randomness so
+# running the same script repeatedly will be unlikely to produce
+# conflicting IDs.
+_id_prefix = 'simp-ink-scr-%d-' % randint(100000, 999999)
+
 # Store all objects the users creates in _simple_objs.  Map an object
 # ID to an object with _id_to_obj.
 _simple_objs = []
@@ -81,7 +86,7 @@ def _finalize_object(obj, transform, conn_avoid, style):
         obj.style = ext_style
 
     # Assign the object a unique ID.
-    tag = 'SimpInkScr_%d' % (1 + len(_simple_objs))
+    tag = '%s%d' % (_id_prefix, 1 + len(_simple_objs))
     obj.set_id(tag)
 
     # Store the modified object.
