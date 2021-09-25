@@ -51,7 +51,7 @@ Usage
 
 ### Getting started
 
-Launch the `simple-py-api` extension from Inkscape via *Extensions* → *Render* → *Simple Python API…*.  This will bring up a dialog box that gives you the option to enter a filename for a Python program or enter Python code directly in a text box.  These options are not mutually exclusive; if both are used, the Python code in the file will be executed first, followed by the Python code in the text box.  This enables one to define functions in a file and invoke them with different parameters from the text box, for example.
+Launch the `simple-py-api` extension from Inkscape via *Extensions* → *Render* → *Simple Python API…*.  This will bring up a dialog box that gives you the option to enter a filename for a Python program or enter Python code directly in a text box.  These options are not mutually exclusive; if both are used, the Python code in the file will be executed first, followed by the Python code in the text box.  This enables one, for example, to define functions in a file and invoke them with different parameters from the text box.
 
 As an initial test, try entering
 ```Python
@@ -79,11 +79,11 @@ Draw a line from `(x1, y1)` to `(x2, y2)`.  *Example*: `line((width, 0), (0, hei
 
 * `polyline((x1, y1), (x2, y2), …, (xn, yn))`
 
-Draw a polyline (open polygon) from the given coordinates.  *Example*: `polyline((0, height), (width/2, 0), (width, height), (width/2, height*2/3), fill='none', stroke='blue', stroke_width=3)`.
+Draw a polyline (open polygon) from the given coordinates.  *Example*: `polyline((0, 300), (150, 0), (300, 300), (150, 200), fill='none', stroke='blue', stroke_width=3)`
 
 * `polygon((x1, y1), (x2, y2), …, (xn, yn))`
 
-Draw a polygon from the given coordinates.  *Example*: `polygon((0, height), (width/2, 0), (width, height), (width/2, height*2/3), fill='none', stroke='green', stroke_width=3)`.
+Draw a polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 0), (300, 300), (150, 200), fill='none', stroke='green', stroke_width=3)`
 
 * `path(elt, …)`
 
@@ -93,9 +93,9 @@ Draw a path from a list of path commands (strings) and arguments (floats).  *Exa
 
 Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Python API', (0, height), font_size='36pt')`.
 
-* `more_text(msg, (x, y))`.  *Example*: `text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle'); more_text('Inkscape', font_weight='bold', fill='#800000'); more_text('!!!')`.
+* `more_text(msg, (x, y))`
 
-Append to a previous piece of text (created with `text` or `more_text`), possibly changing the style.  The starting coordinates `(x, y)` are optional and can be used, e.g., to begin a new line.
+Append to a previous piece of text (created with `text` or `more_text`), possibly changing the style.  The starting coordinates `(x, y)` are optional and can be used, e.g., to begin a new line.  *Example*: `text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle'); more_text('Inkscape', font_weight='bold', fill='#800000'); more_text('!!!')`.
 
 ### Transformations
 
