@@ -37,7 +37,7 @@ Second, install `simple-py-api` in that directory or any subdirectory.  For exam
 ```bash
 cd $HOME/.config/inkscape/extensions/
 git clone github.com/spakin/simple-py-api
-```		
+```
 will retrieve the code from GitHub.  This later can be updated with
 ```bash
 cd $HOME/.config/inkscape/extensions/simple-py-api/
@@ -63,37 +63,37 @@ into the text box and clicking *Apply* then *Close*.  This should create a fille
 
 * `circle((cx, cy), r)`
 
-Draw a circle with center `(cx, cy)` and radius `r`.
+Draw a circle with center `(cx, cy)` and radius `r`.  *Example*: `circle((width/2, height/2), 50)`.
 
-* `ellipse((cx. cy), rx, ry)`
+* `ellipse((cx. cy), rx, ry)`.
 
-Draw an ellipse with center `(cx, cy)` and radii `rx` and `ry`.
+Draw an ellipse with center `(cx, cy)` and radii `rx` and `ry`.  *Example*: `ellipse((width/2, height/2), 75, 50)`.
 
 * `rect((x1, y1), (x2, y2))`
 
-Draw a rectangle from `(x1, y1)` to `(x2, y2)`.
+Draw a rectangle from `(x1, y1)` to `(x2, y2)`.  *Example*: `rect((width/2 - 50, height/2 - 30), (width/2 + 50, height/2 + 30))`.
 
 * `line((x1, y1), (x2, y2))`
 
-Draw a line from `(x1, y1)` to `(x2, y2)`.
+Draw a line from `(x1, y1)` to `(x2, y2)`.  *Example*: `line((width, 0), (0, height), stroke='red')`.
 
 * `polyline((x1, y1), (x2, y2), …, (xn, yn))`
 
-Draw a polyline (open polygon) from the given coordinates.
+Draw a polyline (open polygon) from the given coordinates.  *Example*: `polyline((0, height), (width/2, 0), (width, height), (width/2, height*2/3), fill='none', stroke='blue', stroke_width=3)`.
 
 * `polygon((x1, y1), (x2, y2), …, (xn, yn))`
 
-Draw a polygon from the given coordinates.
+Draw a polygon from the given coordinates.  *Example*: `polygon((0, height), (width/2, 0), (width, height), (width/2, height*2/3), fill='none', stroke='green', stroke_width=3)`.
 
 * `path(elt, …)`
 
-Draw a path from a list of path commands (strings) and arguments (floats).
+Draw a path from a list of path commands (strings) and arguments (floats).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`.
 
 * `text(msg, (x, y))`
 
-Draw a piece of text starting at `(x, y)`.
+Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Python API', (0, height), font_size='36pt')`.
 
-* `more_text(msg, (x, y))`
+* `more_text(msg, (x, y))`.  *Example*: `text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle'); more_text('Inkscape', font_weight='bold', fill='#800000'); more_text('!!!')`.
 
 Append to a previous piece of text (created with `text` or `more_text`), possibly changing the style.  The starting coordinates `(x, y)` are optional and can be used, e.g., to begin a new line.
 
@@ -107,6 +107,15 @@ A shortcut for applying the same transformation to multiple objects is to invoke
 
 This sets the default transformation to the string `t`.  Objects specifying a `transform` parameter will prepend their transformations to the default (i.e., apply them afterwards).
 
+*Example*:
+```Python
+transform('translate(100, 200) skewX(-15)')
+for i in range(5):
+    rect((i*100 + 10, 10), (i*100 + 40, 40))
+    circle((i*100 + 75, 25), 15)
+```
+The above draws the shapes using coordinates near the origin then applies a transform to shift them to (100, 200).  The transform also skews all the shapes to the right by 15°.
+
 ### Styles
 
 Trailing *key=value* arguments passed to any of the functions presented under [Shape API](#shape-api) are treated as style parameters.  Use `_` instead of `_` in *key*.  For example, write `stroke_width=2` to represent the SVG style `stroke-width:2`.)
@@ -116,6 +125,17 @@ A shortcut for applying the same style to multiple objects is to invoke
 * `style(key=value, …)`
 
 This augments the default style with the given parameters.  Use a value of `None` to remove the default value for *key*.  Objects specifying *key=value* style parameters override any default value for the corresponding key.  Here, too, a value of `None` cancels the effect of a previously assigned key.
+
+*Example*:
+```Python
+style(stroke='red', stroke_width=2, stroke_dasharray='5,5')
+cx, cy = width/2, height/2
+for d in range(200, 20, -20):
+    gray = 255 - int(d*255/200)
+    shade = '#%02x%02x%02x' % (gray, gray, gray)
+    rect((cx - d, cy - d), (cx + d, cy + d), fill=shade)
+```
+In the above, the stroke style is set once and inherited by all of the rectangles, which specify only a fill color.
 
 ### Additional convenience features
 
