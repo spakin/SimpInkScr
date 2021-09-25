@@ -45,7 +45,9 @@ _simple_objs = []
 _id_to_obj = {}
 
 # Store the default style in _default_style.
-_default_style = {}
+_default_style = {'stroke': 'black',
+                  'stroke_width': '1',
+                  'fill': 'none'}
 
 # Store the default transform in _default_transform.
 _default_transform = None
@@ -241,7 +243,8 @@ def more_text(msg, base=None, conn_avoid=False, **style):
     if base is not None:
         tspan.set('x', str(base[0]))
         tspan.set('y', str(base[1]))
-    _simple_objs[-1].append(tspan)
+    obj = _simple_objs[-1]
+    obj.append(tspan)
     return obj.get_id()
 
 

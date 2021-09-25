@@ -22,7 +22,7 @@ def tree_from(cx, cy, rad, hsep, vsep, depth, max_depth):
     return c
 
 
-style(stroke='black', stroke_width=2, fill='#f4e3d7')
+style(stroke_width=2, fill='#f4e3d7')
 tree_from(cx=width/2, cy=20, rad=10,
           hsep=width/4, vsep=50,
           depth=0, max_depth=5)

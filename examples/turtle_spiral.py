@@ -12,5 +12,4 @@ for dist in range(500, 0, -10):
     t.right(121)
 
 # Use Simple Inkscape Scripting to plot the turtle's path.
-path(t.getPath(), fill='none', stroke='black', stroke_width=1,
-     transform='translate(600, 600)')
+path(t.getPath(), transform='translate(600, 600)')

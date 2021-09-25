@@ -5,7 +5,7 @@
 # field.  Then, include text to invoke poly_by_angle in the "Python
 # code" field.  For example, here's a boring, old square:
 #
-#   poly_by_angle(90, 100, fill='none', stroke='black')
+#   poly_by_angle(90, 100)
 #
 # Here's a 7-pointed star (technically, a {7/2} heptagram) inscribed
 # within a heptagon:
@@ -16,8 +16,8 @@
 #
 # Here are some stars with lots more points:
 #
-#   poly_by_angle(140, 200, fill='none', stroke='#008000')
-#   poly_by_angle(140, 70, fill='none', stroke='#00ff00')
+#   poly_by_angle(140, 200, stroke='#008000')
+#   poly_by_angle(140, 70, stroke='#00ff00')
 
 def poly_by_angle(ang, rad, *args, **kwargs):
     '''Draw a (possibly self-intersecting) polygon given an angle in

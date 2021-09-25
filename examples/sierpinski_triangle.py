@@ -23,7 +23,6 @@ def sierpinski(tx, ty, edge, depth, colors):
     sierpinski(tx + edge/4, ty + ht/2, edge/2, depth + 1, colors)
 
 
-style(stroke='black', stroke_width=1)
 edge = min(width, height)/2
 colors = ['#ff0000', '#00ff00', '#0000ff', '#00ffff', '#ff00ff', '#ffff00']
 sierpinski(width/2, 50, edge, 0, colors)

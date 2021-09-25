@@ -12,9 +12,8 @@ In the [Inkscape](https://inkscape.org/) vector-drawing program, how would you g
 
 * **Option 2**: Create an [Inkscape extension](https://inkscape-extensions-guide.readthedocs.io/) to automate the process.  This involves gaining familiarity with a large API and writing a substantial amount of setup code just to perform what ought to be a simple task.
 
-Neither option is particularly enticing.  This is why I created the Simple Inkscape Scripting extension for Inkscape.  Simple Inkscape Scripting lets you create shapes in the current Inkscape canvas with a Python script plus a set of simple functions such as `circle` for drawing a circle and `rect` for drawing a rectangle.  The picture shown above was created using just the following six lines of code:
+Neither option is particularly enticing.  This is why I created the Simple Inkscape Scripting extension for Inkscape.  Simple Inkscape Scripting lets you create shapes in the current Inkscape canvas with a Python script plus a set of simple functions such as `circle` for drawing a circle and `rect` for drawing a rectangle.  The picture shown above was created using just the following five lines of code:
 ```Python
-style(stroke='black', stroke_width="1")
 for i in range(100):
     x, y = uniform(0, width), uniform(0, height)
     rect((-5, -5), (5, 5),
@@ -22,7 +21,7 @@ for i in range(100):
          fill='#%02x%02x%02x' % (randrange(256), randrange(256), randrange(256)))
 ```
 
-The first line defines the default object style to include a 1-pixel-wide black stroke.  The second line is an ordinary Python `for` loop.  The third line selects a position for the rectangle.  Note that Simple Inkscape Scripting predefines `width` as the canvas width and `height` as the canvas height.  The `random` package is imported into the current namespace so `uniform` can be invoked directly.  The fourth line draws a 10×10 pixel rectangle centered on the origin.  The fifth line rotates the rectangle by 45°, squeezes it horizontally into a lozenge, and moves it to the target position.  The sixth line specifies a random fill color.
+The first line is an ordinary Python `for` loop.  The second line selects a position for the rectangle.  Note that Simple Inkscape Scripting predefines `width` as the canvas width and `height` as the canvas height.  The `random` package is imported into the current namespace so `uniform` can be invoked directly.  The third line draws a 10×10 pixel rectangle centered on the origin.  The fourth line rotates the rectangle by 45°, squeezes it horizontally into a lozenge, and moves it to the target position.  The fifth line specifies a random fill color.
 
 The diamonds drawn on the canvas are all ordinary Inkscape objects and can be further manipulated using any of the usual Inkscape tools.
 
@@ -57,7 +56,7 @@ As an initial test, try entering
 ```Python
 circle((100, 100), 50)
 ```
-into the text box and clicking *Apply* then *Close*.  This should create a filled, black circle of radius 50 at position (100, 100).  Due to how "generate extensions" work, Inkscape always places the output of Simple Inkscape Scripting within a group so ungroup it if desired.
+into the text box and clicking *Apply* then *Close*.  This should create a black circle of radius 50 at position (100, 100).  Due to how "generate extensions" work, Inkscape always places the output of Simple Inkscape Scripting within a group so ungroup it if desired.
 
 See the [`examples` directory](examples/) for a collection of examples that can be run from the Simple Inkscape Scripting dialog box.
 
@@ -65,43 +64,43 @@ See the [`examples` directory](examples/) for a collection of examples that can 
 
 * `circle((cx, cy), r)`
 
-Draw a circle with center `(cx, cy)` and radius `r`.  *Example*: `circle((width/2, height/2), 50)`.
+Draw a circle with center `(cx, cy)` and radius `r`.  *Example*: `circle((width/2, height/2), 50)`
 
-* `ellipse((cx. cy), rx, ry)`.
+* `ellipse((cx. cy), rx, ry)`
 
-Draw an ellipse with center `(cx, cy)` and radii `rx` and `ry`.  *Example*: `ellipse((width/2, height/2), 75, 50)`.
+Draw an ellipse with center `(cx, cy)` and radii `rx` and `ry`.  *Example*: `ellipse((width/2, height/2), 75, 50)`
 
 * `rect((x1, y1), (x2, y2))`
 
-Draw a rectangle from `(x1, y1)` to `(x2, y2)`.  *Example*: `rect((width/2 - 50, height/2 - 30), (width/2 + 50, height/2 + 30))`.
+Draw a rectangle from `(x1, y1)` to `(x2, y2)`.  *Example*: `rect((width/2 - 50, height/2 - 30), (width/2 + 50, height/2 + 30))`
 
 * `line((x1, y1), (x2, y2))`
 
-Draw a line from `(x1, y1)` to `(x2, y2)`.  *Example*: `line((width, 0), (0, height), stroke='red')`.
+Draw a line from `(x1, y1)` to `(x2, y2)`.  *Example*: `line((width, 0), (0, height))`
 
 * `polyline((x1, y1), (x2, y2), …, (xn, yn))`
 
-Draw a polyline (open polygon) from the given coordinates.  *Example*: `polyline((0, 300), (150, 0), (300, 300), (150, 200), fill='none', stroke='blue', stroke_width=3)`
+Draw a polyline (open polygon) from the given coordinates.  *Example*: `polyline((0, 300), (150, 0), (300, 300), (150, 200))`
 
 * `polygon((x1, y1), (x2, y2), …, (xn, yn))`
 
-Draw a polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 0), (300, 300), (150, 200), fill='none', stroke='green', stroke_width=3)`
+Draw a polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 0), (300, 300), (150, 200), fill='none')`
 
 * `path(elt, …)`
 
-Draw a path from a list of path commands (strings) and arguments (floats).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`.
+Draw a path from a list of path commands (strings) and arguments (floats).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`
 
 * `connector(id1, id2, ctype, curve)`
 
-Draw a path that routes automatically between two objects, given their object IDs.  (All functions in the shape API return an object ID.)  `ctype` specifies the connector type and must be either `polyline` (any angle, the default) or `orthogonal` (only 90° bends).  `curve` specifies the curvature amount (default `0`).  *Example*: `r = rect((50, 50), (100, 100)); c = circle((200, 200), 25); connector(r, c, ctype='orthogonal', curve=15, stroke='black', fill='none')`.
+Draw a path that routes automatically between two objects, given their object IDs.  (All functions in the shape API return an object ID.)  `ctype` specifies the connector type and must be either `polyline` (any angle, the default) or `orthogonal` (only 90° bends).  `curve` specifies the curvature amount (default `0`).  *Example*: `r = rect((50, 50), (100, 100)); c = circle((200, 200), 25); connector(r, c, ctype='orthogonal', curve=15)`
 
 * `text(msg, (x, y))`
 
-Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Inkscape Scripting', (0, height), font_size='36pt')`.
+Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Inkscape Scripting', (0, height), font_size='36pt', fill='black', stroke='none')`
 
 * `more_text(msg, (x, y))`
 
-Append to a previous piece of text (created with `text` or `more_text`), possibly changing the style.  The starting coordinates `(x, y)` are optional and can be used, e.g., to begin a new line.  *Example*: `text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle'); more_text('Inkscape', font_weight='bold', fill='#800000'); more_text('!!!')`.
+Append to a previous piece of text (created with `text` or `more_text`), possibly changing the style.  The starting coordinates `(x, y)` are optional and can be used, e.g., to begin a new line.  *Example*: `style(fill='black', stroke='none'); text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle'); more_text('Inkscape', font_weight='bold', fill='#800000'); more_text('!!!')`
 
 ### Transformations
 
@@ -128,7 +127,6 @@ All of the functions presented under [Shape API](#shape-api) accept an additiona
 
 *Example*:
 ```Python
-style(stroke='black', stroke_width=3, fill='none')
 r1 = rect((100, 0), (150, 50), fill='#fff6d5')
 r2 = rect((200, 400), (250, 450), fill='#fff6d5')
 connector(r1, r2, ctype='orthogonal', curve=100)
@@ -144,6 +142,8 @@ A shortcut for applying the same style to multiple objects is to invoke
 * `style(key=value, …)`
 
 This augments the default style with the given parameters.  Use a value of `None` to remove the default value for *key*.  Objects specifying *key=value* style parameters override any default value for the corresponding key.  Here, too, a value of `None` cancels the effect of a previously assigned key.
+
+The default style for all shapes is `stroke='black', stroke_width=1, fill='none'`.
 
 *Example*:
 ```Python
