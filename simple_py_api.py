@@ -74,6 +74,9 @@ def _finalize_object(obj, transform, style):
     if ext_style != '':
         obj.style = ext_style
 
+    # Assign the object a (hopefully) unique ID.
+    obj.set_id('simple_py_api_%d' % (1 + len(_simple_objs)))
+
     # Store the modified object.
     _simple_objs.append(obj)
 
@@ -105,6 +108,7 @@ def circle(center, r, transform=None, **style):
     'Draw a circle.'
     obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r))
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def ellipse(center, rx, ry, transform=None, **style):
@@ -112,6 +116,7 @@ def ellipse(center, rx, ry, transform=None, **style):
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
                         rx=str(rx), ry=str(ry))
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def rect(pt1, pt2, transform=None, **style):
@@ -129,6 +134,7 @@ def rect(pt1, pt2, transform=None, **style):
     obj = inkex.Rectangle(x=str(x0), y=str(y0),
                           width=str(wd), height=str(ht))
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def line(pt1, pt2, transform=None, **style):
@@ -136,6 +142,7 @@ def line(pt1, pt2, transform=None, **style):
     obj = inkex.Line(x1=str(pt1[0]), y1=str(pt1[1]),
                      x2=str(pt2[0]), y2=str(pt2[1]))
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def polyline(*coords, transform=None, **style):
@@ -146,6 +153,7 @@ def polyline(*coords, transform=None, **style):
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polyline(points=pts)
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def polygon(*coords, transform=None, **style):
@@ -156,6 +164,7 @@ def polygon(*coords, transform=None, **style):
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def path(*elts, transform=None, **style):
@@ -166,6 +175,7 @@ def path(*elts, transform=None, **style):
     d = ' '.join([str(e) for e in elts])
     obj = inkex.PathElement(d=d)
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def text(msg, base, transform=None, **style):
@@ -174,6 +184,7 @@ def text(msg, base, transform=None, **style):
     obj.set('xml:space', 'preserve')
     obj.text = msg
     _finalize_object(obj, transform, style)
+    return obj.get_id()
 
 
 def more_text(msg, base=None, **style):
@@ -190,6 +201,7 @@ def more_text(msg, base=None, **style):
         tspan.set('x', str(base[0]))
         tspan.set('y', str(base[1]))
     _simple_objs[-1].append(tspan)
+    return obj.get_id()
 
 
 # ----------------------------------------------------------------------
