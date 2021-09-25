@@ -74,8 +74,8 @@ def _finalize_object(obj, transform, style):
     if ext_style != '':
         obj.style = ext_style
 
-    # Assign the object a (hopefully) unique ID.
-    obj.set_id('simple_py_api_%d' % (1 + len(_simple_objs)))
+    # Assign the object a unique ID.
+    obj.set_id('SimpInkScr_%d' % (1 + len(_simple_objs)))
 
     # Store the modified object.
     _simple_objs.append(obj)
@@ -83,8 +83,8 @@ def _finalize_object(obj, transform, style):
 
 # ----------------------------------------------------------------------
 
-# The following functions represent the Simple Python API and are
-# intended to be called by user code.
+# The following functions represent the Simple Inkscape Scripting API
+# and are intended to be called by user code.
 
 def style(**kwargs):
     'Modify the default style.'
@@ -206,7 +206,7 @@ def more_text(msg, base=None, **style):
 
 # ----------------------------------------------------------------------
 
-class SimplePyAPI(inkex.GenerateExtension):
+class SimpleInkscapeScripting(inkex.GenerateExtension):
     'Help the user create Inkscape objects with a simple API.'
 
     def add_arguments(self, pars):
@@ -242,4 +242,4 @@ class SimplePyAPI(inkex.GenerateExtension):
 
 
 if __name__ == '__main__':
-    SimplePyAPI().run()
+    SimpleInkscapeScripting().run()

@@ -1,5 +1,5 @@
-# Create a path using turtle graphics and render it using the Simple
-# Python API.
+# Create a path using turtle graphics and render it using Simple
+# Inkscape Scripting.
 
 from inkex import turtle as pturtle
 
@@ -11,6 +11,6 @@ for dist in range(500, 0, -10):
     t.forward(dist)
     t.right(121)
 
-# Use the Simple Python API to plot the turtle's path.
+# Use Simple Inkscape Scripting to plot the turtle's path.
 path(t.getPath(), fill='none', stroke='black', stroke_width=1,
      transform='translate(600, 600)')

@@ -1,7 +1,7 @@
-# Use the Simple Python API to draw (possibly self-intersecting)
+# Use Simple Inkscape Scripting to draw (possibly self-intersecting)
 # polygons.
 #
-# Usage: Point to this file in the Simple Python API's "Python file"
+# Usage: Point to this file in Simple Inkscape Scripting's "Python file"
 # field.  Then, include text to invoke poly_by_angle in the "Python
 # code" field.  For example, here's a boring, old square:
 #

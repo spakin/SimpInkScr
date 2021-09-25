@@ -1,4 +1,4 @@
-# Use the Simple Python API to draw an array of hundreds of
+# Use Simple Inkscape Scripting to draw an array of hundreds of
 # overlapping circles.
 
 rad = 30

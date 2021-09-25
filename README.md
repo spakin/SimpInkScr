@@ -1,5 +1,5 @@
-A Simple Python API for Inkscape
-================================
+Simple Inkscape Scripting
+=========================
 
 Description
 -----------
@@ -12,7 +12,7 @@ In the [Inkscape](https://inkscape.org/) vector-drawing program, how would you g
 
 * **Option 2**: Create an [Inkscape extension](https://inkscape-extensions-guide.readthedocs.io/) to automate the process.  This involves gaining familiarity with a large API and writing a substantial amount of setup code just to perform what ought to be a simple task.
 
-Neither option is particularly enticing.  This is why I created the `simple_py_api` Inkscape extension.  `simple_py_api` lets you create shapes in the current Inkscape canvas with a Python script plus a set of simple functions such as `circle` for drawing a circle and `rect` for drawing a rectangle.  The picture shown above was created using just the following six lines of code:
+Neither option is particularly enticing.  This is why I created the Simple Inkscape Scripting extension for Inkscape.  Simple Inkscape Scripting lets you create shapes in the current Inkscape canvas with a Python script plus a set of simple functions such as `circle` for drawing a circle and `rect` for drawing a rectangle.  The picture shown above was created using just the following six lines of code:
 ```Python
 style(stroke='black', stroke_width="1")
 for i in range(100):
@@ -22,25 +22,25 @@ for i in range(100):
          fill='#%02x%02x%02x' % (randrange(256), randrange(256), randrange(256)))
 ```
 
-The first line defines the default object style to include a 1-pixel-wide black stroke.  The second line is an ordinary Python `for` loop.  The third line selects a position for the rectangle.  Note that `simple_py_api` predefines `width` as the canvas width and `height` as the canvas height.  The `random` package is imported into the current namespace so `uniform` can be invoked directly.  The fourth line draws a 10×10 pixel rectangle centered on the origin.  The fifth line rotates the rectangle by 45°, squeezes it horizontally into a lozenge, and moves it to the target position.  The sixth line specifies a random fill color.
+The first line defines the default object style to include a 1-pixel-wide black stroke.  The second line is an ordinary Python `for` loop.  The third line selects a position for the rectangle.  Note that Simple Inkscape Scripting predefines `width` as the canvas width and `height` as the canvas height.  The `random` package is imported into the current namespace so `uniform` can be invoked directly.  The fourth line draws a 10×10 pixel rectangle centered on the origin.  The fifth line rotates the rectangle by 45°, squeezes it horizontally into a lozenge, and moves it to the target position.  The sixth line specifies a random fill color.
 
 The diamonds drawn on the canvas are all ordinary Inkscape objects and can be further manipulated using any of the usual Inkscape tools.
 
-In short, `simple_py_api` helps automate repetitive drawing tasks.  Unlike writing a custom Inkscape extension, `simple_py_api` requires sufficiently little boilerplate code as to make its use worthwhile even for tasks that will be performed only once or twice.
+In short, Simple Inkscape Scripting helps automate repetitive drawing tasks.  Unlike writing a custom Inkscape extension, Simple Inkscape Scripting requires sufficiently little boilerplate code as to make its use worthwhile even for tasks that will be performed only once or twice.
 
 Installation
 ------------
 
 First, identify your Inkscape extensions directory.  This can be found in  Inkscape's preferences: Go to *Edit* → *Preferences* → *System* and look in the *User extensions* field.  On Linux, the extensions directory is typically `$HOME/.config/inkscape/extensions/`.
 
-Second, install `simple_py_api` in that directory or any subdirectory.  For example,
+Second, install Simple Inkscape Scripting in that directory or any subdirectory.  For example,
 ```bash
 cd $HOME/.config/inkscape/extensions/
-git clone github.com/spakin/simple_py_api
+git clone github.com/spakin/SimpInkScr
 ```
 will retrieve the code from GitHub.  This later can be updated with
 ```bash
-cd $HOME/.config/inkscape/extensions/simple_py_api/
+cd $HOME/.config/inkscape/extensions/SimpInkScr/
 git pull
 ```
 
@@ -51,15 +51,15 @@ Usage
 
 ### Getting started
 
-Launch the `simple_py_api` extension from Inkscape via *Extensions* → *Render* → *Simple Python API…*.  This will bring up a dialog box that gives you the option to enter a filename for a Python program or enter Python code directly in a text box.  These options are not mutually exclusive; if both are used, the Python code in the file will be executed first, followed by the Python code in the text box.  This enables one, for example, to define functions in a file and invoke them with different parameters from the text box.
+Launch the Simple Inkscape Scripting extension from Inkscape via *Extensions* → *Render* → *Simple Inkscape Scripting…*.  This will bring up a dialog box that gives you the option to enter a filename for a Python program or enter Python code directly in a text box.  These options are not mutually exclusive; if both are used, the Python code in the file will be executed first, followed by the Python code in the text box.  This enables one, for example, to define functions in a file and invoke them with different parameters from the text box.
 
 As an initial test, try entering
 ```Python
 circle((100, 100), 50)
 ```
-into the text box and clicking *Apply* then *Close*.  This should create a filled, black circle of radius 50 at position (100, 100).  Due to how "generate extensions" work, Inkscape always places the output of `simple_py_api` within a group so ungroup it if desired.
+into the text box and clicking *Apply* then *Close*.  This should create a filled, black circle of radius 50 at position (100, 100).  Due to how "generate extensions" work, Inkscape always places the output of Simple Inkscape Scripting within a group so ungroup it if desired.
 
-See the [`examples` directory](examples/) for a collection of examples that can be run from the Simple Python API dialog box.
+See the [`examples` directory](examples/) for a collection of examples that can be run from the Simple Inkscape Scripting dialog box.
 
 ### Shape API
 
@@ -93,7 +93,7 @@ Draw a path from a list of path commands (strings) and arguments (floats).  *Exa
 
 * `text(msg, (x, y))`
 
-Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Python API', (0, height), font_size='36pt')`.
+Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Inkscape Scripting', (0, height), font_size='36pt')`.
 
 * `more_text(msg, (x, y))`
 
@@ -146,7 +146,7 @@ The document's width and height are provided in pre-defined variables:
 * `width`
 * `height`
 
-Because they are likely to be used quite frequently for drawing repetitive objects, `simple_py_api` imports Python's [`math`](https://docs.python.org/3/library/math.html) and [`random`](https://docs.python.org/3/library/random.html) packages into the program's namespace with
+Because they are likely to be used quite frequently for drawing repetitive objects, Simple Inkscape Scripting imports Python's [`math`](https://docs.python.org/3/library/math.html) and [`random`](https://docs.python.org/3/library/random.html) packages into the program's namespace with
 ```Python
 from math import *
 from random import *

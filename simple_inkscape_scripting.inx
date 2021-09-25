@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-  <name>Simple Python API</name>
-  <id>org.pakin.filter.simple_py_api</id>
+  <name>Simple Inkscape Scripting</name>
+  <id>org.pakin.filter.simple_inkscape_scripting</id>
   <param name="tab" type="notebook">
     <page name="Code" gui-text="Code">
       <param type="path" name="py-source" mode="file"
@@ -56,7 +56,7 @@
       <label>
         For more usage details and examples, please visit
       </label>
-      <label appearance="url">https://github.com/spakin/simple_py_api</label>
+      <label appearance="url">https://github.com/spakin/SimpInkScr</label>
     </page>
   </param>
 
@@ -67,6 +67,6 @@
     </effects-menu>
   </effect>
   <script>
-    <command location="inx" interpreter="python">simple_py_api.py</command>
+    <command location="inx" interpreter="python">simple_inkscape_scripting.py</command>
   </script>
 </inkscape-extension>
