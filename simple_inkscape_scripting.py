@@ -44,30 +44,42 @@ _id_prefix = 'simp-ink-scr-%d-' % randint(100000, 999999)
 _simple_objs = []
 _id_to_obj = {}
 
-# Store the default style in _default_style.
-_default_style = {'stroke': 'black',
-                  'stroke_width': '1',
-                  'fill': 'none'}
+# Store the user-specified default style in _default_style.
+_default_style = {}
+
+# Most shapes use this as their default style.
+_common_shape_style = {'stroke': 'black',
+                       'fill': 'none'}
 
 # Store the default transform in _default_transform.
 _default_transform = None
 
 
-def _construct_style(new_style):
-    '''Combine new styles with the default style and return the result as
-    a string.'''
-    style = _default_style.copy()
+def _construct_style(shape_style, new_style):
+    '''Combine a shape default style, a global default style, and an
+    object-specific style and return the result as a string.'''
+    # Start with the default style for the shape type.
+    style = shape_style.copy()
+
+    # Update the style according to the current global default style.
+    style.update(_default_style)
+
+    # Update the style based on the object-specific style.
     for k, v in new_style.items():
         k = k.replace('_', '-')
         if v is None:
-            if k in style:
-                del style[k]
+            style[k] = None
         else:
             style[k] = str(v)
+
+    # Remove all keys whose value is None.
+    style = {k: v for k, v in style.items() if v is not None}
+
+    # Concatenate the style into a string.
     return ';'.join(['%s:%s' % kv for kv in style.items()])
 
 
-def _finalize_object(obj, transform, conn_avoid, style):
+def _finalize_object(obj, transform, conn_avoid, shape_style, obj_style):
     'Assign a transform and a style then record the object in the object list.'
     # Combine the current and default transforms.
     ts = []
@@ -83,7 +95,7 @@ def _finalize_object(obj, transform, conn_avoid, style):
         obj.set('inkscape:connector-avoid', 'true')
 
     # Combine the current and default styles.
-    ext_style = _construct_style(style)
+    ext_style = _construct_style(shape_style, obj_style)
     if ext_style != '':
         obj.style = ext_style
 
@@ -113,8 +125,7 @@ def style(**kwargs):
     for k, v in kwargs.items():
         k = k.replace('_', '-')
         if v is None:
-            if k in _default_style:
-                del _default_style[k]
+            _default_style[k] = None
         else:
             _default_style[k] = str(v)
 
@@ -128,7 +139,7 @@ def transform(t):
 def circle(center, r, transform=None, conn_avoid=False, **style):
     'Draw a circle.'
     obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r))
-    _finalize_object(obj, transform, conn_avoid, style)
+    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
     return obj.get_id()
 
 
@@ -136,7 +147,7 @@ def ellipse(center, rx, ry, transform=None, conn_avoid=False, **style):
     'Draw an ellipse.'
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
                         rx=str(rx), ry=str(ry))
-    _finalize_object(obj, transform, conn_avoid, style)
+    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
     return obj.get_id()
 
 
@@ -154,7 +165,7 @@ def rect(pt1, pt2, transform=None, conn_avoid=False, **style):
     # Draw the rectangle.
     obj = inkex.Rectangle(x=str(x0), y=str(y0),
                           width=str(wd), height=str(ht))
-    _finalize_object(obj, transform, conn_avoid, style)
+    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
     return obj.get_id()
 
 
@@ -162,7 +173,8 @@ def line(pt1, pt2, transform=None, conn_avoid=False, **style):
     'Draw a line.'
     obj = inkex.Line(x1=str(pt1[0]), y1=str(pt1[1]),
                      x2=str(pt2[0]), y2=str(pt2[1]))
-    _finalize_object(obj, transform, conn_avoid, style)
+    shape_style = {'stroke': 'black'}  # No need for fill='none' here.
+    _finalize_object(obj, transform, conn_avoid, shape_style, style)
     return obj.get_id()
 
 
@@ -173,7 +185,7 @@ def polyline(*coords, transform=None, conn_avoid=False, **style):
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polyline(points=pts)
-    _finalize_object(obj, transform, conn_avoid, style)
+    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
     return obj.get_id()
 
 
@@ -184,7 +196,7 @@ def polygon(*coords, transform=None, conn_avoid=False, **style):
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
-    _finalize_object(obj, transform, conn_avoid, style)
+    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
     return obj.get_id()
 
 
@@ -195,7 +207,7 @@ def path(*elts, transform=None, conn_avoid=False, **style):
         return
     d = ' '.join([str(e) for e in elts])
     obj = inkex.PathElement(d=d)
-    _finalize_object(obj, transform, conn_avoid, style)
+    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
     return obj.get_id()
 
 
@@ -217,7 +229,7 @@ def connector(id1, id2, ctype='polyline', curve=0,
     path.set('inkscape:connection-end', '#%s' % id2)
 
     # Store the connector as its own object.
-    _finalize_object(path, transform, conn_avoid, style)
+    _finalize_object(path, transform, conn_avoid, _common_shape_style, style)
     return path.get_id()
 
 
@@ -226,7 +238,7 @@ def text(msg, base, transform=None, conn_avoid=False, **style):
     obj = inkex.TextElement(x=str(base[0]), y=str(base[1]))
     obj.set('xml:space', 'preserve')
     obj.text = msg
-    _finalize_object(obj, transform, conn_avoid, style)
+    _finalize_object(obj, transform, conn_avoid, {}, style)
     return obj.get_id()
 
 
@@ -239,7 +251,7 @@ def more_text(msg, base=None, conn_avoid=False, **style):
         return
     tspan = inkex.Tspan()
     tspan.text = msg
-    tspan.style = _construct_style(style)
+    tspan.style = _construct_style({}, style)
     if base is not None:
         tspan.set('x', str(base[0]))
         tspan.set('y', str(base[1]))

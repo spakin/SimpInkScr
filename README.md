@@ -96,11 +96,11 @@ Draw a path that routes automatically between two objects, given their object ID
 
 * `text(msg, (x, y))`
 
-Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Inkscape Scripting', (0, height), font_size='36pt', fill='black', stroke='none')`
+Draw a piece of text starting at `(x, y)`.  *Example*: `text('Simple Inkscape Scripting', (0, height), font_size='36pt')`
 
 * `more_text(msg, (x, y))`
 
-Append to a previous piece of text (created with `text` or `more_text`), possibly changing the style.  The starting coordinates `(x, y)` are optional and can be used, e.g., to begin a new line.  *Example*: `style(fill='black', stroke='none'); text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle'); more_text('Inkscape', font_weight='bold', fill='#800000'); more_text('!!!')`
+Append to a previous piece of text (created with `text` or `more_text`), possibly changing the style.  The starting coordinates `(x, y)` are optional and can be used, e.g., to begin a new line.  *Example*: `text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle'); more_text('Inkscape', font_weight='bold', fill='#800000'); more_text('!!!')`
 
 ### Transformations
 
@@ -143,7 +143,7 @@ A shortcut for applying the same style to multiple objects is to invoke
 
 This augments the default style with the given parameters.  Use a value of `None` to remove the default value for *key*.  Objects specifying *key=value* style parameters override any default value for the corresponding key.  Here, too, a value of `None` cancels the effect of a previously assigned key.
 
-The default style for all shapes is `stroke='black', stroke_width=1, fill='none'`.
+The default style for most shapes is `stroke='black', fill='none'`.  Text has an empty default, which SVG interprets as `stroke='none', fill='black'`.
 
 *Example*:
 ```Python
