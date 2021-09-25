@@ -59,6 +59,8 @@ circle((100, 100), 50)
 ```
 into the text box and clicking *Apply* then *Close*.  This should create a filled, black circle of radius 50 at position (100, 100).  Due to how "generate extensions" work, Inkscape always places the output of `simple-py-api` within a group so ungroup it if desired.
 
+See the [`examples` directory](examples/) for a collection of examples that can be run from the Simple Python API dialog box.
+
 ### Shape API
 
 * `circle((cx, cy), r)`
