@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 '''
 
 import inkex
+import PIL.Image
+import base64
+import io
 import os
 import sys
 
@@ -257,6 +260,27 @@ def more_text(msg, base=None, conn_avoid=False, **style):
         tspan.set('y', str(base[1]))
     obj = _simple_objs[-1]
     obj.append(tspan)
+    return obj.get_id()
+
+
+def image(fname, ul, embed=True, transform=None, conn_avoid=False, **style):
+    'Include an image, either embedded or linked.'
+    obj = inkex.Image()
+    obj.set('x', ul[0])
+    obj.set('y', ul[1])
+    if embed:
+        # Read and embed the named file.
+        img = PIL.Image.open(fname)
+        data = io.BytesIO()
+        img.save(data, img.format)
+        mime = PIL.Image.MIME[img.format]
+        b64 = base64.b64encode(data.getvalue()).decode('utf-8')
+        uri = 'data:%s;base64,%s' % (mime, b64)
+    else:
+        # Point to an external file.
+        uri = fname
+    obj.set('xlink:href', uri)
+    _finalize_object(obj, transform, conn_avoid, {}, style)
     return obj.get_id()
 
 

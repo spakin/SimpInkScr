@@ -40,21 +40,22 @@
 • connector(id1, id2, [ctype], [curve])
 • text(msg, base)
 • more_text(msg, [base])
+• image(fname, ul, [embed])
       </label>
       <label>
         In the above, center, ul, lr, pt1, pt2, pt, and base are (x,
         y) coordinates, expressed as 2-tuples.  r, rx, ry, and curve
-        are floats.  Each elt is either a string or a float.  msg is a
-        string.  ctype is either "polyline" or "orthogonal".  id1 and
-        id2 are object IDs, returned from any object-creation
-        function.
+        are floats.  Each elt is either a string or a float.  msg,
+        fname, and ctype are strings, but ctype must be either
+        "polyline" or "orthogonal".  embed is a bool.  id1 and id2 are
+        object IDs returned from any object-creation function.
       </label>
       <label />
       <label>
         Each function also accepts a transform="…" argument and a
         conn_avoid=True|False argument.  Any trailing key=value
-        arguments are added to the object's style.  (Underscores in
-        key are converted to dashes.)
+        arguments update the object's style.  (Underscores in key are
+        converted to dashes.)
       </label>
       <label />
       <label>
