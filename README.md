@@ -8,9 +8,9 @@ In the [Inkscape](https://inkscape.org/) vector-drawing program, how would you g
 
 ![diamonds](https://user-images.githubusercontent.com/650041/134632937-bd3c2d21-04d0-47b9-a61b-170de129022c.png)
 
-* **Option 1**: Draw, color, and place the diamonds manually.  This is exceptionally tedious.
+**Option 1**: Draw, color, and place the diamonds manually.  This is exceptionally tedious.
 
-* **Option 2**: Create an [Inkscape extension](https://inkscape-extensions-guide.readthedocs.io/) to automate the process.  This involves gaining familiarity with a large API and writing a substantial amount of setup code just to perform what ought to be a simple task.
+**Option 2**: Create an [Inkscape extension](https://inkscape-extensions-guide.readthedocs.io/) to automate the process.  This involves gaining familiarity with a large API and writing a substantial amount of setup code just to perform what ought to be a simple task.
 
 Neither option is particularly enticing.  This is why I created the Simple Inkscape Scripting extension for Inkscape.  Simple Inkscape Scripting lets you create shapes in the current Inkscape canvas with a Python script plus a set of simple functions such as `circle` for drawing a circle and `rect` for drawing a rectangle.  The picture shown above was created using just the following five lines of code:
 ```Python
@@ -35,7 +35,7 @@ First, identify your Inkscape extensions directory.  This can be found in  Inksc
 Second, install Simple Inkscape Scripting in that directory or any subdirectory.  For example,
 ```bash
 cd $HOME/.config/inkscape/extensions/
-git clone github.com/spakin/SimpInkScr
+git clone https://github.com/spakin/SimpInkScr.git
 ```
 will retrieve the code from GitHub.  This later can be updated with
 ```bash
