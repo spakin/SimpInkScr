@@ -41,6 +41,7 @@
 • text(msg, base)
 • more_text(msg, [base])
 • image(fname, ul, [embed])
+• inkex_object(obj)
       </label>
       <label>
         In the above, center, ul, lr, pt1, pt2, pt, and base are (x,
@@ -48,7 +49,8 @@
         are floats.  Each elt is either a string or a float.  msg,
         fname, and ctype are strings, but ctype must be either
         "polyline" or "orthogonal".  embed is a bool.  id1 and id2 are
-        object IDs returned from any object-creation function.
+        object IDs returned from any object-creation function.  obj is
+        an arbitrary object created using Inkscape's core API.
       </label>
       <label />
       <label>

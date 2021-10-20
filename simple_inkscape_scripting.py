@@ -284,6 +284,11 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False, **style):
     return obj.get_id()
 
 
+def inkex_object(obj):
+    'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
+    _simple_objs.append(obj)
+
+
 # ----------------------------------------------------------------------
 
 class SimpleInkscapeScripting(inkex.GenerateExtension):
@@ -306,7 +311,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
     def generate(self):
         'Generate objects from user-provided Python code.'
         width, height = self.svg.width, self.svg.height  # For user convenience
-        code = ""
+        code = "global width, height\n\n"
         py_source = self.options.py_source
         if py_source != "" and not os.path.isdir(py_source):
             # The preceding test for isdir is explained in

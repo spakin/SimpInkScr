@@ -106,6 +106,10 @@ Append to a previous piece of text (created with `text` or `more_text`), possibl
 
 Include an image.  `fname` is the name of the file to include.  A variety of image formats are supported, but only PNG, JPEG, and SVG are guaranteed to be supported by all SVG viewers.  The upper-left corner of the image will lie at coordinates `(x, y)`.  If `embed` is `True` (the default), the image data will be embedded in the SVG file.  This results in a larger SVG file, but it can be viewed without access to the original image file.  If `embed` is `False`, the SVG file will merely reference the named file.  This results in a smaller SVG file, but it requires access to the image file.  If the image file is moved or deleted, it will no longer appear in the SVG file.  `fname` can be a URL.  In this case, `embed` must be set to `False`.  *Example*: `image('https://media.inkscape.org/static/images/inkscape-logo.png', (0, 0), embed=False)`
 
+* `inkex_object(obj)`
+
+*For advanced users*: expose an arbitrary object created using Inkscape's [core API](https://inkscape-extensions-guide.readthedocs.io/en/latest/inkex-core.html) to Simple Inkscape Scripting.
+
 ### Transformations
 
 All of the functions presented under [Shape API](#shape-api) accept an additional `transform` parameter.  `transform` takes a string representing an [SVG transform](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform) (`rotate`, `scale`, etc.) and applies that transform to the object.
