@@ -201,6 +201,25 @@ def polygon(*coords, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
+def regular_polygon(sides, center, r, angle=-pi/2, round=0.0, random=0.0,
+                    transform=None, conn_avoid=False, **style):
+    'Draw a regular polygon.'
+    # Create a star object, which is also used for regular polygons.
+    if sides < 3:
+        inkex.utils.errormsg('A regular polygon must contain at least '
+                             'three points.')
+        return
+    obj = inkex.PathElement.star(center, (r, r/2), sides, round)
+
+    # Set all the regular polygon's parameters.
+    obj.set('sodipodi:arg1', angle)
+    obj.set('sodipodi:arg2', angle + pi/sides)
+    obj.set('inkscape:flatsided', 'true')   # Regular polygon, not star
+    obj.set('inkscape:rounded', round)
+    obj.set('inkscape:randomized', random)
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
+
+
 def star(sides, center, radii, angles=None, round=0.0, random=0.0,
          transform=None, conn_avoid=False, **style):
     'Draw a star.'
@@ -221,7 +240,7 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     # Set all the star's parameters.
     obj.set('sodipodi:arg1', angles[0])
     obj.set('sodipodi:arg2', angles[1])
-    obj.set('inkscape:flatsided', 'false')   # Star, not polygon
+    obj.set('inkscape:flatsided', 'false')   # Star, not regular polygon
     obj.set('inkscape:rounded', round)
     obj.set('inkscape:randomized', random)
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)

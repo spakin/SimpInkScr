@@ -36,6 +36,7 @@
 • line(pt1, pt2)
 • polyline(pt, …)
 • polygon(pt, …)
+• regular_polygon(sides, center, r, [ang], [round], [random])
 • star(sides, center, (rt, rb), [(angt, angb)], [round], [random])
 • path(elt, …)
 • connector(obj1, obj2, [ctype], [curve])
@@ -47,13 +48,13 @@
       <label>
         In the above, center, ul, lr, pt1, pt2, pt, and base are (x,
         y) coordinates, expressed as 2-tuples.  r, rx, ry, rt, rb,
-        angt, angb, round, random, and curve are floats.  sides is an
-        integer.  Each elt is either a string or a float.  msg, fname,
-        and ctype are strings, but ctype must be either "polyline" or
-        "orthogonal".  embed is a bool.  obj1 and obj2 are objects
-        returned from any of the object-creation functions listed
-        above.  iobj is an arbitrary object created using Inkscape's
-        core API.
+        ang, angt, angb, round, random, and curve are floats.  sides
+        is an integer.  Each elt is either a string or a float.  msg,
+        fname, and ctype are strings, but ctype must be either
+        "polyline" or "orthogonal".  embed is a bool.  obj1 and obj2
+        are objects returned from any of the object-creation functions
+        listed above.  iobj is an arbitrary object created using
+        Inkscape's core API.
       </label>
       <label />
       <label>
