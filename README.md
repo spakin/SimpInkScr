@@ -90,9 +90,9 @@ Draw a polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 
 
 Draw a path from a list of path commands (strings) and arguments (floats).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`
 
-* `connector(id1, id2, ctype, curve)`
+* `connector(obj1, obj2, ctype, curve)`
 
-Draw a path that routes automatically between two objects, given their object IDs.  (All functions in the shape API return an object ID.)  `ctype` specifies the connector type and must be either `polyline` (any angle, the default) or `orthogonal` (only 90° bends).  `curve` specifies the curvature amount (default `0`).  *Example*: `r = rect((50, 50), (100, 100)); c = circle((200, 200), 25); connector(r, c, ctype='orthogonal', curve=15)`
+Draw a path that routes automatically between two Simple Inkscape Scripting objects.  (All functions in the shape API return such an object.)  `ctype` specifies the connector type and must be either `polyline` (any angle, the default) or `orthogonal` (only 90° bends).  `curve` specifies the curvature amount (default `0`).  *Example*: `r = rect((50, 50), (100, 100)); c = circle((200, 200), 25); connector(r, c, ctype='orthogonal', curve=15)`
 
 * `text(msg, (x, y))`
 
@@ -180,7 +180,9 @@ Because the Python code is invoked from within an Inkscape [`GenerateExtension`]
 
 Objects created directly using Inkscape's core API should be made available to Simple Inkscape Scripting by passing them to the `inkex_object` function:
 
-* `inkex_object(obj)`
+* `inkex_object(iobj)`
+
+*Example*: `c = inkex.Circle(cx="200", cy="200", r="50"); inkex_object(c)`
 
 Author
 ------

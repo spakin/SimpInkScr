@@ -42,10 +42,11 @@ from random import *
 # conflicting IDs.
 _id_prefix = 'simp-ink-scr-%d-' % randint(100000, 999999)
 
-# Store all objects the users creates in _simple_objs.  Map an object
-# ID to an object with _id_to_obj.
+# Keep track of the next ID to append to _id_prefix.
+_next_obj_id = 1
+
+# Store all SimpleObjects the user creates in _simple_objs.
 _simple_objs = []
-_id_to_obj = {}
 
 # Store the user-specified default style in _default_style.
 _default_style = {}
@@ -58,63 +59,66 @@ _common_shape_style = {'stroke': 'black',
 _default_transform = None
 
 
-def _construct_style(shape_style, new_style):
-    '''Combine a shape default style, a global default style, and an
-    object-specific style and return the result as a string.'''
-    # Start with the default style for the shape type.
-    style = shape_style.copy()
+class SimpleObject(object):
+    'Encapsulate an Inkscape object and additional metadata.'
 
-    # Update the style according to the current global default style.
-    style.update(_default_style)
+    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style):
+        'Wrap an Inkscape object within a SimpleObject.'
+        # Combine the current and default transforms.
+        ts = []
+        if transform is not None and transform != '':
+            ts.append(transform)
+        if _default_transform is not None and _default_transform != '':
+            ts.append(_default_transform)
+        if ts != []:
+            obj.transform = ' '.join(ts)
 
-    # Update the style based on the object-specific style.
-    for k, v in new_style.items():
-        k = k.replace('_', '-')
-        if v is None:
-            style[k] = None
-        else:
-            style[k] = str(v)
+        # Optionally indicate that connectors are to avoid this object.
+        if conn_avoid:
+            obj.set('inkscape:connector-avoid', 'true')
 
-    # Remove all keys whose value is None.
-    style = {k: v for k, v in style.items() if v is not None}
+        # Combine the current and default styles.
+        ext_style = self._construct_style(shape_style, obj_style)
+        if ext_style != '':
+            obj.style = ext_style
 
-    # Concatenate the style into a string.
-    return ';'.join(['%s:%s' % kv for kv in style.items()])
+        # Assign the object a unique ID.
+        global _next_obj_id
+        tag = '%s%d' % (_id_prefix, _next_obj_id)
+        obj.set_id(tag)
+        _next_obj_id += 1
 
+        # Store the modified Inkscape object.
+        self.inkscape_obj = obj
+        _simple_objs.append(self)
 
-def _finalize_object(obj, transform, conn_avoid, shape_style, obj_style):
-    'Assign a transform and a style then record the object in the object list.'
-    # Combine the current and default transforms.
-    ts = []
-    if transform is not None and transform != '':
-        ts.append(transform)
-    if _default_transform is not None and _default_transform != '':
-        ts.append(_default_transform)
-    if ts != []:
-        obj.transform = ' '.join(ts)
+    def _construct_style(self, shape_style, new_style):
+        '''Combine a shape default style, a global default style, and an
+        object-specific style and return the result as a string.'''
+        # Start with the default style for the shape type.
+        style = shape_style.copy()
 
-    # Optionally indicate that connectors are to avoid this object.
-    if conn_avoid:
-        obj.set('inkscape:connector-avoid', 'true')
+        # Update the style according to the current global default style.
+        style.update(_default_style)
 
-    # Combine the current and default styles.
-    ext_style = _construct_style(shape_style, obj_style)
-    if ext_style != '':
-        obj.style = ext_style
+        # Update the style based on the object-specific style.
+        for k, v in new_style.items():
+            k = k.replace('_', '-')
+            if v is None:
+                style[k] = None
+            else:
+                style[k] = str(v)
 
-    # Assign the object a unique ID.
-    tag = '%s%d' % (_id_prefix, 1 + len(_simple_objs))
-    obj.set_id(tag)
+        # Remove all keys whose value is None.
+        style = {k: v for k, v in style.items() if v is not None}
 
-    # Store the modified object.
-    _simple_objs.append(obj)
-    _id_to_obj[tag] = obj
+        # Concatenate the style into a string.
+        return ';'.join(['%s:%s' % kv for kv in style.items()])
 
-
-def _get_bbox_center(obj):
-    "Return the center of an object's bounding box."
-    bbox = obj.bounding_box()
-    return (bbox.center_x, bbox.center_y)
+    def _get_bbox_center(self):
+        "Return the center of an object's bounding box."
+        bbox = self.inkscape_obj.bounding_box()
+        return (bbox.center_x, bbox.center_y)
 
 
 # ----------------------------------------------------------------------
@@ -142,16 +146,14 @@ def transform(t):
 def circle(center, r, transform=None, conn_avoid=False, **style):
     'Draw a circle.'
     obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r))
-    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
 def ellipse(center, rx, ry, transform=None, conn_avoid=False, **style):
     'Draw an ellipse.'
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
                         rx=str(rx), ry=str(ry))
-    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
 def rect(pt1, pt2, transform=None, conn_avoid=False, **style):
@@ -168,8 +170,7 @@ def rect(pt1, pt2, transform=None, conn_avoid=False, **style):
     # Draw the rectangle.
     obj = inkex.Rectangle(x=str(x0), y=str(y0),
                           width=str(wd), height=str(ht))
-    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
 def line(pt1, pt2, transform=None, conn_avoid=False, **style):
@@ -177,8 +178,7 @@ def line(pt1, pt2, transform=None, conn_avoid=False, **style):
     obj = inkex.Line(x1=str(pt1[0]), y1=str(pt1[1]),
                      x2=str(pt2[0]), y2=str(pt2[1]))
     shape_style = {'stroke': 'black'}  # No need for fill='none' here.
-    _finalize_object(obj, transform, conn_avoid, shape_style, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, shape_style, style)
 
 
 def polyline(*coords, transform=None, conn_avoid=False, **style):
@@ -188,8 +188,7 @@ def polyline(*coords, transform=None, conn_avoid=False, **style):
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polyline(points=pts)
-    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
 def polygon(*coords, transform=None, conn_avoid=False, **style):
@@ -199,8 +198,7 @@ def polygon(*coords, transform=None, conn_avoid=False, **style):
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
-    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
 def path(*elts, transform=None, conn_avoid=False, **style):
@@ -210,30 +208,27 @@ def path(*elts, transform=None, conn_avoid=False, **style):
         return
     d = ' '.join([str(e) for e in elts])
     obj = inkex.PathElement(d=d)
-    _finalize_object(obj, transform, conn_avoid, _common_shape_style, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def connector(id1, id2, ctype='polyline', curve=0,
+def connector(obj1, obj2, ctype='polyline', curve=0,
               transform=None, conn_avoid=False, **style):
     'Connect two objects with a path.'
     # Create a path that links the two objects' centers.
-    obj1 = _id_to_obj[id1]
-    obj2 = _id_to_obj[id2]
-    center1 = _get_bbox_center(obj1)
-    center2 = _get_bbox_center(obj2)
+    center1 = obj1._get_bbox_center()
+    center2 = obj2._get_bbox_center()
     d = 'M %g,%g L %g,%g' % (center1[0], center1[1], center2[0], center2[1])
     path = inkex.PathElement(d=d)
 
     # Mark the path as a connector.
     path.set('inkscape:connector-type', str(ctype))
     path.set('inkscape:connector-curvature', str(curve))
-    path.set('inkscape:connection-start', '#%s' % id1)
-    path.set('inkscape:connection-end', '#%s' % id2)
+    path.set('inkscape:connection-start', '#%s' % obj1.inkscape_obj.get_id())
+    path.set('inkscape:connection-end', '#%s' % obj2.inkscape_obj.get_id())
 
     # Store the connector as its own object.
-    _finalize_object(path, transform, conn_avoid, _common_shape_style, style)
-    return path.get_id()
+    return SimpleObject(path, transform, conn_avoid,
+                        _common_shape_style, style)
 
 
 def text(msg, base, transform=None, conn_avoid=False, **style):
@@ -241,26 +236,25 @@ def text(msg, base, transform=None, conn_avoid=False, **style):
     obj = inkex.TextElement(x=str(base[0]), y=str(base[1]))
     obj.set('xml:space', 'preserve')
     obj.text = msg
-    _finalize_object(obj, transform, conn_avoid, {}, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
 def more_text(msg, base=None, conn_avoid=False, **style):
     'Append text to the preceding object, which must be text.'
     if len(_simple_objs) == 0 or \
-       not isinstance(_simple_objs[-1], inkex.TextElement):
+       not isinstance(_simple_objs[-1].inkscape_obj, inkex.TextElement):
         inkex.utils.errormsg('more_text must immediately follow'
                              ' text or another more_text')
         return
+    obj = _simple_objs[-1]
     tspan = inkex.Tspan()
     tspan.text = msg
-    tspan.style = _construct_style({}, style)
+    tspan.style = obj._construct_style({}, style)
     if base is not None:
         tspan.set('x', str(base[0]))
         tspan.set('y', str(base[1]))
-    obj = _simple_objs[-1]
-    obj.append(tspan)
-    return obj.get_id()
+    obj.inkscape_obj.append(tspan)
+    return obj
 
 
 def image(fname, ul, embed=True, transform=None, conn_avoid=False, **style):
@@ -280,13 +274,12 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False, **style):
         # Point to an external file.
         uri = fname
     obj.set('xlink:href', uri)
-    _finalize_object(obj, transform, conn_avoid, {}, style)
-    return obj.get_id()
+    return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
-def inkex_object(obj):
+def inkex_object(obj, transform=None, conn_avoid=False, **style):
     'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
-    _simple_objs.append(obj)
+    return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
 # ----------------------------------------------------------------------
@@ -310,6 +303,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
 
     def generate(self):
         'Generate objects from user-provided Python code.'
+        global width, height
         width, height = self.svg.width, self.svg.height  # For user convenience
         code = "global width, height\n\n"
         py_source = self.options.py_source
@@ -323,7 +317,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
             code += self.options.program.replace(r'\n', '\n')
         exec(code)
         for obj in _simple_objs:
-            yield obj
+            yield obj.inkscape_obj
 
 
 if __name__ == '__main__':
