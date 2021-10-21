@@ -86,6 +86,10 @@ Draw a polyline (open polygon) from the given coordinates.  *Example*: `polyline
 
 Draw a polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 0), (300, 300), (150, 200), fill='none')`
 
+* `star(sides, (cx, cy), (rt, rb), (angt, angb), round, random)`
+
+Draw a `sides`-sided star centered at `(cx, cy)` with tip radius `rt` and base radius `rb`.  All of the remaining arguments are optional.  `angt` and `angb` are the tip and base angles in radians and default to angles that do not skew the star and that point it upwards.  `round` specifies how much to round the corners and defaults to `0.0` (sharp).  `random` adds an amount of randomness to all vertex coordinates (default `0.0`).  *Example*: `star(5, (100, 100), (80, 30))`
+
 * `path(elt, …)`
 
 Draw a path from a list of path commands (strings) and arguments (floats).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`

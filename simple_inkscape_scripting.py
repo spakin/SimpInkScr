@@ -201,6 +201,32 @@ def polygon(*coords, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
+def star(sides, center, radii, angles=None, round=0.0, random=0.0,
+         transform=None, conn_avoid=False, **style):
+    'Draw a star.'
+    # Create a star object.
+    if sides < 3:
+        inkex.utils.errormsg('A star must contain at least three points.')
+        return
+    obj = inkex.PathElement.star(center, radii, sides, round)
+
+    # If no angles were specified, point the star upwards.
+    if angles is not None:
+        pass
+    elif radii[0] >= radii[1]:
+        angles = (-pi/2, pi/sides - pi/2)
+    else:
+        angles = (pi/2, pi/sides + pi/2)
+
+    # Set all the star's parameters.
+    obj.set('sodipodi:arg1', angles[0])
+    obj.set('sodipodi:arg2', angles[1])
+    obj.set('inkscape:flatsided', 'false')   # Star, not polygon
+    obj.set('inkscape:rounded', round)
+    obj.set('inkscape:randomized', random)
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
+
+
 def path(*elts, transform=None, conn_avoid=False, **style):
     'Draw an arbitrary path.'
     if len(elts) == 0:
