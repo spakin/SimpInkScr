@@ -62,6 +62,8 @@ See the [`examples` directory](examples/) for a collection of examples that can 
 
 ### Shape API
 
+All of the following functions return a Simple Inkscape Scripting object, which can be passed to the `connector` and `group` functions.
+
 * `circle((cx, cy), r)`
 
 Draw a circle with center `(cx, cy)` and radius `r`.  *Example*: `circle((width/2, height/2), 50)`
@@ -84,7 +86,7 @@ Draw a polyline (open polygon) from the given coordinates.  *Example*: `polyline
 
 * `polygon((x1, y1), (x2, y2), …, (xn, yn))`
 
-Draw a polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 0), (300, 300), (150, 200), fill='none')`
+Draw an arbitrary polygon from the given coordinates.  *Example*: `polygon((0, 300), (150, 0), (300, 300), (150, 200), fill='none')`
 
 * `regular_polygon(sides, (cx, cy), r, ang, round, random)`
 
@@ -167,6 +169,32 @@ for d in range(200, 20, -20):
     rect((cx - d, cy - d), (cx + d, cy + d), fill=shade)
 ```
 In the above, the stroke style is set once and inherited by all of the rectangles, which specify only a fill color.
+
+### Groups
+
+Due to how "generate extensions" work, Inkscape always places the output of Simple Inkscape Scripting within a group.  It is possible to specify additional levels of grouping using
+
+* `group(objs)`
+
+where *objs* is a list of initial objects in the group and is allowed to be empty.  Like all of the objects in the [shape API](#shape-api), `group` accepts optional `transform`, `conn_avoid`, and *key=value* style parameters.
+
+Additional objects can be added to a group one-by-one by invoking the `add` method on the object returned by a call to `group` and passing it an object to add.  Groups are themselves objects and can be added to other groups.
+
+*Example*:
+```Python
+rad = 25
+evens = group()
+odds = group()
+fills = ['cyan', 'yellow']
+for i in range(8):
+    sides = i + 3
+    p = regular_polygon(sides, (i*rad*3 + rad*2, 3*rad), rad, fill=fills[i%2])
+    if sides%2 == 0:
+        evens.add(p)
+    else:
+        odds.add(p)
+```
+The preceding example draws regular polygons of an increasing number of sides.  All polygons with an even number of sides are grouped together, and all polygons with an odd number of sides are grouped together.  (Because all Simple Inkscape Scripting output is put in a single top-level group, you will need to ungroup once to access the separate even/odd-side groups.)
 
 ### Additional convenience features
 

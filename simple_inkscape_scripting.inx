@@ -43,6 +43,7 @@
 • text(msg, base)
 • more_text(msg, [base])
 • image(fname, ul, [embed])
+• group([obj1, obj2, …])
 • inkex_object(iobj)
       </label>
       <label>

@@ -89,7 +89,7 @@ class SimpleObject(object):
         _next_obj_id += 1
 
         # Store the modified Inkscape object.
-        self.inkscape_obj = obj
+        self._inkscape_obj = obj
         _simple_objs.append(self)
 
     def _construct_style(self, shape_style, new_style):
@@ -117,8 +117,46 @@ class SimpleObject(object):
 
     def _get_bbox_center(self):
         "Return the center of an object's bounding box."
-        bbox = self.inkscape_obj.bounding_box()
+        bbox = self._inkscape_obj.bounding_box()
         return (bbox.center_x, bbox.center_y)
+
+
+class SimpleGroup(SimpleObject):
+    'Represent a group of objects.'
+
+    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style):
+        super().__init__(obj, transform, conn_avoid, shape_style, obj_style)
+        self._children = []
+
+    def __len__(self):
+        return len(self._children)
+
+    def __getitem__(self, idx):
+        return self._children[idx]
+
+    def __iter__(self):
+        yield from self._children
+
+    def add(self, obj):
+        'Add a SimpleObject to the group.'
+        # Ensure the addition is legitimate.
+        global _simple_objs
+        if not isinstance(obj, SimpleObject):
+            inkex.utils.errormsg('TEMPORARY: %s' % repr(obj))
+            inkex.utils.errormsg('Only Simple Inkscape Scripting objects '
+                                 'can be added to a group')
+            return
+        if obj not in _simple_objs:
+            inkex.utils.errormsg('Only objects not already in a group '
+                                 'can be added to a group')
+            return
+
+        # Remove the object from the top-level set of objects.
+        _simple_objs = [o for o in _simple_objs if o is not obj]
+
+        # Add the object to both the SimpleGroup and the SVG group.
+        self._children.append(obj)
+        self._inkscape_obj.add(obj._inkscape_obj)
 
 
 # ----------------------------------------------------------------------
@@ -268,8 +306,8 @@ def connector(obj1, obj2, ctype='polyline', curve=0,
     # Mark the path as a connector.
     path.set('inkscape:connector-type', str(ctype))
     path.set('inkscape:connector-curvature', str(curve))
-    path.set('inkscape:connection-start', '#%s' % obj1.inkscape_obj.get_id())
-    path.set('inkscape:connection-end', '#%s' % obj2.inkscape_obj.get_id())
+    path.set('inkscape:connection-start', '#%s' % obj1._inkscape_obj.get_id())
+    path.set('inkscape:connection-end', '#%s' % obj2._inkscape_obj.get_id())
 
     # Store the connector as its own object.
     return SimpleObject(path, transform, conn_avoid,
@@ -287,7 +325,7 @@ def text(msg, base, transform=None, conn_avoid=False, **style):
 def more_text(msg, base=None, conn_avoid=False, **style):
     'Append text to the preceding object, which must be text.'
     if len(_simple_objs) == 0 or \
-       not isinstance(_simple_objs[-1].inkscape_obj, inkex.TextElement):
+       not isinstance(_simple_objs[-1]._inkscape_obj, inkex.TextElement):
         inkex.utils.errormsg('more_text must immediately follow'
                              ' text or another more_text')
         return
@@ -298,7 +336,7 @@ def more_text(msg, base=None, conn_avoid=False, **style):
     if base is not None:
         tspan.set('x', str(base[0]))
         tspan.set('y', str(base[1]))
-    obj.inkscape_obj.append(tspan)
+    obj._inkscape_obj.append(tspan)
     return obj
 
 
@@ -320,6 +358,15 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False, **style):
         uri = fname
     obj.set('xlink:href', uri)
     return SimpleObject(obj, transform, conn_avoid, {}, style)
+
+
+def group(objs=[], transform=None, conn_avoid=False, **style):
+    'Create a container for other objects.'
+    g = inkex.Group()
+    obj = SimpleGroup(g, transform, conn_avoid, {}, style)
+    for o in objs:
+        obj.add(o)
+    return obj
 
 
 def inkex_object(obj, transform=None, conn_avoid=False, **style):
@@ -362,7 +409,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
             code += self.options.program.replace(r'\n', '\n')
         exec(code)
         for obj in _simple_objs:
-            yield obj.inkscape_obj
+            yield obj._inkscape_obj
 
 
 if __name__ == '__main__':
