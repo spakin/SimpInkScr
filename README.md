@@ -203,6 +203,8 @@ The document's width and height are provided in pre-defined variables:
 * `width`
 * `height`
 
+`print` is redefined to invoke `inkex.utils.debug`, which presents its output within a dialog box after the script completes.
+
 Because they are likely to be used quite frequently for drawing repetitive objects, Simple Inkscape Scripting imports Python's [`math`](https://docs.python.org/3/library/math.html) and [`random`](https://docs.python.org/3/library/random.html) packages into the program's namespace with
 ```Python
 from math import *
@@ -212,7 +214,7 @@ Hence, programs can invoke functions such as `cos(rad)` and `uniform(a, b)` and 
 
 ### Advanced usage
 
-Because the Python code is invoked from within an Inkscape [`GenerateExtension`](https://inkscape-extensions-guide.readthedocs.io/en/latest/inkex-modules.html#inkex.extensions.GenerateExtension) object's `generate` method, it is possible to invoke functions from Inkscape's [core API](https://inkscape-extensions-guide.readthedocs.io/en/latest/inkex-core.html).  For example, a debug message can be output with `inkex.utils.debug(msg)`, and the document as a whole can be read and modified via `self.svg`, just as in a conventionally developed generate extension.
+Because the Python code is invoked from within an Inkscape [`GenerateExtension`](https://inkscape-extensions-guide.readthedocs.io/en/latest/inkex-modules.html#inkex.extensions.GenerateExtension) object's `generate` method, it is possible to invoke functions from Inkscape's [core API](https://inkscape-extensions-guide.readthedocs.io/en/latest/inkex-core.html).  For example, the document as a whole can be read and modified via `self.svg`, just as in a conventionally developed generate extension.
 
 Objects created directly using Inkscape's core API should be made available to Simple Inkscape Scripting by passing them to the `inkex_object` function:
 

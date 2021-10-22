@@ -397,7 +397,11 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         'Generate objects from user-provided Python code.'
         global width, height
         width, height = self.svg.width, self.svg.height  # For user convenience
-        code = "global width, height\n\n"
+        code = '''\
+global width, height
+print = inkex.utils.debug
+
+'''
         py_source = self.options.py_source
         if py_source != "" and not os.path.isdir(py_source):
             # The preceding test for isdir is explained in
