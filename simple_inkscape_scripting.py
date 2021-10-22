@@ -360,6 +360,13 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
+def clone(obj, transform=None, conn_avoid=False, **style):
+    'Return a linked clone of the object.'
+    c = inkex.Use(obj._inkscape_obj)
+    c.href = obj._inkscape_obj.get_id()
+    return SimpleObject(c, transform, conn_avoid, {}, style)
+
+
 def group(objs=[], transform=None, conn_avoid=False, **style):
     'Create a container for other objects.'
     g = inkex.Group()
