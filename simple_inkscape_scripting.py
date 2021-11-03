@@ -142,12 +142,12 @@ class SimpleGroup(SimpleObject):
         # Ensure the addition is legitimate.
         global _simple_objs
         if not isinstance(obj, SimpleObject):
-            inkex.utils.errormsg('Only Simple Inkscape Scripting objects '
-                                 'can be added to a group')
+            inkex.utils.errormsg(_('Only Simple Inkscape Scripting objects '
+                                   'can be added to a group'))
             return
         if obj not in _simple_objs:
-            inkex.utils.errormsg('Only objects not already in a group '
-                                 'can be added to a group')
+            inkex.utils.errormsg(_('Only objects not already in a group '
+                                   'can be added to a group'))
             return
 
         # Remove the object from the top-level set of objects.
@@ -221,7 +221,7 @@ def line(pt1, pt2, transform=None, conn_avoid=False, **style):
 def polyline(*coords, transform=None, conn_avoid=False, **style):
     'Draw a polyline.'
     if len(coords) < 2:
-        inkex.utils.errormsg('A polyline must contain at least two points.')
+        inkex.utils.errormsg(_('A polyline must contain at least two points.'))
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polyline(points=pts)
@@ -231,7 +231,8 @@ def polyline(*coords, transform=None, conn_avoid=False, **style):
 def polygon(*coords, transform=None, conn_avoid=False, **style):
     'Draw a polygon.'
     if len(coords) < 3:
-        inkex.utils.errormsg('A polygon must contain at least three points.')
+        inkex.utils.errormsg(_('A polygon must contain'
+                               ' at least three points.'))
         return
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
@@ -243,8 +244,8 @@ def regular_polygon(sides, center, r, angle=-pi/2, round=0.0, random=0.0,
     'Draw a regular polygon.'
     # Create a star object, which is also used for regular polygons.
     if sides < 3:
-        inkex.utils.errormsg('A regular polygon must contain at least '
-                             'three points.')
+        inkex.utils.errormsg(_('A regular polygon must contain at least '
+                               'three points.'))
         return
     obj = inkex.PathElement.star(center, (r, r/2), sides, round)
 
@@ -262,7 +263,7 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     'Draw a star.'
     # Create a star object.
     if sides < 3:
-        inkex.utils.errormsg('A star must contain at least three points.')
+        inkex.utils.errormsg(_('A star must contain at least three points.'))
         return
     obj = inkex.PathElement.star(center, radii, sides, round)
 
@@ -290,14 +291,15 @@ def arc(center, rx, ry, ang1, ang2, arc_type='arc',
     if arc_type in ['arc', 'slice', 'chord']:
         obj.set('sodipodi:arc-type', arc_type)
     else:
-        inkex.utils.errormsg('Invalid arc_type "%s"' % str(arc_type))
+        inkex.utils.errormsg(_('Invalid arc_type "%s"' % str(arc_type)))
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
 def path(*elts, transform=None, conn_avoid=False, **style):
     'Draw an arbitrary path.'
     if len(elts) == 0:
-        inkex.utils.errormsg('A path must contain at least one path element.')
+        inkex.utils.errormsg(_('A path must contain at least'
+                               ' one path element.'))
         return
     d = ' '.join([str(e) for e in elts])
     obj = inkex.PathElement(d=d)
@@ -336,8 +338,8 @@ def more_text(msg, base=None, conn_avoid=False, **style):
     'Append text to the preceding object, which must be text.'
     if len(_simple_objs) == 0 or \
        not isinstance(_simple_objs[-1]._inkscape_obj, inkex.TextElement):
-        inkex.utils.errormsg('more_text must immediately follow'
-                             ' text or another more_text')
+        inkex.utils.errormsg(_('more_text must immediately follow'
+                               ' text or another more_text'))
         return
     obj = _simple_objs[-1]
     tspan = inkex.Tspan()
