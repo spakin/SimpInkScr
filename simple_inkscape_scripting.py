@@ -284,6 +284,14 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
+def arc(center, rx, ry, ang1, ang2, closed=False,
+        transform=None, conn_avoid=False, **style):
+    'Draw an arc.'
+    obj = inkex.PathElement.arc(center, rx, ry,
+                                start=ang1, end=ang2, open=not closed)
+    return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
+
+
 def path(*elts, transform=None, conn_avoid=False, **style):
     'Draw an arbitrary path.'
     if len(elts) == 0:
