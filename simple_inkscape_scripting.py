@@ -142,7 +142,6 @@ class SimpleGroup(SimpleObject):
         # Ensure the addition is legitimate.
         global _simple_objs
         if not isinstance(obj, SimpleObject):
-            inkex.utils.errormsg('TEMPORARY: %s' % repr(obj))
             inkex.utils.errormsg('Only Simple Inkscape Scripting objects '
                                  'can be added to a group')
             return
@@ -284,11 +283,14 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def arc(center, rx, ry, ang1, ang2, closed=False,
+def arc(center, rx, ry, ang1, ang2, arc_type='arc',
         transform=None, conn_avoid=False, **style):
     'Draw an arc.'
-    obj = inkex.PathElement.arc(center, rx, ry,
-                                start=ang1, end=ang2, open=not closed)
+    obj = inkex.PathElement.arc(center, rx, ry, start=ang1, end=ang2)
+    if arc_type in ['arc', 'slice', 'chord']:
+        obj.set('sodipodi:arc-type', arc_type)
+    else:
+        inkex.utils.errormsg('Invalid arc_type "%s"' % str(arc_type))
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
