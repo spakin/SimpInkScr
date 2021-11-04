@@ -103,7 +103,16 @@ Draw an arc as a segment of an ellipse with center `(cx, cy)` and radii `rx` and
 
 * `path(elt, …)`
 
-Draw a path from a list of path commands (strings) and arguments (floats).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`
+Draw a path from a list of path commands (strings) and arguments (floats) or a list of `PathCommand`s from [`inkex.paths`](https://inkscape.gitlab.io/extensions/documentation/source/inkex.paths.html).  *Example*: `path('M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z')`
+or equivalently,
+```Python
+from inkex.paths import *
+path(Move(226, 34),
+     Vert(237),
+     Line(32, 185),
+     Curve(32, 185, 45, -9, 226, 34),
+     ZoneClose())
+```
 
 * `connector(obj1, obj2, ctype, curve)`
 
