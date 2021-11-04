@@ -287,11 +287,43 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
 def arc(center, rx, ry, ang1, ang2, arc_type='arc',
         transform=None, conn_avoid=False, **style):
     'Draw an arc.'
+    # Construct the arc proper.
     obj = inkex.PathElement.arc(center, rx, ry, start=ang1, end=ang2)
     if arc_type in ['arc', 'slice', 'chord']:
         obj.set('sodipodi:arc-type', arc_type)
     else:
         inkex.utils.errormsg(_('Invalid arc_type "%s"' % str(arc_type)))
+
+    # The arc is visible only in Inkscape because it lacks a path.
+    # Here we manually add a path to the object.  (Is there a built-in
+    # method for doing this?)
+    p = []
+    ang1 %= 2*pi
+    ang2 %= 2*pi
+    x0 = rx*cos(ang1) + center[0]
+    y0 = ry*sin(ang1) + center[1]
+    p.append(inkex.paths.Move(x0, y0))
+    delta_ang = (ang2 - ang1) % (2*pi)
+    if delta_ang == 0.0:
+        delta_ang = 2*pi   # Special case for full ellipses
+    n_segs = int((delta_ang + pi/2) / (pi/2))
+    for s in range(n_segs):
+        a = ang1 + delta_ang*(s + 1)/n_segs
+        x1 = rx*cos(a) + center[0]
+        y1 = ry*sin(a) + center[1]
+        p.append(inkex.paths.Arc(rx, ry, 0, False, True, x1, y1))
+    if arc_type == 'arc':
+        obj.set('sodipodi:open', 'true')
+    elif arc_type == 'slice':
+        p.append(inkex.paths.Line(center[0], center[1]))
+        p.append(inkex.paths.ZoneClose())
+    elif arc_type == 'chord':
+        p.append(inkex.paths.ZoneClose())
+    else:
+        inkex.utils.errormsg(_('Invalid arc_type "%s"' % str(arc_type)))
+    obj.path = inkex.Path(p)
+
+    # Return a Simple Inkscape Scripting object.
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
