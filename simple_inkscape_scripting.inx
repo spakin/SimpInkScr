@@ -17,60 +17,19 @@
              gui-description="See the help tab for more information" />
     </page>
 
-    <page name="Help" gui-text="Help">
-      <label appearance="header">Description</label>
+    <page name="About" gui-text="About">
       <label>
         This extension makes it easy to automate Inkscape object
-        creation via small Python scripts.
-      </label>
-      <label appearance="header">Usage</label>
-      <label>
-        Although any valid Python code can be entered into the Code
-        box, the intention is that it largely will comprise calls to
-        the following object-creation functions:
-      </label>
-      <label xml:space="preserve">
-• circle(center, r)
-• ellipse(center, rx, ry)
-• rect(ul, lr)
-• line(pt1, pt2)
-• polyline(pt, …)
-• polygon(pt, …)
-• regular_polygon(sides, center, r, [ang], [round], [random])
-• star(sides, center, (rt, rb), [(angt, angb)], [round], [random])
-• arc(center, rx, ry, ang1, ang2, [arc_type])
-• path(elt, …)
-• connector(obj1, obj2, [ctype], [curve])
-• text(msg, base)
-• more_text(msg, [base])
-• image(fname, ul, [embed])
-• clone(obj)
-• group([obj1, obj2, …])
-• inkex_object(iobj)
-      </label>
-      <label>
-        In the above, center, ul, lr, pt1, pt2, pt, and base are (x, y)
-        coordinates, expressed as 2-tuples.  r, rx, ry, rt, rb, ang, angt,
-        angb, ang1, ang2, round, random, and curve are floats.  sides is an
-        integer.  Each elt is either a string or a float.  msg, fname,
-        arc_type, and ctype are strings, but arc_type must be either "arc",
-        "slice", or "chord", and ctype must be either "polyline" or
-        "orthogonal".  embed is a bool.  obj, obj1, and obj2 are objects
-        returned from any of the object-creation functions listed above.
-        iobj is an arbitrary object created using Inkscape's core API.
-      </label>
-      <label />
-      <label>
-        Each function also accepts a transform="…" argument and a
-        conn_avoid=True|False argument.  Any trailing key=value
-        arguments update the object's style.  (Underscores in key are
-        converted to dashes.)
-      </label>
-      <label />
-      <label>
-        For more usage details and examples, please visit
+        creation via small Python scripts.  See
       </label>
       <label appearance="url">https://github.com/spakin/SimpInkScr</label>
+      <label>
+        for documentation and examples.
+      </label>
+      <spacer size="10" />
+      <label>
+        Author: Scott Pakin &lt;scott-ink@pakin.org&gt;
+      </label>
     </page>
   </param>
 
