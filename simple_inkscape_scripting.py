@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 '''
 Copyright (C) 2021 Scott Pakin, scott-ink@pakin.org
@@ -58,6 +58,17 @@ _common_shape_style = {'stroke': 'black',
 # Store the default transform in _default_transform.
 _default_transform = None
 
+# Store the SVG definitions in _svg_defs.
+_svg_defs = None
+
+
+def unique_id():
+    'Return a unique ID.'
+    global _id_prefix, _next_obj_id
+    tag = '%s%d' % (_id_prefix, _next_obj_id)
+    _next_obj_id += 1
+    return tag
+
 
 class SimpleObject(object):
     'Encapsulate an Inkscape object and additional metadata.'
@@ -83,10 +94,7 @@ class SimpleObject(object):
             obj.style = ext_style
 
         # Assign the object a unique ID.
-        global _next_obj_id
-        tag = '%s%d' % (_id_prefix, _next_obj_id)
-        obj.set_id(tag)
-        _next_obj_id += 1
+        obj.set_id(unique_id())
 
         # Store the modified Inkscape object.
         self._inkscape_obj = obj
@@ -156,6 +164,56 @@ class SimpleGroup(SimpleObject):
         # Add the object to both the SimpleGroup and the SVG group.
         self._children.append(obj)
         self._inkscape_obj.add(obj._inkscape_obj)
+
+
+class SimpleFilter(object):
+    'Represent an SVG filter effect.'
+
+    def __init__(self, defs, name=None):
+        if name is None:
+            name = unique_id()
+        self.filt = defs.add(inkex.Filter(id=name))
+
+    def __str__(self):
+        return 'url(#%s)' % self.filt.get_id()
+
+    class SimpleFilterPrimitive(object):
+        'Represent one component of an SVG filter effect.'
+
+        def __init__(self, filt, ftype, **kw_args):
+            # Assign a random ID for the default result.
+            all_args = {'result': unique_id()}
+
+            # Make "src1" and "src2" smart aliases for "in" and "in2".
+            s2i = {'src1': 'in', 'src2': 'in2'}
+            for k, v in kw_args.items():
+                k = k.replace('_', '-')
+                if k in s2i:
+                    # src1 and src2 accept either SimpleFilterPrimitive
+                    # objects -- extracting their "result" string -- or
+                    # ordinary strings.
+                    if isinstance(v, self.__class__):
+                        v = v.prim.get('result')
+                    all_args[s2i[k]] = v
+                elif type(v) == str:
+                    # Strings are used unmodified.
+                    all_args[k] = v
+                else:
+                    try:
+                        # Sequences (other than strings, which are
+                        # sequences of characters) are converted to a
+                        # string of space-separated values.
+                        all_args[k] = ' '.join([str(e) for e in v])
+                    except TypeError:
+                        # Scalars are converted to strings.
+                        all_args[k] = str(v)
+
+            # Add a primitive to the filter.
+            self.prim = filt.add_primitive(ftype, **all_args)
+
+    def add(self, ftype, **kw_args):
+        'Add a primitive to a filter and return an object representation.'
+        return self.SimpleFilterPrimitive(self.filt, 'fe' + ftype, **kw_args)
 
 
 # ----------------------------------------------------------------------
@@ -425,6 +483,12 @@ def inkex_object(obj, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
+def filter_effect(name=None):
+    'Return an object representing an empty filter effect.'
+    global _svg_defs
+    return SimpleFilter(_svg_defs, name)
+
+
 # ----------------------------------------------------------------------
 
 class SimpleInkscapeScripting(inkex.GenerateExtension):
@@ -446,6 +510,8 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
 
     def generate(self):
         'Generate objects from user-provided Python code.'
+        global _svg_defs
+        _svg_defs = self.svg.defs
         global width, height
         width, height = self.svg.width, self.svg.height  # For user convenience
         code = '''\
