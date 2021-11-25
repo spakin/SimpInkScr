@@ -255,7 +255,7 @@ def ellipse(center, rx, ry, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def rect(pt1, pt2, transform=None, conn_avoid=False, **style):
+def rect(pt1, pt2, round=None, transform=None, conn_avoid=False, **style):
     'Draw a rectangle.'
     # Convert pt1 and pt2 to an upper-left starting point and
     # rectangle dimensions.
@@ -269,6 +269,15 @@ def rect(pt1, pt2, transform=None, conn_avoid=False, **style):
     # Draw the rectangle.
     obj = inkex.Rectangle(x=str(x0), y=str(y0),
                           width=str(wd), height=str(ht))
+
+    # Optionally round the corners.
+    if round is not None:
+        try:
+            rx, ry = round
+        except TypeError:
+            rx, ry = round, round
+        obj.set('rx', str(rx))
+        obj.set('ry', str(ry))
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
