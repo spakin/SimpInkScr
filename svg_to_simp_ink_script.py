@@ -22,8 +22,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
 import inkex
 
+
 class SvgToPythonScript(inkex.OutputExtension):
     'Save an Inkscape image to a Simple Inkscape Scripting script.'
+
+    # Most shapes use this as their default style.
+    _common_shape_style = {'stroke': 'none',
+                           'fill': 'black'}
 
     def transform_arg(self, node):
         "Return an SVG node's transform string as a function argument."
@@ -39,39 +44,43 @@ class SvgToPythonScript(inkex.OutputExtension):
             return ''
         return ', conn_avoid=%s' % repr(avoid == 'true')
 
-    def style_args(self, node):
+    def style_args(self, node, def_style):
         "Return an SVG node's style string as key=value arguments."
+        # Convert the style string to a dictionary.
         style = node.get('style')
-        if style is None:
-            return ''
-        args = ''
-        for term in style.split(';'):
-            k, v = term.split(':', 1)
-            k = k.replace('-', '_')
-            # TODO: Pretty-print values.
-            args += ', %s=%s' % (k, repr(v))
-        return args
+        style_dict = def_style.copy()
+        if style is not None:
+            for term in style.split(';'):
+                k, v = term.split(':', 1)
+                k = k.replace('-', '_')
+                # TODO: Handle different data types.
+                style_dict[k] = v
 
-    def extra_args(self, node):
+        # Convert the dictionary to a list of function arguments.
+        return ''.join([', %s=%s' % (k, repr(v)) for k, v in style_dict.items()])
+
+    def extra_args(self, node, def_style=None):
         'Return extra function arguments (transform, style) if available.'
+        if def_style is None:
+            def_style = self._common_shape_style
         args = [self.transform_arg(node),
                 self.conn_avoid_arg(node),
-                self.style_args(node)]
+                self.style_args(node, def_style)]
         return ''.join(args)
-        
+
     def convert_circle(self, node):
         'Return Python code for drawing a circle.'
         cx, cy, r = node.get('cx'), node.get('cy'), node.get('r')
         extra = self.extra_args(node)
         return 'circle((%s, %s), %s%s)' % (cx, cy, r, extra)
-        
+
     def convert_ellipse(self, node):
         'Return Python code for drawing an ellipse.'
         cx, cy = node.get('cx'), node.get('cy')
         rx, ry = node.get('rx'), node.get('ry')
         extra = self.extra_args(node)
         return 'ellipse((%s, %s), %s, %s%s)' % (cx, cy, rx, ry, extra)
-        
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python function call.'
         code = []
@@ -81,7 +90,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             elif isinstance(node, inkex.Ellipse):
                 code.append(self.convert_ellipse(node))
         return code
-    
+
     def save(self, stream):
         'Write Python code that regenerates the SVG to an output stream.'
         stream.write(b'''\
