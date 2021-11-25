@@ -88,24 +88,46 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def convert_rectangle(self, node):
         'Return Python code for drawing a rectangle.'
+        # Acquire a rect's required parameters.
         x, y = float(node.get('x')), float(node.get('y'))
         wd, ht = float(node.get('width')), float(node.get('height'))
         extra = self.extra_args(node)
+
+        # Handle the optional corner-rounding parameter.
+        rx, ry = node.get('rx'), node.get('ry')
+        if rx is not None and ry is not None:
+            extra = ', (%s, %s)%s' % (rx, ry, extra)
+        elif rx is not None:
+            extra = ', %s%s' % (rx, extra)
+        elif ry is not None:
+            extra = ', %s%s' % (ry, extra)
+
+        # Return a complete call to rect.
         return 'rect((%.5g, %.5g), (%.5g, %.5g)%s)' % \
             (x, y, x + wd, y + ht, extra)
+
+    def convert_line(self, node):
+        'Return Python code for drawing a line.'
+        x1, y1 = node.get('x1'), node.get('y1')
+        x2, y2 = node.get('x2'), node.get('y2')
+        extra = self.extra_args(node)
+        return 'line((%s, %s), (%s, %s)%s)' % (x1, y1, x2, y2, extra)
 
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python function call.'
         code = []
         for node in self.svg.xpath('//svg:circle | '
                                    '//svg:ellipse | '
-                                   '//svg:rect'):
+                                   '//svg:rect | '
+                                   '//svg:line'):
             if isinstance(node, inkex.Circle):
                 code.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
                 code.append(self.convert_ellipse(node))
             elif isinstance(node, inkex.Rectangle):
                 code.append(self.convert_rectangle(node))
+            elif isinstance(node, inkex.Line):
+                code.append(self.convert_line(node))
         return code
 
     def save(self, stream):
