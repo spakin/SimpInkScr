@@ -28,20 +28,22 @@ class SvgToPythonScript(inkex.OutputExtension):
     def transform_arg(self, node):
         "Return an SVG node's transform string as a function argument."
         xform = node.get('transform')
-        if xform == '':
-            return xform
+        if xform is None:
+            return ''
         return ', transform=%s' % repr(xform)
 
     def conn_avoid_arg(self, node):
         "Return an SVG node's connector-avoid value as a function argument."
         avoid = node.get('inkscape:connector-avoid')
-        if avoid == '':
-            return avoid
+        if avoid is None:
+            return ''
         return ', conn_avoid=%s' % repr(avoid == 'true')
 
     def style_args(self, node):
         "Return an SVG node's style string as key=value arguments."
         style = node.get('style')
+        if style is None:
+            return ''
         args = ''
         for term in style.split(';'):
             k, v = term.split(':', 1)
@@ -68,7 +70,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         cx, cy = node.get('cx'), node.get('cy')
         rx, ry = node.get('rx'), node.get('ry')
         extra = self.extra_args(node)
-        return 'ellipse((%s, %s), (%s, %s)%s)' % (cx, cy, rx, ry, extra)
+        return 'ellipse((%s, %s), %s, %s%s)' % (cx, cy, rx, ry, extra)
         
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python function call.'
