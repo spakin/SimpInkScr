@@ -51,13 +51,18 @@ class SvgToPythonScript(inkex.OutputExtension):
         style_dict = def_style.copy()
         if style is not None:
             for term in style.split(';'):
+                # Convert the key from SVG to Python syntax.
                 k, v = term.split(':', 1)
                 k = k.replace('-', '_')
-                # TODO: Handle different data types.
-                style_dict[k] = v
+
+                # Convert the value from a string to another type if possible.
+                try:
+                    style_dict[k] = '%.10g' % float(v)
+                except ValueError:
+                    style_dict[k] = repr(v)
 
         # Convert the dictionary to a list of function arguments.
-        return ''.join([', %s=%s' % (k, repr(v)) for k, v in style_dict.items()])
+        return ''.join([', %s=%s' % kv for kv in style_dict.items()])
 
     def extra_args(self, node, def_style=None):
         'Return extra function arguments (transform, style) if available.'
