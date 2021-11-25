@@ -128,6 +128,10 @@ class SimpleObject(object):
         bbox = self._inkscape_obj.bounding_box()
         return (bbox.center_x, bbox.center_y)
 
+    def bounding_box(self):
+        "Return the object's bounding box as an inkex.transforms.BoundingBox."
+        return self._inkscape_obj.bounding_box()
+
 
 class SimpleGroup(SimpleObject):
     'Represent a group of objects.'
