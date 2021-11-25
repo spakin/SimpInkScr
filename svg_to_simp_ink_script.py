@@ -57,7 +57,7 @@ class SvgToPythonScript(inkex.OutputExtension):
 
                 # Convert the value from a string to another type if possible.
                 try:
-                    style_dict[k] = '%.10g' % float(v)
+                    style_dict[k] = '%.5g' % float(v)
                 except ValueError:
                     style_dict[k] = repr(v)
 
@@ -86,14 +86,26 @@ class SvgToPythonScript(inkex.OutputExtension):
         extra = self.extra_args(node)
         return 'ellipse((%s, %s), %s, %s%s)' % (cx, cy, rx, ry, extra)
 
+    def convert_rectangle(self, node):
+        'Return Python code for drawing a rectangle.'
+        x, y = float(node.get('x')), float(node.get('y'))
+        wd, ht = float(node.get('width')), float(node.get('height'))
+        extra = self.extra_args(node)
+        return 'rect((%.5g, %.5g), (%.5g, %.5g)%s)' % \
+            (x, y, x + wd, y + ht, extra)
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python function call.'
         code = []
-        for node in self.svg.xpath('//svg:circle | //svg:ellipse'):
+        for node in self.svg.xpath('//svg:circle | '
+                                   '//svg:ellipse | '
+                                   '//svg:rect'):
             if isinstance(node, inkex.Circle):
                 code.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
                 code.append(self.convert_ellipse(node))
+            elif isinstance(node, inkex.Rectangle):
+                code.append(self.convert_rectangle(node))
         return code
 
     def save(self, stream):
