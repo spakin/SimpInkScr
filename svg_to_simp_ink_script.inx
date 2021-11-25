@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <name>Save as Simple Inkscape Scripting</name>
+  <id>org.pakin.output.simple_inkscape_scripting</id>
+  <output>
+    <extension>.py</extension>
+    <mimetype>text/x-python</mimetype>
+    <filetypename>Simple Inkscape Scripting script (*.py)</filetypename>
+    <filetypetooltip>Simple Inkscape Scripting script (*.py)</filetypetooltip>
+    <dataloss>true</dataloss>
+  </output>
+  <script>
+    <command location="inx" interpreter="python">svg_to_simp_ink_script.py</command>
+  </script>
+</inkscape-extension>
