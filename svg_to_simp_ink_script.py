@@ -148,12 +148,35 @@ class SvgToPythonScript(inkex.OutputExtension):
         py += extra
         return py
 
+    def convert_poly_star(self, node):
+        'Return Python code for drawing either a regular polygon or a star.'
+        # Extract all of the parameters that define the shape.
+        sides = node.get('sodipodi:sides')
+        cx, cy = node.get('sodipodi:cx'), node.get('sodipodi:cy')
+        r1, r2 = node.get('sodipodi:r1'), node.get('sodipodi:r2')
+        arg1, arg2 = node.get('sodipodi:arg1'), node.get('sodipodi:arg2')
+        flat = node.get('inkscape:flatsided')
+        rnd = node.get('inkscape:rounded')
+        rand = node.get('inkscape:randomized')
+        extra = self.extra_args(node)
+
+        # Case 1: Regular polygon
+        if flat == 'true':
+            return 'regular_polygon(%s, (%s, %s), %s, %s, %s, %s%s)' % \
+                (sides, cx, cy, r1, arg1, rnd, rand, extra)
+
+        # Case 2: Star
+        return 'star(%s, (%s, %s), (%s, %s), (%s, %s), %s, %s%s)' % \
+            (sides, cx, cy, r1, r2, arg1, arg2, rnd, rand, extra)
+
     def convert_path(self, node):
         'Return Python code for drawing a path.'
         # Handle the special case of an arc.
         ptype = node.get('sodipodi:type')
         if ptype == 'arc':
             return self.convert_arc(node)
+        if ptype == 'star':
+            return self.convert_poly_star(node)
 
         # Handle the case of a generic path.
         d_str = node.get('d')
