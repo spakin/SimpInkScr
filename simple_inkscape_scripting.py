@@ -100,6 +100,12 @@ class SimpleObject(object):
         self._inkscape_obj = obj
         _simple_objs.append(self)
 
+    def __str__(self):
+        '''Return the object as a string of the form "url(#id)".  This
+        enables the object to be used as a value in style key=value
+        arguments such as shape_inside.'''
+        return 'url(#%s)' % self._inkscape_obj.get_id()
+
     def _construct_style(self, shape_style, new_style):
         '''Combine a shape default style, a global default style, and an
         object-specific style and return the result as a string.'''
