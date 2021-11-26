@@ -227,6 +227,28 @@ class SvgToPythonScript(inkex.OutputExtension):
                 code.append('more_text(%s)' % repr(tspan.tail))
         return code
 
+    def convert_image(self, node):
+        'Return Python code for including an image.'
+        x, y = node.get('x'), node.get('y')
+        href = node.get('xlink:href')
+        absref = node.get('sodipodi:absref')
+        extra = self.extra_args(node, {})
+        if href is not None and href[:5] == 'data:':
+            # Embedded image.  Note that we specify False for the embed
+            # parameter.  This is because Inkscape has already discarded
+            # the original filename.  Hence, we are effectively requesting
+            # a non-embeded image described by a data URL.
+            return ['image(%s, (%s, %s), False%s)' %
+                    (repr(href), x, y, extra)]
+        elif absref is not None:
+            # Non-embedded image.  We were given the original filename.
+            return ['image(%s, (%s, %s), False%s)' %
+                    (repr(absref), x, y, extra)]
+        else:
+            # Non-embedded image.  We were given a URL but not a filename.
+            return ['image(%s, (%s, %s), False%s)' %
+                    (repr(href), x, y, extra)]
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python function call.'
         code = []
@@ -237,7 +259,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:polyline | '
                                    '//svg:polygon | '
                                    '//svg:path | '
-                                   '//svg:text'):
+                                   '//svg:text | '
+                                   '//svg:image'):
             if isinstance(node, inkex.Circle):
                 code.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -254,6 +277,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 code.append(self.convert_path(node))
             elif isinstance(node, inkex.TextElement):
                 code.append(self.convert_text(node))
+            elif isinstance(node, inkex.Image):
+                code.append(self.convert_image(node))
         return code
 
     def save(self, stream):
