@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 '''
 
 import inkex
+import re
 
 
 class SvgToPythonScript(inkex.OutputExtension):
@@ -29,6 +30,12 @@ class SvgToPythonScript(inkex.OutputExtension):
     # Most shapes use this as their default style.
     _common_shape_style = {'stroke': 'none',
                            'fill': 'black'}
+
+    # SVG uses both spaces and commas to separate numbers.
+    sep_re = re.compile(r'[\s,]+')
+
+    # We separate command characters in path strings from adjoining numbers.
+    char_re = re.compile(r'([A-Za-z])')
 
     def transform_arg(self, node):
         "Return an SVG node's transform string as a function argument."
@@ -113,13 +120,42 @@ class SvgToPythonScript(inkex.OutputExtension):
         extra = self.extra_args(node)
         return 'line((%s, %s), (%s, %s)%s)' % (x1, y1, x2, y2, extra)
 
+    def convert_poly(self, node, poly):
+        'Return Python code for drawing a polyline or polygon.'
+        toks = self.sep_re.split(node.get('points'))
+        pts = []
+        for i in range(0, len(toks), 2):
+            pts.append('(%s, %s)' % (toks[i], toks[i + 1]))
+        extra = self.extra_args(node)
+        return '%s(%s%s)' % (poly, ', '.join(pts), extra)
+
+    def convert_path(self, node):
+        'Return Python code for drawing a path.'
+        d_str = node.get('d')
+        d_str = self.char_re.sub(r' \1 ', d_str).strip()
+        toks = self.sep_re.split(d_str)
+        cmds = []
+        for t in toks:
+            try:
+                # Number
+                f = float(t)
+                cmds.append(t)
+            except ValueError:
+                # String
+                cmds.append(repr(t))
+        extra = self.extra_args(node)
+        return 'path(%s%s)' % (', '.join(cmds), extra)
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python function call.'
         code = []
         for node in self.svg.xpath('//svg:circle | '
                                    '//svg:ellipse | '
                                    '//svg:rect | '
-                                   '//svg:line'):
+                                   '//svg:line | '
+                                   '//svg:polyline | '
+                                   '//svg:polygon | '
+                                   '//svg:path'):
             if isinstance(node, inkex.Circle):
                 code.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -128,6 +164,12 @@ class SvgToPythonScript(inkex.OutputExtension):
                 code.append(self.convert_rectangle(node))
             elif isinstance(node, inkex.Line):
                 code.append(self.convert_line(node))
+            elif isinstance(node, inkex.Polyline):
+                code.append(self.convert_poly(node, 'polyline'))
+            elif isinstance(node, inkex.Polygon):
+                code.append(self.convert_poly(node, 'polygon'))
+            elif isinstance(node, inkex.PathElement):
+                code.append(self.convert_path(node))
         return code
 
     def save(self, stream):
