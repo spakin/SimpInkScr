@@ -82,6 +82,12 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def convert_circle(self, node):
         'Return Python code for drawing a circle.'
+        # Handle the special case of an arc.
+        ptype = node.get('sodipodi:type')
+        if ptype == 'arc':
+            return self.convert_arc(node)
+
+        # Handle the case of an ordinary circle.
         cx, cy, r = node.get('cx'), node.get('cy'), node.get('r')
         extra = self.extra_args(node)
         return 'circle((%s, %s), %s%s)' % (cx, cy, r, extra)
@@ -129,8 +135,27 @@ class SvgToPythonScript(inkex.OutputExtension):
         extra = self.extra_args(node)
         return '%s(%s%s)' % (poly, ', '.join(pts), extra)
 
+    def convert_arc(self, node):
+        'Return Python code for drawing an arc.'
+        cx, cy = node.get('sodipodi:cx'), node.get('sodipodi:cy')
+        rx, ry = node.get('sodipodi:rx'), node.get('sodipodi:ry')
+        ang1, ang2 = node.get('sodipodi:start'), node.get('sodipodi:end')
+        arc_type = node.get('sodipodi:arc-type')
+        extra = self.extra_args(node)
+        py = 'arc((%s, %s), %s, %s, %s, %s' % (cx, cy, rx, ry, ang1, ang2)
+        if arc_type is not None:
+            py += ', %s' % repr(arc_type)
+        py += extra
+        return py
+
     def convert_path(self, node):
         'Return Python code for drawing a path.'
+        # Handle the special case of an arc.
+        ptype = node.get('sodipodi:type')
+        if ptype == 'arc':
+            return self.convert_arc(node)
+
+        # Handle the case of a generic path.
         d_str = node.get('d')
         d_str = self.char_re.sub(r' \1 ', d_str).strip()
         toks = self.sep_re.split(d_str)
