@@ -37,6 +37,40 @@ class SvgToPythonScript(inkex.OutputExtension):
     # We separate command characters in path strings from adjoining numbers.
     char_re = re.compile(r'([A-Za-z])')
 
+    class Statement(object):
+        '''Represent a Python statement (or multiple related statements)
+        plus dependencies.'''
+
+        # The following characters are not allowed in Python variable names.
+        no_var_re = re.compile(r'\W')
+
+        def __init__(self, code, obj_id=None, dep_ids=None):
+            '''Associate an array of code lines with the source SVG object
+            ID and any SVG object IDs upon which the SVG object depends.'''
+            self.code = code
+            self.var_name = self.id2var(obj_id)
+            if dep_ids is None:
+                self.dep_vars = set()
+            else:
+                self.dep_vars = {self.id2var(i) for i in dep_ids}
+            self.need_var_name = False
+
+        def __str__(self):
+            if self.need_var_name:
+                self.code[0] = '%s = %s' % (self.var_name, self.code[0])
+            return '\n'.join(self.code)
+
+        @classmethod
+        def id2var(self, obj_id):
+            """Return an Inkscape object's ID as a Python variable name.
+            Return None if given None."""
+            if obj_id is None:
+                return None
+            var = self.no_var_re.sub(r'_', obj_id)
+            if var[0].isdigit():
+                var[0] = '_'
+            return var
+
     def transform_arg(self, node):
         "Return an SVG node's transform string as a function argument."
         xform = node.get('transform')
@@ -90,14 +124,16 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Handle the case of an ordinary circle.
         cx, cy, r = node.get('cx'), node.get('cy'), node.get('r')
         extra = self.extra_args(node)
-        return ['circle((%s, %s), %s%s)' % (cx, cy, r, extra)]
+        code = ['circle((%s, %s), %s%s)' % (cx, cy, r, extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_ellipse(self, node):
         'Return Python code for drawing an ellipse.'
         cx, cy = node.get('cx'), node.get('cy')
         rx, ry = node.get('rx'), node.get('ry')
         extra = self.extra_args(node)
-        return ['ellipse((%s, %s), %s, %s%s)' % (cx, cy, rx, ry, extra)]
+        code = ['ellipse((%s, %s), %s, %s%s)' % (cx, cy, rx, ry, extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_rectangle(self, node):
         'Return Python code for drawing a rectangle.'
@@ -116,15 +152,17 @@ class SvgToPythonScript(inkex.OutputExtension):
             extra = ', %s%s' % (ry, extra)
 
         # Return a complete call to rect.
-        return ['rect((%.5g, %.5g), (%.5g, %.5g)%s)' %
+        code = ['rect((%.5g, %.5g), (%.5g, %.5g)%s)' %
                 (x, y, x + wd, y + ht, extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_line(self, node):
         'Return Python code for drawing a line.'
         x1, y1 = node.get('x1'), node.get('y1')
         x2, y2 = node.get('x2'), node.get('y2')
         extra = self.extra_args(node)
-        return ['line((%s, %s), (%s, %s)%s)' % (x1, y1, x2, y2, extra)]
+        code = ['line((%s, %s), (%s, %s)%s)' % (x1, y1, x2, y2, extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_poly(self, node, poly):
         'Return Python code for drawing a polyline or polygon.'
@@ -133,7 +171,8 @@ class SvgToPythonScript(inkex.OutputExtension):
         for i in range(0, len(toks), 2):
             pts.append('(%s, %s)' % (toks[i], toks[i + 1]))
         extra = self.extra_args(node)
-        return ['%s(%s%s)' % (poly, ', '.join(pts), extra)]
+        code = ['%s(%s%s)' % (poly, ', '.join(pts), extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_arc(self, node):
         'Return Python code for drawing an arc.'
@@ -142,11 +181,12 @@ class SvgToPythonScript(inkex.OutputExtension):
         ang1, ang2 = node.get('sodipodi:start'), node.get('sodipodi:end')
         arc_type = node.get('sodipodi:arc-type')
         extra = self.extra_args(node)
-        py = 'arc((%s, %s), %s, %s, %s, %s' % (cx, cy, rx, ry, ang1, ang2)
+        code = 'arc((%s, %s), %s, %s, %s, %s' % (cx, cy, rx, ry, ang1, ang2)
         if arc_type is not None:
-            py += ', %s' % repr(arc_type)
-        py += extra
-        return [py]
+            code += ', %s' % repr(arc_type)
+        code += extra
+        code = [code]
+        return self.Statement(code, node.get_id())
 
     def convert_poly_star(self, node):
         'Return Python code for drawing either a regular polygon or a star.'
@@ -160,14 +200,16 @@ class SvgToPythonScript(inkex.OutputExtension):
         rand = node.get('inkscape:randomized')
         extra = self.extra_args(node)
 
-        # Case 1: Regular polygon
+        # Produce either a regular polygon or a star.
         if flat == 'true':
-            return ['regular_polygon(%s, (%s, %s), %s, %s, %s, %s%s)' %
+            # Regular polygon
+            code = ['regular_polygon(%s, (%s, %s), %s, %s, %s, %s%s)' %
                     (sides, cx, cy, r1, arg1, rnd, rand, extra)]
-
-        # Case 2: Star
-        return ['star(%s, (%s, %s), (%s, %s), (%s, %s), %s, %s%s)' %
-                (sides, cx, cy, r1, r2, arg1, arg2, rnd, rand, extra)]
+        else:
+            # Star
+            code = ['star(%s, (%s, %s), (%s, %s), (%s, %s), %s, %s%s)' %
+                    (sides, cx, cy, r1, r2, arg1, arg2, rnd, rand, extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_path(self, node):
         'Return Python code for drawing a path.'
@@ -192,24 +234,35 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # String
                 cmds.append(repr(t))
         extra = self.extra_args(node)
-        return ['path(%s%s)' % (', '.join(cmds), extra)]
+        code = ['path(%s%s)' % (', '.join(cmds), extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_text(self, node):
         'Return Python code for drawing text.'
+        # Determine if the text lies on a path.
+        tpaths = [c.get('xlink:href')[1:]
+                  for c in node.iter()
+                  if c.tag[-8:] == 'textPath']
+        if tpaths != []:
+            tpath_str = ', %s' % self.Statement.id2var(tpaths[0])
+        else:
+            tpath_str = ''
+
         # Convert the initial text object.
         x, y = node.get('x'), node.get('y')
         msg = node.text
         if msg is None:
             msg = ''
         extra = self.extra_args(node, {})
-        code = ['text(%s, (%s, %s)%s)' % (repr(msg), x, y, extra)]
+        code = ['text(%s, (%s, %s)%s%s)' %
+                (repr(msg), x, y, tpath_str, extra)]
 
         # Convert all sub-text objects.  We assume that <tspan> tags are
         # not nested.  (SVG allows this, but it's not currently supported
         # by Simple Inkscape Scripting.)
         for tspan in [c for c in node.iter() if c.tag[-5:] == 'tspan']:
             if tspan.text is not None:
-                # The text within a <tpsan> can have a specified position
+                # The text within a <tspan> can have a specified position
                 # and style.
                 x, y = tspan.get('x'), tspan.get('y')
                 extra = self.extra_args(tspan, {})
@@ -225,7 +278,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # The text following a <tspan> has neither a specified
                 # position nor style.
                 code.append('more_text(%s)' % repr(tspan.tail))
-        return code
+        return self.Statement(code, node.get_id(), set(tpaths))
 
     def convert_image(self, node):
         'Return Python code for including an image.'
@@ -238,20 +291,21 @@ class SvgToPythonScript(inkex.OutputExtension):
             # parameter.  This is because Inkscape has already discarded
             # the original filename.  Hence, we are effectively requesting
             # a non-embeded image described by a data URL.
-            return ['image(%s, (%s, %s), False%s)' %
+            code = ['image(%s, (%s, %s), False%s)' %
                     (repr(href), x, y, extra)]
         elif absref is not None:
             # Non-embedded image.  We were given the original filename.
-            return ['image(%s, (%s, %s), False%s)' %
+            code = ['image(%s, (%s, %s), False%s)' %
                     (repr(absref), x, y, extra)]
         else:
             # Non-embedded image.  We were given a URL but not a filename.
-            return ['image(%s, (%s, %s), False%s)' %
+            code = ['image(%s, (%s, %s), False%s)' %
                     (repr(href), x, y, extra)]
+        return self.Statement(code, node.get_id())
 
     def convert_all_shapes(self):
-        'Convert each SVG shape to a Python function call.'
-        code = []
+        'Convert each SVG shape to a Python statement.'
+        stmts = []
         for node in self.svg.xpath('//svg:circle | '
                                    '//svg:ellipse | '
                                    '//svg:rect | '
@@ -262,24 +316,24 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:text | '
                                    '//svg:image'):
             if isinstance(node, inkex.Circle):
-                code.append(self.convert_circle(node))
+                stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
-                code.append(self.convert_ellipse(node))
+                stmts.append(self.convert_ellipse(node))
             elif isinstance(node, inkex.Rectangle):
-                code.append(self.convert_rectangle(node))
+                stmts.append(self.convert_rectangle(node))
             elif isinstance(node, inkex.Line):
-                code.append(self.convert_line(node))
+                stmts.append(self.convert_line(node))
             elif isinstance(node, inkex.Polyline):
-                code.append(self.convert_poly(node, 'polyline'))
+                stmts.append(self.convert_poly(node, 'polyline'))
             elif isinstance(node, inkex.Polygon):
-                code.append(self.convert_poly(node, 'polygon'))
+                stmts.append(self.convert_poly(node, 'polygon'))
             elif isinstance(node, inkex.PathElement):
-                code.append(self.convert_path(node))
+                stmts.append(self.convert_path(node))
             elif isinstance(node, inkex.TextElement):
-                code.append(self.convert_text(node))
+                stmts.append(self.convert_text(node))
             elif isinstance(node, inkex.Image):
-                code.append(self.convert_image(node))
-        return code
+                stmts.append(self.convert_image(node))
+        return stmts
 
     def save(self, stream):
         'Write Python code that regenerates the SVG to an output stream.'
@@ -288,9 +342,9 @@ class SvgToPythonScript(inkex.OutputExtension):
 # Scripting extension.
 
 ''')
-        for code in self.convert_all_shapes():
-            ln = '\n'.join(code) + '\n'
-            stream.write(ln.encode('utf-8'))
+        for stmt in self.convert_all_shapes():
+            code = str(stmt) + '\n'
+            stream.write(code.encode('utf-8'))
 
 
 if __name__ == '__main__':
