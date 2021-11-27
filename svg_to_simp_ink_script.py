@@ -362,6 +362,24 @@ class SvgToPythonScript(inkex.OutputExtension):
         for st in code:
             st.identify_dependents(var2stmt)
 
+    def sort_statement_forest(self, code, seen=set()):
+        '''Return a list of statements with dependencies before dependents
+        but otherwise maintaining the original order.'''
+        ordered_code = []
+        for stmt in code:
+            # Ignore statements we've seen before.
+            if stmt in seen:
+                continue
+
+            # Recursively process our dependencies.
+            children = self.sort_statement_forest(stmt.dep_stmts, seen)
+            ordered_code.extend(children)
+
+            # Append ourself.
+            ordered_code.append(stmt)
+            seen.add(stmt)
+        return ordered_code
+
     def save(self, stream):
         'Write Python code that regenerates the SVG to an output stream.'
         stream.write(b'''\
@@ -371,6 +389,7 @@ class SvgToPythonScript(inkex.OutputExtension):
 ''')
         code = self.convert_all_shapes()
         self.find_dependencies(code)
+        code = self.sort_statement_forest(code)
         for stmt in code:
             ln = str(stmt) + '\n'
             stream.write(ln.encode('utf-8'))
