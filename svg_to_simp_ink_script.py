@@ -71,6 +71,21 @@ class SvgToPythonScript(inkex.OutputExtension):
                 var[0] = '_'
             return var
 
+        def identify_dependents(self, var2stmt):
+            '''Acquire a set of all dependent statements, and notify each
+            that we need its variable name.'''
+            self.dep_stmts = set()
+            for dep in self.dep_vars:
+                # Tell our dependents to assign themselves a variable name.
+                try:
+                    var2stmt[dep].need_var_name = True
+                except KeyError:
+                    pass
+
+                # Keep track of our dependent statements by object,
+                # not just by name.
+                self.dep_stmts.add(var2stmt[dep])
+
     def transform_arg(self, node):
         "Return an SVG node's transform string as a function argument."
         xform = node.get('transform')
@@ -335,6 +350,18 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_image(node))
         return stmts
 
+    def find_dependencies(self, code):
+        'Find the Statements upon which each other Statement depends.'
+        # Construct a map from variable name to Statement.
+        var2stmt = {}
+        for st in code:
+            if st.var_name is not None:
+                var2stmt[st.var_name] = st
+
+        # Set need_var_name to True for each referenced Statement.
+        for st in code:
+            st.identify_dependents(var2stmt)
+
     def save(self, stream):
         'Write Python code that regenerates the SVG to an output stream.'
         stream.write(b'''\
@@ -342,9 +369,11 @@ class SvgToPythonScript(inkex.OutputExtension):
 # Scripting extension.
 
 ''')
-        for stmt in self.convert_all_shapes():
-            code = str(stmt) + '\n'
-            stream.write(code.encode('utf-8'))
+        code = self.convert_all_shapes()
+        self.find_dependencies(code)
+        for stmt in code:
+            ln = str(stmt) + '\n'
+            stream.write(ln.encode('utf-8'))
 
 
 if __name__ == '__main__':
