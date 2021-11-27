@@ -348,6 +348,17 @@ class SvgToPythonScript(inkex.OutputExtension):
         code = ['clone(%s%s)' % (var, extra)]
         return self.Statement(code, node.get_id(), {href})
 
+    def convert_group(self, node):
+        'Return Python code for grouping objects.'
+        if node.get('inkscape:groupmode') == 'layer':
+            # Ignore layers.
+            return None
+        extra = self.extra_args(node, {})
+        child_ids = [c.get_id() for c in node]
+        child_vars = [self.Statement.id2var(i) for i in child_ids]
+        code = ['group([%s]%s)' % (', '.join(child_vars), extra)]
+        return self.Statement(code, node.get_id(), child_ids)
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -360,7 +371,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:path | '
                                    '//svg:text | '
                                    '//svg:image | '
-                                   '//svg:use'):
+                                   '//svg:use | '
+                                   '//svg:g'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -381,7 +393,9 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_image(node))
             elif isinstance(node, inkex.Use):
                 stmts.append(self.convert_clone(node))
-        return stmts
+            elif isinstance(node, inkex.Group):
+                stmts.append(self.convert_group(node))
+        return [st for st in stmts if st is not None]
 
     def find_dependencies(self, code):
         'Find the Statements upon which each other Statement depends.'
