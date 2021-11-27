@@ -50,9 +50,9 @@ class SvgToPythonScript(inkex.OutputExtension):
             self.code = code
             self.var_name = self.id2var(obj_id)
             if dep_ids is None:
-                self.dep_vars = set()
+                self.dep_vars = []
             else:
-                self.dep_vars = {self.id2var(i) for i in dep_ids}
+                self.dep_vars = [self.id2var(i) for i in dep_ids]
             self.need_var_name = False
 
         def __str__(self):
@@ -72,9 +72,9 @@ class SvgToPythonScript(inkex.OutputExtension):
             return var
 
         def identify_dependents(self, var2stmt):
-            '''Acquire a set of all dependent statements, and notify each
+            '''Acquire a list of all dependent statements, and notify each
             that we need its variable name.'''
-            self.dep_stmts = set()
+            self.dep_stmts = []
             for dep in self.dep_vars:
                 # Tell our dependents to assign themselves a variable name.
                 try:
@@ -85,7 +85,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # Keep track of our dependent statements by object,
                 # not just by name.
                 try:
-                    self.dep_stmts.add(var2stmt[dep])
+                    self.dep_stmts.append(var2stmt[dep])
                 except KeyError:
                     pass
 
