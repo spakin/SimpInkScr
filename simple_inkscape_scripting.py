@@ -435,11 +435,19 @@ def connector(obj1, obj2, ctype='polyline', curve=0,
                         _common_shape_style, style)
 
 
-def text(msg, base, transform=None, conn_avoid=False, **style):
-    'Typeset a piece of text.'
+def text(msg, base, path=None, transform=None, conn_avoid=False, **style):
+    'Typeset a piece of text, optionally along a path.'
+    # Create the basic text object.
     obj = inkex.TextElement(x=str(base[0]), y=str(base[1]))
     obj.set('xml:space', 'preserve')
     obj.text = msg
+
+    # Optionally place the text along a path.
+    if path is not None:
+        tp = obj.add(inkex.TextPath())
+        tp.href = path._inkscape_obj.get_id()
+
+    # Wrap the text object within a SimpleObject.
     return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
