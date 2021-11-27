@@ -340,6 +340,14 @@ class SvgToPythonScript(inkex.OutputExtension):
                     (repr(href), x, y, extra)]
         return self.Statement(code, node.get_id())
 
+    def convert_clone(self, node):
+        'Return Python code for cloning an object.'
+        href = node.get('xlink:href')[1:]
+        var = self.Statement.id2var(href)
+        extra = self.extra_args(node, {})
+        code = ['clone(%s%s)' % (var, extra)]
+        return self.Statement(code, node.get_id(), {href})
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -351,7 +359,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:polygon | '
                                    '//svg:path | '
                                    '//svg:text | '
-                                   '//svg:image'):
+                                   '//svg:image | '
+                                   '//svg:use'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -370,6 +379,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_text(node))
             elif isinstance(node, inkex.Image):
                 stmts.append(self.convert_image(node))
+            elif isinstance(node, inkex.Use):
+                stmts.append(self.convert_clone(node))
         return stmts
 
     def find_dependencies(self, code):
