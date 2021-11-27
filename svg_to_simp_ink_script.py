@@ -84,7 +84,10 @@ class SvgToPythonScript(inkex.OutputExtension):
 
                 # Keep track of our dependent statements by object,
                 # not just by name.
-                self.dep_stmts.add(var2stmt[dep])
+                try:
+                    self.dep_stmts.add(var2stmt[dep])
+                except KeyError:
+                    pass
 
     def transform_arg(self, node):
         "Return an SVG node's transform string as a function argument."
@@ -226,6 +229,23 @@ class SvgToPythonScript(inkex.OutputExtension):
                     (sides, cx, cy, r1, r2, arg1, arg2, rnd, rand, extra)]
         return self.Statement(code, node.get_id())
 
+    def convert_connector(self, node):
+        'Return Python code for drawing a connector between objects.'
+        ctype = node.get('inkscape:connector-type')
+        if ctype is None:
+            ctype = 'polyline'
+        curve = node.get('inkscape:connector-curvature')
+        if curve is None:
+            curve = '0'
+        id1 = node.get('inkscape:connection-start')[1:]
+        var1 = self.Statement.id2var(id1)
+        id2 = node.get('inkscape:connection-end')[1:]
+        var2 = self.Statement.id2var(id2)
+        extra = self.extra_args(node)
+        code = ['connector(%s, %s, %s, %s%s)' %
+                (var1, var2, repr(ctype), curve, extra)]
+        return self.Statement(code, node.get_id(), {id1, id2})
+
     def convert_path(self, node):
         'Return Python code for drawing a path.'
         # Handle the special case of an arc.
@@ -234,6 +254,8 @@ class SvgToPythonScript(inkex.OutputExtension):
             return self.convert_arc(node)
         if ptype == 'star':
             return self.convert_poly_star(node)
+        if node.get('inkscape:connector-type') is not None:
+            return self.convert_connector(node)
 
         # Handle the case of a generic path.
         d_str = node.get('d')
