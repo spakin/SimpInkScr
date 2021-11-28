@@ -27,9 +27,13 @@ import re
 class SvgToPythonScript(inkex.OutputExtension):
     'Save an Inkscape image to a Simple Inkscape Scripting script.'
 
-    # Most shapes use this as their default style.
-    _common_shape_style = {'stroke': repr('none'),
-                           'fill': repr('black')}
+    # Most SVG shapes use this as their default style.
+    _common_svg_defaults = {'stroke': repr('none'),
+                            'fill': repr('black')}
+
+    # Most Simple Inkscape Scripting shapes use this as their default style.
+    _common_sis_defaults = {'stroke': '#000000',  # More common than "black"
+                            'fill': 'none'}
 
     # SVG uses both spaces and commas to separate numbers.
     sep_re = re.compile(r'[\s,]+')
@@ -103,11 +107,11 @@ class SvgToPythonScript(inkex.OutputExtension):
             return ''
         return ', conn_avoid=%s' % repr(avoid == 'true')
 
-    def style_args(self, node, def_style):
+    def style_args(self, node, def_svg_style, def_sis_style):
         "Return an SVG node's style string as key=value arguments."
         # Convert the style string to a dictionary.
         style = node.get('style')
-        style_dict = def_style.copy()
+        style_dict = def_svg_style.copy()
         if style is not None:
             for term in style.split(';'):
                 # Convert the key from SVG to Python syntax.
@@ -116,20 +120,39 @@ class SvgToPythonScript(inkex.OutputExtension):
 
                 # Convert the value from a string to another type if possible.
                 try:
+                    # Number -- format and use.
                     style_dict[k] = '%.5g' % float(v)
                 except ValueError:
-                    style_dict[k] = repr(v)
+                    # String -- quote if not already quoted.
+                    try:
+                        if (v[0] == "'" and v[-1] == "'") or \
+                           (v[0] == '"' and v[-1] == '"'):
+                            style_dict[k] = v
+                        else:
+                            style_dict[k] = repr(v)
+                    except IndexError:
+                        pass
+
+        # Remove key=value pairs that are Simple Inkscape Scripting defaults.
+        for k, v in def_sis_style.items():
+            try:
+                if style_dict[k] == repr(v):
+                    del style_dict[k]
+            except KeyError:
+                pass
 
         # Convert the dictionary to a list of function arguments.
         return ''.join([', %s=%s' % kv for kv in style_dict.items()])
 
-    def extra_args(self, node, def_style=None):
+    def extra_args(self, node, def_svg_style=None, def_sis_style=None):
         'Return extra function arguments (transform, style) if available.'
-        if def_style is None:
-            def_style = self._common_shape_style
+        if def_svg_style is None:
+            def_svg_style = self._common_svg_defaults
+        if def_sis_style is None:
+            def_sis_style = self._common_sis_defaults
         args = [self.transform_arg(node),
                 self.conn_avoid_arg(node),
-                self.style_args(node, def_style)]
+                self.style_args(node, def_svg_style, def_sis_style)]
         return ''.join(args)
 
     def convert_circle(self, node):
@@ -184,7 +207,8 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def convert_poly(self, node, poly):
         'Return Python code for drawing a polyline or polygon.'
-        toks = self.sep_re.split(node.get('points'))
+        points_str = node.get('points').strip()
+        toks = self.sep_re.split(points_str)
         pts = []
         for i in range(0, len(toks), 2):
             pts.append('(%s, %s)' % (toks[i], toks[i + 1]))
@@ -202,7 +226,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         code = 'arc((%s, %s), %s, %s, %s, %s' % (cx, cy, rx, ry, ang1, ang2)
         if arc_type is not None and arc_type != 'arc':
             code += ', arc_type=%s' % repr(arc_type)
-        code += extra
+        code += extra + ')'
         code = [code]
         return self.Statement(code, node.get_id())
 
@@ -310,7 +334,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         msg = node.text
         if msg is None:
             msg = ''
-        extra = self.extra_args(node, {})
+        extra = self.extra_args(node, {}, {})
         code = ['text(%s, (%s, %s)%s%s)' %
                 (repr(msg), x, y, tpath_str, extra)]
 
@@ -342,7 +366,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         x, y = node.get('x'), node.get('y')
         href = node.get('xlink:href')
         absref = node.get('sodipodi:absref')
-        extra = self.extra_args(node, {})
+        extra = self.extra_args(node, {}, {})
         if href is not None and href[:5] == 'data:':
             # Embedded image.  Note that we specify False for the embed
             # parameter.  This is because Inkscape has already discarded
@@ -364,7 +388,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         'Return Python code for cloning an object.'
         href = node.get('xlink:href')[1:]
         var = self.Statement.id2var(href)
-        extra = self.extra_args(node, {})
+        extra = self.extra_args(node, {}, {})
         code = ['clone(%s%s)' % (var, extra)]
         return self.Statement(code, node.get_id(), {href})
 
@@ -373,7 +397,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         if node.get('inkscape:groupmode') == 'layer':
             # Ignore layers.
             return None
-        extra = self.extra_args(node, {})
+        extra = self.extra_args(node, {}, {})
         child_ids = [c.get_id() for c in node]
         child_vars = [self.Statement.id2var(i) for i in child_ids]
         code = ['group([%s]%s)' % (', '.join(child_vars), extra)]
@@ -450,8 +474,8 @@ class SvgToPythonScript(inkex.OutputExtension):
     def save(self, stream):
         'Write Python code that regenerates the SVG to an output stream.'
         stream.write(b'''\
-# This script is intended to be run from Inkscape's Simple Inkscape
-# Scripting extension.
+# This Python script is intended to be run from Inkscape's Simple
+# Inkscape Scripting extension.
 
 ''')
         code = self.convert_all_shapes()
