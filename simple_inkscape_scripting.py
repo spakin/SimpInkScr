@@ -25,7 +25,6 @@ import PIL.Image
 import base64
 import io
 import os
-import re
 import sys
 
 # The following imports are provided for user convenience.
@@ -181,11 +180,9 @@ class SimpleFilter(object):
     'Represent an SVG filter effect.'
 
     def __init__(self, defs, name=None, **style):
-        if name is None or name == '':
-            name = unique_id()
-        else:
-            name = re.sub(r'[^-:.\w]', '_', name)  # Valid XML ID characters
-        self.filt = defs.add(inkex.Filter(id=name))
+        self.filt = defs.add(inkex.Filter())
+        if name is not None and name != '':
+            self.filt.set('inkscape:label', name)
         style_str = str(inkex.Style(**style))
         if style_str != '':
             self.filt.set('style', style_str)
