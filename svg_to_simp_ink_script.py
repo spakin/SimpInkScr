@@ -418,6 +418,81 @@ class SvgToPythonScript(inkex.OutputExtension):
         code = ['group([%s]%s)' % (', '.join(child_vars), extra)]
         return self.Statement(code, node.get_id(), child_ids + extra_deps)
 
+    def convert_filter(self, node):
+        'Return Python code that defines a filter.'
+        # Generate code for the filter effect.
+        extra, extra_deps = self.extra_args(node, {}, {})
+        code = ['filter_effect(%s%s)' % (repr(node.get_id()), extra)]
+        id2var = self.Statement.id2var
+        filt_name = id2var(node.get_id())
+
+        class Primitive(object):
+            'Represent a single filter primitive.'
+
+            def __init__(self, pnode, var2prim):
+                self.prim = pnode
+                self.var_name = pnode.get('result')
+                if self.var_name is not None:
+                    self.var_name = id2var(self.var_name)
+                self.src1 = pnode.get('in')
+                self.src2 = pnode.get('in2')
+                self.var2prim = var2prim
+                self.need_var_name = False
+
+            def __str__(self):
+                # Invoke the add method on the filter_effect object.
+                if self.need_var_name:
+                    code = '%s = ' % self.var_name
+                else:
+                    code = ''
+                code += '%s.add(%s' % (filt_name, repr(self.prim.tag_name[2:]))
+
+                # Specially handle src1 and src2.  These point to
+                # either a named filter primitive or a string.
+                if self.src1 is not None:
+                    if self.src1 in self.var2prim:
+                        code += ', src1=%s' % self.src1
+                    else:
+                        code += ', src1=%s' % repr(self.src1)
+                if self.src2 is not None:
+                    if self.src2 in self.var2prim:
+                        code += ', src2=%s' % self.src2
+                    else:
+                        code += ', src2=%s' % repr(self.src2)
+
+                # Append all remaining attributes.
+                for k, v in self.prim.items():
+                    if k not in ['in', 'in2', 'result', 'id']:
+                        k = k.replace('-', '_')
+                        try:
+                            code += ', %s=%.5g' % (k, float(v))
+                        except ValueError:
+                            code += ', %s=%s' % (k, repr(v))
+
+                # Return the final string.
+                return code + ')'
+
+        # Generate code for each underlying filter primitive.
+        prim_list = []   # Ordered list of Primitives
+        var2prim = {}    # Map from a variable name to a Primitive
+        for prim in node:
+            if not isinstance(prim, inkex.Filter.Primitive):
+                continue
+            pobj = Primitive(prim, var2prim)
+            prim_list.append(pobj)
+            var2prim[pobj.var_name] = pobj
+            if pobj.src1 is not None and pobj.src1 in var2prim:
+                var2prim[pobj.src1].need_var_name = True
+            if pobj.src2 is not None and pobj.src2 in var2prim:
+                var2prim[pobj.src2].need_var_name = True
+        for pobj in prim_list:
+            code.append(str(pobj))
+
+        # Construct and return a Statement.
+        stmt = self.Statement(code, node.get_id(), extra_deps)
+        stmt.need_var_name = True  # Always needed by filter primitives
+        return stmt
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -431,7 +506,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:text | '
                                    '//svg:image | '
                                    '//svg:use | '
-                                   '//svg:g'):
+                                   '//svg:g | '
+                                   '//svg:filter'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -454,6 +530,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_clone(node))
             elif isinstance(node, inkex.Group):
                 stmts.append(self.convert_group(node))
+            elif isinstance(node, inkex.Filter):
+                stmts.append(self.convert_filter(node))
         return [st for st in stmts if st is not None]
 
     def find_dependencies(self, code):
