@@ -422,7 +422,10 @@ class SvgToPythonScript(inkex.OutputExtension):
         'Return Python code that defines a filter.'
         # Generate code for the filter effect.
         extra, extra_deps = self.extra_args(node, {}, {})
-        code = ['filter_effect(%s%s)' % (repr(node.get_id()), extra)]
+        filt_desc = node.label
+        if filt_desc is None or filt_desc == '':
+            filt_desc = node.get_id()
+        code = ['filter_effect(%s%s)' % (repr(filt_desc), extra)]
         id2var = self.Statement.id2var
         filt_name = id2var(node.get_id())
 
