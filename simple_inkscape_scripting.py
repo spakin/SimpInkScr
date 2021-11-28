@@ -179,10 +179,24 @@ class SimpleGroup(SimpleObject):
 class SimpleFilter(object):
     'Represent an SVG filter effect.'
 
-    def __init__(self, defs, name=None, **style):
+    def __init__(self, defs, name=None, pt1=None, pt2=None,
+                 filter_units=None, primitive_units=None, **style):
         self.filt = defs.add(inkex.Filter())
         if name is not None and name != '':
             self.filt.set('inkscape:label', name)
+        if pt1 is not None or pt2 is not None:
+            x0 = float(pt1[0] or 0)
+            y0 = float(pt1[1] or 0)
+            x1 = float(pt2[0] or 1)
+            y1 = float(pt2[1] or 1)
+            self.filt.set('x', x0)
+            self.filt.set('y', y0)
+            self.filt.set('width', x1 - x0)
+            self.filt.set('height', y1 - y0)
+        if filter_units is not None:
+            self.filt.set('filterUnits', filter_units)
+        if primitive_units is not None:
+            self.filt.set('primitiveUnits', primitive_units)
         style_str = str(inkex.Style(**style))
         if style_str != '':
             self.filt.set('style', style_str)
@@ -513,10 +527,12 @@ def inkex_object(obj, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
-def filter_effect(name=None, **style):
+def filter_effect(name=None, pt1=None, pt2=None,
+                  filter_units=None, primitive_units=None, **style):
     'Return an object representing an empty filter effect.'
     global _svg_defs
-    return SimpleFilter(_svg_defs, name, **style)
+    return SimpleFilter(_svg_defs, name, pt1, pt2,
+                        filter_units, primitive_units, **style)
 
 
 # ----------------------------------------------------------------------
