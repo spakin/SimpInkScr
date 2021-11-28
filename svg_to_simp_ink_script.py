@@ -108,7 +108,8 @@ class SvgToPythonScript(inkex.OutputExtension):
         return ', conn_avoid=%s' % repr(avoid == 'true')
 
     def style_args(self, node, def_svg_style, def_sis_style):
-        "Return an SVG node's style string as key=value arguments."
+        """Return an SVG node's style string as key=value arguments.  Also
+        return additional object dependencies from url(#...) values."""
         # Convert the style string to a dictionary.
         style = node.get('style')
         style_dict = def_svg_style.copy()
@@ -141,19 +142,30 @@ class SvgToPythonScript(inkex.OutputExtension):
             except KeyError:
                 pass
 
+        # Replace "url(#...)" values with object references.
+        url_ids = set()
+        for k, v in style_dict.items():
+            if v[:6] == "'url(#":
+                v = v[6:-2]
+                url_ids.add(v)
+                style_dict[k] = self.Statement.id2var(v)
+
         # Convert the dictionary to a list of function arguments.
-        return ''.join([', %s=%s' % kv for kv in style_dict.items()])
+        args = ''.join([', %s=%s' % kv for kv in style_dict.items()])
+        return args, list(url_ids)
 
     def extra_args(self, node, def_svg_style=None, def_sis_style=None):
-        'Return extra function arguments (transform, style) if available.'
+        '''Return extra function arguments (transform, style) if available.
+        Also return a list of dependencies (SVG IDs).'''
         if def_svg_style is None:
             def_svg_style = self._common_svg_defaults
         if def_sis_style is None:
             def_sis_style = self._common_sis_defaults
+        style_args, deps = self.style_args(node, def_svg_style, def_sis_style)
         args = [self.transform_arg(node),
                 self.conn_avoid_arg(node),
-                self.style_args(node, def_svg_style, def_sis_style)]
-        return ''.join(args)
+                style_args]
+        return ''.join(args), deps
 
     def convert_circle(self, node):
         'Return Python code for drawing a circle.'
@@ -164,24 +176,24 @@ class SvgToPythonScript(inkex.OutputExtension):
 
         # Handle the case of an ordinary circle.
         cx, cy, r = node.get('cx'), node.get('cy'), node.get('r')
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
         code = ['circle((%s, %s), %s%s)' % (cx, cy, r, extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_ellipse(self, node):
         'Return Python code for drawing an ellipse.'
         cx, cy = node.get('cx'), node.get('cy')
         rx, ry = node.get('rx'), node.get('ry')
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
         code = ['ellipse((%s, %s), %s, %s%s)' % (cx, cy, rx, ry, extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_rectangle(self, node):
         'Return Python code for drawing a rectangle.'
         # Acquire a rect's required parameters.
         x, y = float(node.get('x')), float(node.get('y'))
         wd, ht = float(node.get('width')), float(node.get('height'))
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
 
         # Handle the optional corner-rounding parameter.
         rx, ry = node.get('rx'), node.get('ry')
@@ -195,15 +207,15 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Return a complete call to rect.
         code = ['rect((%.5g, %.5g), (%.5g, %.5g)%s)' %
                 (x, y, x + wd, y + ht, extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_line(self, node):
         'Return Python code for drawing a line.'
         x1, y1 = node.get('x1'), node.get('y1')
         x2, y2 = node.get('x2'), node.get('y2')
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
         code = ['line((%s, %s), (%s, %s)%s)' % (x1, y1, x2, y2, extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_poly(self, node, poly):
         'Return Python code for drawing a polyline or polygon.'
@@ -212,9 +224,9 @@ class SvgToPythonScript(inkex.OutputExtension):
         pts = []
         for i in range(0, len(toks), 2):
             pts.append('(%s, %s)' % (toks[i], toks[i + 1]))
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
         code = ['%s(%s%s)' % (poly, ', '.join(pts), extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_arc(self, node):
         'Return Python code for drawing an arc.'
@@ -222,13 +234,13 @@ class SvgToPythonScript(inkex.OutputExtension):
         rx, ry = node.get('sodipodi:rx'), node.get('sodipodi:ry')
         ang1, ang2 = node.get('sodipodi:start'), node.get('sodipodi:end')
         arc_type = node.get('sodipodi:arc-type')
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
         code = 'arc((%s, %s), %s, %s, %s, %s' % (cx, cy, rx, ry, ang1, ang2)
         if arc_type is not None and arc_type != 'arc':
             code += ', arc_type=%s' % repr(arc_type)
         code += extra + ')'
         code = [code]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_poly_star(self, node):
         'Return Python code for drawing either a regular polygon or a star.'
@@ -240,7 +252,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         flat = node.get('inkscape:flatsided')
         rnd = node.get('inkscape:rounded')
         rand = node.get('inkscape:randomized')
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
 
         # Construct a list of optional arguments.  We always include
         # the angle, though.
@@ -262,7 +274,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             # Star
             code = ['star(%s, (%s, %s), (%s, %s), ang=(%s, %s)%s%s)' %
                     (sides, cx, cy, r1, r2, arg1, arg2, opt_arg_str, extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_connector(self, node):
         'Return Python code for drawing a connector between objects.'
@@ -283,12 +295,12 @@ class SvgToPythonScript(inkex.OutputExtension):
         opt_arg_str = ''
         if opt_args != []:
             opt_arg_str = ', ' + ', '.join(opt_args)
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
 
         # Generate a Statement for the connector.
         code = ['connector(%s, %s%s%s)' %
                 (var1, var2, opt_arg_str, extra)]
-        return self.Statement(code, node.get_id(), {id1, id2})
+        return self.Statement(code, node.get_id(), [id1, id2] + extra_deps)
 
     def convert_path(self, node):
         'Return Python code for drawing a path.'
@@ -314,9 +326,9 @@ class SvgToPythonScript(inkex.OutputExtension):
             except ValueError:
                 # String
                 cmds.append(repr(t))
-        extra = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node)
         code = ['path(%s%s)' % (', '.join(cmds), extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_text(self, node):
         'Return Python code for drawing text.'
@@ -328,15 +340,17 @@ class SvgToPythonScript(inkex.OutputExtension):
             tpath_str = ', path=%s' % self.Statement.id2var(tpaths[0])
         else:
             tpath_str = ''
+        all_deps = set(tpaths)
 
         # Convert the initial text object.
         x, y = node.get('x'), node.get('y')
         msg = node.text
         if msg is None:
             msg = ''
-        extra = self.extra_args(node, {}, {})
+        extra, extra_deps = self.extra_args(node, {}, {})
         code = ['text(%s, (%s, %s)%s%s)' %
                 (repr(msg), x, y, tpath_str, extra)]
+        all_deps = all_deps.union(extra_deps)
 
         # Convert all sub-text objects.  We assume that <tspan> tags are
         # not nested.  (SVG allows this, but it's not currently supported
@@ -346,7 +360,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # The text within a <tspan> can have a specified position
                 # and style.
                 x, y = tspan.get('x'), tspan.get('y')
-                extra = self.extra_args(tspan, {})
+                extra, extra_deps = self.extra_args(tspan, {})
+                all_deps = all_deps.union(extra_deps)
                 if x is not None and y is not None:
                     # Specified position
                     code.append('more_text(%s, (%s, %s)%s)' %
@@ -359,14 +374,14 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # The text following a <tspan> has neither a specified
                 # position nor style.
                 code.append('more_text(%s)' % repr(tspan.tail))
-        return self.Statement(code, node.get_id(), set(tpaths))
+        return self.Statement(code, node.get_id(), sorted(all_deps))
 
     def convert_image(self, node):
         'Return Python code for including an image.'
         x, y = node.get('x'), node.get('y')
         href = node.get('xlink:href')
         absref = node.get('sodipodi:absref')
-        extra = self.extra_args(node, {}, {})
+        extra, extra_deps = self.extra_args(node, {}, {})
         if href is not None and href[:5] == 'data:':
             # Embedded image.  Note that we specify False for the embed
             # parameter.  This is because Inkscape has already discarded
@@ -382,26 +397,26 @@ class SvgToPythonScript(inkex.OutputExtension):
             # Non-embedded image.  We were given a URL but not a filename.
             code = ['image(%s, (%s, %s), embed=False%s)' %
                     (repr(href), x, y, extra)]
-        return self.Statement(code, node.get_id())
+        return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_clone(self, node):
         'Return Python code for cloning an object.'
         href = node.get('xlink:href')[1:]
         var = self.Statement.id2var(href)
-        extra = self.extra_args(node, {}, {})
+        extra, extra_deps = self.extra_args(node, {}, {})
         code = ['clone(%s%s)' % (var, extra)]
-        return self.Statement(code, node.get_id(), {href})
+        return self.Statement(code, node.get_id(), [href] + extra_deps)
 
     def convert_group(self, node):
         'Return Python code for grouping objects.'
         if node.get('inkscape:groupmode') == 'layer':
             # Ignore layers.
             return None
-        extra = self.extra_args(node, {}, {})
+        extra, extra_deps = self.extra_args(node, {}, {})
         child_ids = [c.get_id() for c in node]
         child_vars = [self.Statement.id2var(i) for i in child_ids]
         code = ['group([%s]%s)' % (', '.join(child_vars), extra)]
-        return self.Statement(code, node.get_id(), child_ids)
+        return self.Statement(code, node.get_id(), child_ids + extra_deps)
 
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
