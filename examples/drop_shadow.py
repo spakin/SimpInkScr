@@ -2,7 +2,7 @@
 
 # Define a drop shadow as an offset, blurred, black copy of the input
 # shape placed underneath a copy of the original object.
-shadow = filter_effect('drop-shadow')
+shadow = filter_effect('Drop Shadow')
 flood = shadow.add('Flood', floodOpacity=1, floodColor='black')
 comp1 = shadow.add('Composite', src1=flood, src2='SourceGraphic',
                    operator='in')
