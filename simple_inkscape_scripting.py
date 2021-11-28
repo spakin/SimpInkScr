@@ -179,10 +179,13 @@ class SimpleGroup(SimpleObject):
 class SimpleFilter(object):
     'Represent an SVG filter effect.'
 
-    def __init__(self, defs, name=None):
+    def __init__(self, defs, name=None, **style):
         if name is None:
             name = unique_id()
         self.filt = defs.add(inkex.Filter(id=name))
+        style_str = str(inkex.Style(**style))
+        if style_str != '':
+            self.filt.set('style', style_str)
 
     def __str__(self):
         return 'url(#%s)' % self.filt.get_id()
@@ -510,10 +513,10 @@ def inkex_object(obj, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, {}, style)
 
 
-def filter_effect(name=None):
+def filter_effect(name=None, **style):
     'Return an object representing an empty filter effect.'
     global _svg_defs
-    return SimpleFilter(_svg_defs, name)
+    return SimpleFilter(_svg_defs, name, **style)
 
 
 # ----------------------------------------------------------------------
