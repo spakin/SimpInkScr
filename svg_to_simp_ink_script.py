@@ -163,11 +163,11 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Handle the optional corner-rounding parameter.
         rx, ry = node.get('rx'), node.get('ry')
         if rx is not None and ry is not None:
-            extra = ', (%s, %s)%s' % (rx, ry, extra)
+            extra = ', round=(%s, %s)%s' % (rx, ry, extra)
         elif rx is not None:
-            extra = ', %s%s' % (rx, extra)
+            extra = ', round=%s%s' % (rx, extra)
         elif ry is not None:
-            extra = ', %s%s' % (ry, extra)
+            extra = ', round%s%s' % (ry, extra)
 
         # Return a complete call to rect.
         code = ['rect((%.5g, %.5g), (%.5g, %.5g)%s)' %
@@ -200,8 +200,8 @@ class SvgToPythonScript(inkex.OutputExtension):
         arc_type = node.get('sodipodi:arc-type')
         extra = self.extra_args(node)
         code = 'arc((%s, %s), %s, %s, %s, %s' % (cx, cy, rx, ry, ang1, ang2)
-        if arc_type is not None:
-            code += ', %s' % repr(arc_type)
+        if arc_type is not None and arc_type != 'arc':
+            code += ', arc_type=%s' % repr(arc_type)
         code += extra
         code = [code]
         return self.Statement(code, node.get_id())
@@ -218,32 +218,52 @@ class SvgToPythonScript(inkex.OutputExtension):
         rand = node.get('inkscape:randomized')
         extra = self.extra_args(node)
 
+        # Construct a list of optional arguments.  We always include
+        # the angle, though.
+        opt_args = []
+        if rnd is not None and float(rnd) != 0.0:
+            opt_args.append('round=%s' % rnd)
+        if rand is not None and float(rand) != 0.0:
+            opt_args.append('random=%s' % rand)
+        opt_arg_str = ''
+        if opt_args != []:
+            opt_arg_str = ', ' + ', '.join(opt_args)
+
         # Produce either a regular polygon or a star.
         if flat == 'true':
             # Regular polygon
-            code = ['regular_polygon(%s, (%s, %s), %s, %s, %s, %s%s)' %
-                    (sides, cx, cy, r1, arg1, rnd, rand, extra)]
+            code = ['regular_polygon(%s, (%s, %s), %s, ang=%s%s%s)' %
+                    (sides, cx, cy, r1, arg1, opt_arg_str, extra)]
         else:
             # Star
-            code = ['star(%s, (%s, %s), (%s, %s), (%s, %s), %s, %s%s)' %
-                    (sides, cx, cy, r1, r2, arg1, arg2, rnd, rand, extra)]
+            code = ['star(%s, (%s, %s), (%s, %s), ang=(%s, %s)%s%s)' %
+                    (sides, cx, cy, r1, r2, arg1, arg2, opt_arg_str, extra)]
         return self.Statement(code, node.get_id())
 
     def convert_connector(self, node):
         'Return Python code for drawing a connector between objects.'
-        ctype = node.get('inkscape:connector-type')
-        if ctype is None:
-            ctype = 'polyline'
-        curve = node.get('inkscape:connector-curvature')
-        if curve is None:
-            curve = '0'
+        # Process the required arguments.
         id1 = node.get('inkscape:connection-start')[1:]
         var1 = self.Statement.id2var(id1)
         id2 = node.get('inkscape:connection-end')[1:]
         var2 = self.Statement.id2var(id2)
+
+        # Process the optional arguments.
+        opt_args = []
+        ctype = node.get('inkscape:connector-type')
+        if ctype is not None and ctype != 'polyline':
+            opt_args.append('ctype=%s' % repr(ctype))
+        curve = node.get('inkscape:connector-curvature')
+        if curve is not None and float(curve) != 0:
+            opt_args.append('curve=%s' % curve)
+        opt_arg_str = ''
+        if opt_args != []:
+            opt_arg_str = ', ' + ', '.join(opt_args)
         extra = self.extra_args(node)
-        code = ['connector(%s, %s, %s, %s%s)' %
-                (var1, var2, repr(ctype), curve, extra)]
+
+        # Generate a Statement for the connector.
+        code = ['connector(%s, %s%s%s)' %
+                (var1, var2, opt_arg_str, extra)]
         return self.Statement(code, node.get_id(), {id1, id2})
 
     def convert_path(self, node):
@@ -281,7 +301,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                   for c in node.iter()
                   if c.tag[-8:] == 'textPath']
         if tpaths != []:
-            tpath_str = ', %s' % self.Statement.id2var(tpaths[0])
+            tpath_str = ', path=%s' % self.Statement.id2var(tpaths[0])
         else:
             tpath_str = ''
 
@@ -328,15 +348,15 @@ class SvgToPythonScript(inkex.OutputExtension):
             # parameter.  This is because Inkscape has already discarded
             # the original filename.  Hence, we are effectively requesting
             # a non-embeded image described by a data URL.
-            code = ['image(%s, (%s, %s), False%s)' %
+            code = ['image(%s, (%s, %s), embed=False%s)' %
                     (repr(href), x, y, extra)]
         elif absref is not None:
             # Non-embedded image.  We were given the original filename.
-            code = ['image(%s, (%s, %s), False%s)' %
+            code = ['image(%s, (%s, %s), embed=False%s)' %
                     (repr(absref), x, y, extra)]
         else:
             # Non-embedded image.  We were given a URL but not a filename.
-            code = ['image(%s, (%s, %s), False%s)' %
+            code = ['image(%s, (%s, %s), embed=False%s)' %
                     (repr(href), x, y, extra)]
         return self.Statement(code, node.get_id())
 
