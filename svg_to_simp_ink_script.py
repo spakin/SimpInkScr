@@ -421,11 +421,26 @@ class SvgToPythonScript(inkex.OutputExtension):
     def convert_filter(self, node):
         'Return Python code that defines a filter.'
         # Generate code for the filter effect.
+        filt_args = []
+        if node.label is not None and node.label != '':
+            filt_args.append('name=%s' % repr(node.label))
+        x, y = node.get('x'), node.get('y')
+        wd, ht = node.get('width'), node.get('height')
+        if x is not None and y is not None:
+            filt_args.append('pt1=(%s, %s)' % (x, y))
+        if wd is not None and ht is not None:
+            x0, y0 = float(x or 0), float(y or 0)
+            x1, y1 = x0 + float(wd), y0 + float(ht)
+            filt_args.append('pt2=(%s, %s)' % (x1, y1))
+        f_units, p_units = node.get('filterUnits'), node.get('primitiveUnits')
+        if f_units is not None:
+            filt_args.append('filter_units=%s' % repr(f_units))
+        if p_units is not None:
+            filt_args.append('primitive_units=%s' % repr(p_units))
         extra, extra_deps = self.extra_args(node, {}, {})
-        filt_desc = node.label
-        if filt_desc is None or filt_desc == '':
-            filt_desc = node.get_id()
-        code = ['filter_effect(%s%s)' % (repr(filt_desc), extra)]
+        if extra != '':
+            filt_args.append(extra[2:])  # Drop the leading ", ".
+        code = ['filter_effect(%s)' % ', '.join(filt_args)]
         id2var = self.Statement.id2var
         filt_name = id2var(node.get_id())
 
