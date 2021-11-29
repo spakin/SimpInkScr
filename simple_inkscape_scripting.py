@@ -243,6 +243,56 @@ class SimpleFilter(object):
         return self.SimpleFilterPrimitive(self.filt, 'fe' + ftype, **kw_args)
 
 
+class SimpleLinearGradient(object):
+    'Represent an SVG linear gradient pattern.'
+
+    # Map Inkscape repetition names to SVG names.
+    repeat_to_spread = {'none':      'pad',
+                        'reflected': 'reflect',
+                        'direct':    'repeat'}
+
+    def __init__(self, defs, pt1=None, pt2=None, repeat=None,
+                 gradient_units=None, template=None, transform=None,
+                 **style):
+        grad = inkex.LinearGradient()
+        if pt1 is not None:
+            grad.set('x1', pt1[0])
+            grad.set('y1', pt1[1])
+        if pt2 is not None:
+            grad.set('x2', pt2[0])
+            grad.set('y2', pt2[1])
+        if repeat is not None:
+            try:
+                spread = self.repeat_to_spread[repeat]
+            except KeyError:
+                spread = repeat
+            grad.set('spreadMethod', spread)
+        if gradient_units is not None:
+            grad.set('gradientUnits', gradientUnits)
+        if template is not None:
+            tmpl_name = str(template)[5:-1]  # Strip the 'url(#' and the ')'.
+            grad.set('href', '#%s' % tmpl_name)        # No Inkscape support
+            grad.set('xlink:href', '#%s' % tmpl_name)  # Deprecated by SVG
+        if transform is not None:
+            grad.set('gradientTransform', transform)
+        style_str = str(inkex.Style(**style))
+        if style_str != '':
+            grad.set('style', style_str)
+        self.grad = defs.add(grad)
+
+    def __str__(self):
+        return 'url(#%s)' % self.grad.get_id()
+
+    def add_stop(self, ofs, **style):
+        'Add a stop to a linear gradient.'
+        stop = inkex.Stop()
+        stop.offset = ofs
+        style_str = str(inkex.Style(**style))
+        if style_str != '':
+            stop.set('style', style_str)
+        self.grad.append(stop)
+
+
 # ----------------------------------------------------------------------
 
 # The following functions represent the Simple Inkscape Scripting API
@@ -533,6 +583,14 @@ def filter_effect(name=None, pt1=None, pt2=None,
     global _svg_defs
     return SimpleFilter(_svg_defs, name, pt1, pt2,
                         filter_units, primitive_units, **style)
+
+
+def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
+                    template=None, transform=None, **style):
+    global _svg_defs
+    return SimpleLinearGradient(_svg_defs, pt1, pt2, repeat,
+                                gradient_units, template, transform,
+                                **style)
 
 
 # ----------------------------------------------------------------------
