@@ -4,7 +4,7 @@
 colorful = linear_gradient((0, 0), (1, 1))
 for s in range(8):
     r, g, b = ((s >> 2) & 1)*255, ((s >> 1) & 1)*255, ((s >> 0) & 1)*255
-    colorful.add_stop(s/7, stop_color='#%02x%02x%02x' % (r, g, b))
+    colorful.add_stop(s/7, '#%02x%02x%02x' % (r, g, b))
 
 
 def square_subpath(ul, lr):

@@ -244,7 +244,7 @@ class SimpleFilter(object):
 
 
 class SimpleGradient(object):
-    'Base class for an SVG linear or radial gradient pattern.'
+    'Virtual base class for an SVG linear or radial gradient pattern.'
 
     # Map Inkscape repetition names to SVG names.
     repeat_to_spread = {'none':      'pad',
@@ -276,10 +276,13 @@ class SimpleGradient(object):
     def __str__(self):
         return 'url(#%s)' % self.grad.get_id()
 
-    def add_stop(self, ofs, **style):
+    def add_stop(self, ofs, color, opacity=None, **style):
         'Add a stop to a gradient.'
         stop = inkex.Stop()
         stop.offset = ofs
+        stop.set('stop-color', color)
+        if opacity is not None:
+            stop.set('stop-opacity', opacity)
         style_str = str(inkex.Style(**style))
         if style_str != '':
             stop.set('style', style_str)

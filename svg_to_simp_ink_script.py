@@ -547,12 +547,37 @@ class SvgToPythonScript(inkex.OutputExtension):
         deps = set()
         var_name = self.Statement.id2var(node.get_id())
         for stop in node:
+            # The stop offset is a mandatory field.
             if not isinstance(stop, inkex.Stop):
                 continue
-            ofs = stop.offset
-            extra, extra_deps = self.extra_args(stop, {}, {})
-            deps = deps.union(extra_deps)
-            code.append('%s.add_stop(%s%s)' % (var_name, ofs, extra))
+            stop_args = ['%s' % stop.offset]
+
+            # stop-color and stop-opacity can be expressed directly or
+            # within a style.  We therefore have to look in both places.
+            # We let the style override the non-style options.
+            color = stop.get('stop-color')
+            opacity = stop.get('stop-opacity')
+            style = stop.style.copy()
+            try:
+                color = style['stop-color']
+                del style['stop-color']
+            except KeyError:
+                pass
+            try:
+                opacity = style['stop-opacity']
+                del style['stop-opacity']
+            except KeyError:
+                pass
+            stop.style = style
+            style_str, style_deps = self.style_args(stop, {}, {})
+            stop_args.append(repr(color))
+            if opacity is not None:
+                stop_args.append('opacity=%s' % opacity)
+
+            # Construct a call to add_stop.
+            deps = deps.union(style_deps)
+            code.append('%s.add_stop(%s%s)' %
+                        (var_name, ', '.join(stop_args), style_str))
         return code, deps
 
     def convert_linear_gradient(self, node):
