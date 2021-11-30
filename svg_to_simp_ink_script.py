@@ -511,6 +511,59 @@ class SvgToPythonScript(inkex.OutputExtension):
         stmt.need_var_name = True  # Always needed by filter primitives
         return stmt
 
+    def convert_linear_gradient(self, node):
+        'Return Python code that defines a linear gradient.'
+        # Generate code for the linear-gradient object proper.
+        grad_args = []
+        all_deps = set()
+        x1, y1 = node.get('x1'), node.get('y1')
+        if x1 is not None and y1 is not None:
+            grad_args.append('pt1=(%s, %s)' % (x1, y1))
+        x2, y2 = node.get('x2'), node.get('y2')
+        if x2 is not None and y2 is not None:
+            grad_args.append('pt2=(%s, %s)' % (x2, y2))
+        spread = node.get('spreadMethod')
+        if spread is not None and spread != 'pad':
+            spread_to_repeat = {'reflect': 'reflected',
+                                'repeat':  'direct'}
+            grad_args.append('repeat=%s' % repr(spread_to_repeat[spread]))
+        g_units = node.get('gradientUnits')
+        if g_units is not None:
+            grad_args.append('gradient_units=%s' % repr(g_units))
+        href = node.get('href')
+        xlink = node.get('xlink:href')
+        template = href or xlink
+        if template is not None:
+            template = template[1:]  # Drop the "#".
+            grad_args.append('template=%s' % template)
+            all_deps.add(template)
+        xform = node.get('gradientTransform')
+        if xform is not None:
+            grad_args.append('transform=%s' % repr(xform))
+        extra, extra_deps = self.extra_args(node, {}, {})
+        if extra != '':
+            grad_args.append(extra[2:])  # Drop the leading ", ".
+            all_deps = all_deps.union(extra_deps)
+        code = ['linear_gradient(%s)' % ', '.join(grad_args)]
+
+        # Generate code for each stop.
+        have_stops = False
+        var_name = self.Statement.id2var(node.get_id())
+        for stop in node:
+            if not isinstance(stop, inkex.Stop):
+                continue
+            have_stops = True
+            ofs = stop.offset
+            extra, extra_deps = self.extra_args(stop, {}, {})
+            all_deps = all_deps.union(extra_deps)
+            code.append('%s.add_stop(%s%s)' % (var_name, ofs, extra))
+
+        # Construct and return a Statement.
+        stmt = self.Statement(code, node.get_id(), all_deps)
+        if have_stops:
+            stmt.need_var_name = True
+        return stmt
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -525,7 +578,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:image | '
                                    '//svg:use | '
                                    '//svg:g | '
-                                   '//svg:filter'):
+                                   '//svg:filter | '
+                                   '//svg:linearGradient'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -550,6 +604,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_group(node))
             elif isinstance(node, inkex.Filter):
                 stmts.append(self.convert_filter(node))
+            elif isinstance(node, inkex.LinearGradient):
+                stmts.append(self.convert_linear_gradient(node))
         return [st for st in stmts if st is not None]
 
     def find_dependencies(self, code):

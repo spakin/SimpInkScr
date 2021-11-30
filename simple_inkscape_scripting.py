@@ -268,7 +268,7 @@ class SimpleLinearGradient(object):
                 spread = repeat
             grad.set('spreadMethod', spread)
         if gradient_units is not None:
-            grad.set('gradientUnits', gradientUnits)
+            grad.set('gradientUnits', gradient_units)
         if template is not None:
             tmpl_name = str(template)[5:-1]  # Strip the 'url(#' and the ')'.
             grad.set('href', '#%s' % tmpl_name)        # No Inkscape support
@@ -278,6 +278,7 @@ class SimpleLinearGradient(object):
         style_str = str(inkex.Style(**style))
         if style_str != '':
             grad.set('style', style_str)
+        grad.set('inkscape:collect', 'always')
         self.grad = defs.add(grad)
 
     def __str__(self):
