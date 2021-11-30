@@ -243,24 +243,17 @@ class SimpleFilter(object):
         return self.SimpleFilterPrimitive(self.filt, 'fe' + ftype, **kw_args)
 
 
-class SimpleLinearGradient(object):
-    'Represent an SVG linear gradient pattern.'
+class SimpleGradient(object):
+    'Base class for an SVG linear or radial gradient pattern.'
 
     # Map Inkscape repetition names to SVG names.
     repeat_to_spread = {'none':      'pad',
                         'reflected': 'reflect',
                         'direct':    'repeat'}
 
-    def __init__(self, defs, pt1=None, pt2=None, repeat=None,
-                 gradient_units=None, template=None, transform=None,
-                 **style):
-        grad = inkex.LinearGradient()
-        if pt1 is not None:
-            grad.set('x1', pt1[0])
-            grad.set('y1', pt1[1])
-        if pt2 is not None:
-            grad.set('x2', pt2[0])
-            grad.set('y2', pt2[1])
+    def _set_common(self, grad, repeat=None, gradient_units=None,
+                    template=None, transform=None, **style):
+        'Set arguments that are common to both linear and radial gradients.'
         if repeat is not None:
             try:
                 spread = self.repeat_to_spread[repeat]
@@ -279,19 +272,58 @@ class SimpleLinearGradient(object):
         if style_str != '':
             grad.set('style', style_str)
         grad.set('inkscape:collect', 'always')
-        self.grad = defs.add(grad)
 
     def __str__(self):
         return 'url(#%s)' % self.grad.get_id()
 
     def add_stop(self, ofs, **style):
-        'Add a stop to a linear gradient.'
+        'Add a stop to a gradient.'
         stop = inkex.Stop()
         stop.offset = ofs
         style_str = str(inkex.Style(**style))
         if style_str != '':
             stop.set('style', style_str)
         self.grad.append(stop)
+
+
+class SimpleLinearGradient(SimpleGradient):
+    'Represent an SVG linear gradient pattern.'
+
+    def __init__(self, defs, pt1=None, pt2=None, repeat=None,
+                 gradient_units=None, template=None, transform=None,
+                 **style):
+        grad = inkex.LinearGradient()
+        if pt1 is not None:
+            grad.set('x1', pt1[0])
+            grad.set('y1', pt1[1])
+        if pt2 is not None:
+            grad.set('x2', pt2[0])
+            grad.set('y2', pt2[1])
+        self._set_common(grad, repeat, gradient_units, template,
+                         transform, **style)
+        self.grad = defs.add(grad)
+
+
+class SimpleRadialGradient(SimpleGradient):
+    'Represent an SVG radial gradient pattern.'
+
+    def __init__(self, defs, center=None, r=None, focus=None, fr=None,
+                 repeat=None, gradient_units=None, template=None,
+                 transform=None, **style):
+        grad = inkex.RadialGradient()
+        if center is not None:
+            grad.set('cx', center[0])
+            grad.set('cy', center[1])
+        if r is not None:
+            grad.set('r', r)
+        if focus is not None:
+            grad.set('fx', focus[0])
+            grad.set('fy', focus[1])
+        if fr is not None:
+            grad.set('fr', fr)
+        self._set_common(grad, repeat, gradient_units, template,
+                         transform, **style)
+        self.grad = defs.add(grad)
 
 
 # ----------------------------------------------------------------------
@@ -592,6 +624,15 @@ def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
     return SimpleLinearGradient(_svg_defs, pt1, pt2, repeat,
                                 gradient_units, template, transform,
                                 **style)
+
+
+def radial_gradient(center=None, r=None, focus=None, fr=None,
+                    repeat=None, gradient_units=None, template=None,
+                    transform=None, **style):
+    global _svg_defs
+    return SimpleRadialGradient(_svg_defs, center, r, focus, fr,
+                                repeat, gradient_units, template,
+                                transform, **style)
 
 
 # ----------------------------------------------------------------------
