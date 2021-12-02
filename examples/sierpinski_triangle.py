@@ -1,8 +1,5 @@
 # Use Simple Inkscape Scripting to draw a colorful Sierpinski triangle.
 
-global eq_triangle, sierpinski
-
-
 def eq_triangle(tx, ty, edge, **style):
     """Draw an equilateral triangle with a given top coordinate and
     edge position.  Return the triangle's height."""

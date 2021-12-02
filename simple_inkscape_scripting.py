@@ -677,7 +677,7 @@ print = inkex.utils.debug
             code += "\n"
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
-        exec(code)
+        exec(code, globals())
         for obj in _simple_objs:
             yield obj._inkscape_obj
 
