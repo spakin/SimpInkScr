@@ -61,6 +61,9 @@ _default_transform = None
 # Store the SVG definitions in _svg_defs.
 _svg_defs = None
 
+# Store the top-level SVG tree in _svg_root.
+_svg_root = None
+
 
 def unique_id():
     'Return a unique ID.'
@@ -73,7 +76,8 @@ def unique_id():
 class SimpleObject(object):
     'Encapsulate an Inkscape object and additional metadata.'
 
-    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style):
+    def __init__(self, obj, transform, conn_avoid, shape_style,
+                 obj_style, track=True):
         'Wrap an Inkscape object within a SimpleObject.'
         # Combine the current and default transforms.
         ts = []
@@ -98,7 +102,8 @@ class SimpleObject(object):
 
         # Store the modified Inkscape object.
         self._inkscape_obj = obj
-        _simple_objs.append(self)
+        if track:
+            _simple_objs.append(self)
 
     def __str__(self):
         '''Return the object as a string of the form "url(#id)".  This
@@ -142,8 +147,10 @@ class SimpleObject(object):
 class SimpleGroup(SimpleObject):
     'Represent a group of objects.'
 
-    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style):
-        super().__init__(obj, transform, conn_avoid, shape_style, obj_style)
+    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style,
+                 track=True):
+        super().__init__(obj, transform, conn_avoid, shape_style,
+                         obj_style, track)
         self._children = []
 
     def __len__(self):
@@ -161,11 +168,14 @@ class SimpleGroup(SimpleObject):
         global _simple_objs
         if not isinstance(obj, SimpleObject):
             inkex.utils.errormsg(_('Only Simple Inkscape Scripting objects '
-                                   'can be added to a group'))
+                                   'can be added to a group.'))
+            return
+        if isinstance(obj, SimpleLayer):
+            inkex.utils.errormsg(_('Layers cannot be added to groups.'))
             return
         if obj not in _simple_objs:
-            inkex.utils.errormsg(_('Only objects not already in a group '
-                                   'can be added to a group'))
+            inkex.utils.errormsg(_('Only objects not already in a group or '
+                                   'layer can be added to a group.'))
             return
 
         # Remove the object from the top-level set of objects.
@@ -174,6 +184,17 @@ class SimpleGroup(SimpleObject):
         # Add the object to both the SimpleGroup and the SVG group.
         self._children.append(obj)
         self._inkscape_obj.add(obj._inkscape_obj)
+
+
+class SimpleLayer(SimpleGroup):
+    'Represent an Inkscape layer.'
+
+    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style):
+        super().__init__(obj, transform, conn_avoid, shape_style,
+                         obj_style, track=False)
+        self._children = []
+        global _svg_root
+        _svg_root.add(self._inkscape_obj)
 
 
 class SimpleFilter(object):
@@ -608,6 +629,15 @@ def group(objs=[], transform=None, conn_avoid=False, **style):
     return obj
 
 
+def layer(name, objs=[], transform=None, conn_avoid=False, **style):
+    'Create a container for other objects.'
+    layer = inkex.Layer.new(name)
+    obj = SimpleLayer(layer, transform, conn_avoid, {}, style)
+    for o in objs:
+        obj.add(o)
+    return obj
+
+
 def inkex_object(obj, transform=None, conn_avoid=False, **style):
     'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
     return SimpleObject(obj, transform, conn_avoid, {}, style)
@@ -659,8 +689,9 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
 
     def generate(self):
         'Generate objects from user-provided Python code.'
-        global _svg_defs
+        global _svg_defs, _svg_root
         _svg_defs = self.svg.defs
+        _svg_root = self.svg
         global width, height
         width, height = self.svg.width, self.svg.height  # For user convenience
         code = '''\
