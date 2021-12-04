@@ -65,6 +65,11 @@ _svg_defs = None
 _svg_root = None
 
 
+def debug_print(*args):
+    'Implement print in terms of inkex.utils.debug.'
+    inkex.utils.debug(' '.join([str(a) for a in args]))
+
+
 def unique_id():
     'Return a unique ID.'
     global _id_prefix, _next_obj_id
@@ -689,26 +694,28 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
 
     def generate(self):
         'Generate objects from user-provided Python code.'
+        # Prepare global values we want to export.
         global _svg_defs, _svg_root
         _svg_defs = self.svg.defs
         _svg_root = self.svg
-        global width, height
-        width, height = self.svg.width, self.svg.height  # For user convenience
-        code = '''\
-global width, height
-print = inkex.utils.debug
+        sis_globals = globals().copy()
+        sis_globals['width'] = self.svg.width
+        sis_globals['height'] = self.svg.height
+        sis_globals['svg_root'] = self.svg
+        sis_globals['print'] = debug_print
 
-'''
+        # Launch the user's script and yield all results to the Inkscape core.
+        code = ''
         py_source = self.options.py_source
-        if py_source != "" and not os.path.isdir(py_source):
+        if py_source != '' and not os.path.isdir(py_source):
             # The preceding test for isdir is explained in
             # https://gitlab.com/inkscape/inkscape/-/issues/2822
             with open(self.options.py_source) as fd:
                 code += fd.read()
-            code += "\n"
+            code += '\n'
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
-        exec(code, globals(), {'svg_root': self.svg})
+        exec(code, sis_globals)
         for obj in _simple_objs:
             yield obj._inkscape_obj
 
