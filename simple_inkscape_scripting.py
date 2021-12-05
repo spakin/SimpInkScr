@@ -31,6 +31,7 @@ import sys
 from math import *
 from random import *
 from inkex.paths import *
+from inkex.transforms import Transform
 
 
 # ----------------------------------------------------------------------
@@ -87,6 +88,7 @@ class SimpleObject(object):
         'Wrap an Inkscape object within a SimpleObject.'
         # Combine the current and default transforms.
         ts = []
+        transform = str(transform)   # Transform may be an inkex.Transform.
         if transform is not None and transform != '':
             ts.append(transform)
         if _default_transform is not None and _default_transform != '':
@@ -375,7 +377,7 @@ def style(**kwargs):
 def transform(t):
     'Set the default transform.'
     global _default_transform
-    _default_transform = t.strip()
+    _default_transform = str(t).strip()
 
 
 def circle(center, r, transform=None, conn_avoid=False, **style):

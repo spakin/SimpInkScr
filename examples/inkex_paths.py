@@ -4,8 +4,6 @@
 # as an alternative to path commands expressed as alternating strings and
 # floats.
 
-from inkex.paths import Move, Smooth
-
 cmds = [Move(0, 0)]
 for i in range(0, 10, 2):
     cmds.append(Smooth((i + 1)*100, 100, (i + 2)*100, 0))
