@@ -185,7 +185,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         cx, cy = node.get('cx'), node.get('cy')
         rx, ry = node.get('rx'), node.get('ry')
         extra, extra_deps = self.extra_args(node)
-        code = ['ellipse((%s, %s), %s, %s%s)' % (cx, cy, rx, ry, extra)]
+        code = ['ellipse((%s, %s), (%s, %s)%s)' % (cx, cy, rx, ry, extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_rectangle(self, node):
@@ -225,7 +225,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         for i in range(0, len(toks), 2):
             pts.append('(%s, %s)' % (toks[i], toks[i + 1]))
         extra, extra_deps = self.extra_args(node)
-        code = ['%s(%s%s)' % (poly, ', '.join(pts), extra)]
+        code = ['%s([%s]%s)' % (poly, ', '.join(pts), extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_arc(self, node):
@@ -235,7 +235,8 @@ class SvgToPythonScript(inkex.OutputExtension):
         ang1, ang2 = node.get('sodipodi:start'), node.get('sodipodi:end')
         arc_type = node.get('sodipodi:arc-type')
         extra, extra_deps = self.extra_args(node)
-        code = 'arc((%s, %s), %s, %s, %s, %s' % (cx, cy, rx, ry, ang1, ang2)
+        code = 'arc((%s, %s), (%s, %s), (%s, %s)' % \
+            (cx, cy, rx, ry, ang1, ang2)
         if arc_type is not None and arc_type != 'arc':
             code += ', arc_type=%s' % repr(arc_type)
         code += extra + ')'
@@ -327,7 +328,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # String
                 cmds.append(repr(t))
         extra, extra_deps = self.extra_args(node)
-        code = ['path(%s%s)' % (', '.join(cmds), extra)]
+        code = ['path([%s]%s)' % (', '.join(cmds), extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_text(self, node):
@@ -615,7 +616,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             grad_args.append('center=(%s, %s)' % (cx, cy))
         r = node.get('r')
         if r is not None:
-            grad_args.append('r=%s' % r)
+            grad_args.append('radius=%s' % r)
         fx, fy = node.get('fx'), node.get('fy')
         if fx is not None and fy is not None:
             grad_args.append('focus=(%s, %s)' % (fx, fy))
