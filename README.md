@@ -72,7 +72,7 @@ Simple Inkscape Scripting is
 
 Copyright © 2021 Scott Pakin
 
-All code is licensed under the GNU General Public License version 3.  See [the `LICENSE` file](LICENSE) for details.
+All code is licensed under the GNU General Public License version 3.  See [the license file](LICENSE) for details.
 
 Author
 ------
