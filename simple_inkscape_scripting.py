@@ -91,6 +91,12 @@ def split_two_or_one(val):
     return a, b
 
 
+def abend(msg):
+    'Abnormally end execution with an error message.'
+    inkex.utils.debug(msg)
+    sys.exit(1)
+
+
 class SimpleObject(object):
     'Encapsulate an Inkscape object and additional metadata.'
 
@@ -189,16 +195,14 @@ class SimpleGroup(SimpleObject):
             objs = [objs]   # Convert scalar to list
         for obj in objs:
             if not isinstance(obj, SimpleObject):
-                inkex.utils.errormsg(_('Only Simple Inkscape Scripting '
-                                       'objects can be added to a group.'))
-                return
+                abend(_('Only Simple Inkscape Scripting '
+                        'objects can be added to a group.'))
             if isinstance(obj, SimpleLayer):
-                inkex.utils.errormsg(_('Layers cannot be added to groups.'))
+                abend(_('Layers cannot be added to groups.'))
                 return
             if obj not in _simple_objs:
-                inkex.utils.errormsg(_('Only objects not already in a group '
-                                       'or layer can be added to a group.'))
-                return
+                abend(_('Only objects not already in a group '
+                        'or layer can be added to a group.'))
 
             # Remove the object from the top-level set of objects.
             _simple_objs = [o for o in _simple_objs if o is not obj]
@@ -353,15 +357,15 @@ class SimpleLinearGradient(SimpleGradient):
 class SimpleRadialGradient(SimpleGradient):
     'Represent an SVG radial gradient pattern.'
 
-    def __init__(self, defs, center=None, r=None, focus=None, fr=None,
+    def __init__(self, defs, center=None, radius=None, focus=None, fr=None,
                  repeat=None, gradient_units=None, template=None,
                  transform=None, **style):
         grad = inkex.RadialGradient()
         if center is not None:
             grad.set('cx', center[0])
             grad.set('cy', center[1])
-        if r is not None:
-            grad.set('r', r)
+        if radius is not None:
+            grad.set('r', radius)
         if focus is not None:
             grad.set('fx', focus[0])
             grad.set('fy', focus[1])
@@ -445,8 +449,7 @@ def line(pt1, pt2, transform=None, conn_avoid=False, **style):
 def polyline(coords, transform=None, conn_avoid=False, **style):
     'Draw a polyline.'
     if len(coords) < 2:
-        inkex.utils.errormsg(_('A polyline must contain at least two points.'))
-        return
+        abend(_('A polyline must contain at least two points.'))
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polyline(points=pts)
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
@@ -455,9 +458,7 @@ def polyline(coords, transform=None, conn_avoid=False, **style):
 def polygon(coords, transform=None, conn_avoid=False, **style):
     'Draw a polygon.'
     if len(coords) < 3:
-        inkex.utils.errormsg(_('A polygon must contain'
-                               ' at least three points.'))
-        return
+        abend(_('A polygon must contain at least three points.'))
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
@@ -468,9 +469,7 @@ def regular_polygon(sides, center, radius, angle=-pi/2, round=0.0, random=0.0,
     'Draw a regular polygon.'
     # Create a star object, which is also used for regular polygons.
     if sides < 3:
-        inkex.utils.errormsg(_('A regular polygon must contain at least '
-                               'three points.'))
-        return
+        abend(_('A regular polygon must contain at least three points.'))
     obj = inkex.PathElement.star(center, (radius, radius/2), sides, round)
 
     # Set all the regular polygon's parameters.
@@ -487,8 +486,7 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     'Draw a star.'
     # Create a star object.
     if sides < 3:
-        inkex.utils.errormsg(_('A star must contain at least three points.'))
-        return
+        abend(_('A star must contain at least three points.'))
     obj = inkex.PathElement.star(center, radii, sides, round)
 
     # If no angles were specified, point the star upwards.
@@ -518,7 +516,7 @@ def arc(center, radii, angles, arc_type='arc',
     if arc_type in ['arc', 'slice', 'chord']:
         obj.set('sodipodi:arc-type', arc_type)
     else:
-        inkex.utils.errormsg(_('Invalid arc_type "%s"' % str(arc_type)))
+        abend(_('Invalid arc_type "%s"' % str(arc_type)))
 
     # The arc is visible only in Inkscape because it lacks a path.
     # Here we manually add a path to the object.  (Is there a built-in
@@ -546,7 +544,7 @@ def arc(center, radii, angles, arc_type='arc',
     elif arc_type == 'chord':
         p.append(ZoneClose())
     else:
-        inkex.utils.errormsg(_('Invalid arc_type "%s"' % str(arc_type)))
+        abend(_('Invalid arc_type "%s"' % str(arc_type)))
     obj.path = inkex.Path(p)
 
     # Return a Simple Inkscape Scripting object.
@@ -558,9 +556,7 @@ def path(elts, transform=None, conn_avoid=False, **style):
     if type(elts) == str:
         elts = re.split(r'[\s,]+', elts)
     if len(elts) == 0:
-        inkex.utils.errormsg(_('A path must contain at least'
-                               ' one path element.'))
-        return
+        abend(_('A path must contain at least one path element.'))
     d = ' '.join([str(e) for e in elts])
     obj = inkex.PathElement(d=d)
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
@@ -606,9 +602,8 @@ def more_text(msg, base=None, conn_avoid=False, **style):
     'Append text to the preceding object, which must be text.'
     if len(_simple_objs) == 0 or \
        not isinstance(_simple_objs[-1]._inkscape_obj, inkex.TextElement):
-        inkex.utils.errormsg(_('more_text must immediately follow'
-                               ' text or another more_text'))
-        return
+        abend(_('more_text must immediately follow'
+                ' text or another more_text'))
     obj = _simple_objs[-1]
     tspan = inkex.Tspan()
     tspan.text = msg
