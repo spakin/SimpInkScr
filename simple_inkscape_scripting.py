@@ -25,6 +25,7 @@ import PIL.Image
 import base64
 import io
 import os
+import re
 import sys
 
 # The following imports are provided for user convenience.
@@ -78,6 +79,16 @@ def unique_id():
     tag = '%s%d' % (_id_prefix, _next_obj_id)
     _next_obj_id += 1
     return tag
+
+
+def split_two_or_one(val):
+    '''Split a tuple into two values and a scalar into two copies of the
+    same value.'''
+    try:
+        a, b = val
+    except TypeError:
+        a, b = val, val
+    return a, b
 
 
 class SimpleObject(object):
@@ -170,28 +181,31 @@ class SimpleGroup(SimpleObject):
     def __iter__(self):
         yield from self._children
 
-    def add(self, obj):
-        'Add a SimpleObject to the group.'
+    def add(self, objs):
+        'Add one or more SimpleObjects to the group.'
         # Ensure the addition is legitimate.
         global _simple_objs
-        if not isinstance(obj, SimpleObject):
-            inkex.utils.errormsg(_('Only Simple Inkscape Scripting objects '
-                                   'can be added to a group.'))
-            return
-        if isinstance(obj, SimpleLayer):
-            inkex.utils.errormsg(_('Layers cannot be added to groups.'))
-            return
-        if obj not in _simple_objs:
-            inkex.utils.errormsg(_('Only objects not already in a group or '
-                                   'layer can be added to a group.'))
-            return
+        if not hasattr(objs, '__len__'):
+            objs = [objs]   # Convert scalar to list
+        for obj in objs:
+            if not isinstance(obj, SimpleObject):
+                inkex.utils.errormsg(_('Only Simple Inkscape Scripting '
+                                       'objects can be added to a group.'))
+                return
+            if isinstance(obj, SimpleLayer):
+                inkex.utils.errormsg(_('Layers cannot be added to groups.'))
+                return
+            if obj not in _simple_objs:
+                inkex.utils.errormsg(_('Only objects not already in a group '
+                                       'or layer can be added to a group.'))
+                return
 
-        # Remove the object from the top-level set of objects.
-        _simple_objs = [o for o in _simple_objs if o is not obj]
+            # Remove the object from the top-level set of objects.
+            _simple_objs = [o for o in _simple_objs if o is not obj]
 
-        # Add the object to both the SimpleGroup and the SVG group.
-        self._children.append(obj)
-        self._inkscape_obj.add(obj._inkscape_obj)
+            # Add the object to both the SimpleGroup and the SVG group.
+            self._children.append(obj)
+            self._inkscape_obj.add(obj._inkscape_obj)
 
 
 class SimpleLayer(SimpleGroup):
@@ -380,14 +394,15 @@ def transform(t):
     _default_transform = str(t).strip()
 
 
-def circle(center, r, transform=None, conn_avoid=False, **style):
+def circle(center, radius, transform=None, conn_avoid=False, **style):
     'Draw a circle.'
-    obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(r))
+    obj = inkex.Circle(cx=str(center[0]), cy=str(center[1]), r=str(radius))
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def ellipse(center, rx, ry, transform=None, conn_avoid=False, **style):
+def ellipse(center, radii, transform=None, conn_avoid=False, **style):
     'Draw an ellipse.'
+    rx, ry = split_two_or_one(radii)
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
                         rx=str(rx), ry=str(ry))
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
@@ -427,7 +442,7 @@ def line(pt1, pt2, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, shape_style, style)
 
 
-def polyline(*coords, transform=None, conn_avoid=False, **style):
+def polyline(coords, transform=None, conn_avoid=False, **style):
     'Draw a polyline.'
     if len(coords) < 2:
         inkex.utils.errormsg(_('A polyline must contain at least two points.'))
@@ -437,7 +452,7 @@ def polyline(*coords, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def polygon(*coords, transform=None, conn_avoid=False, **style):
+def polygon(coords, transform=None, conn_avoid=False, **style):
     'Draw a polygon.'
     if len(coords) < 3:
         inkex.utils.errormsg(_('A polygon must contain'
@@ -448,7 +463,7 @@ def polygon(*coords, transform=None, conn_avoid=False, **style):
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def regular_polygon(sides, center, r, angle=-pi/2, round=0.0, random=0.0,
+def regular_polygon(sides, center, radius, angle=-pi/2, round=0.0, random=0.0,
                     transform=None, conn_avoid=False, **style):
     'Draw a regular polygon.'
     # Create a star object, which is also used for regular polygons.
@@ -456,7 +471,7 @@ def regular_polygon(sides, center, r, angle=-pi/2, round=0.0, random=0.0,
         inkex.utils.errormsg(_('A regular polygon must contain at least '
                                'three points.'))
         return
-    obj = inkex.PathElement.star(center, (r, r/2), sides, round)
+    obj = inkex.PathElement.star(center, (radius, radius/2), sides, round)
 
     # Set all the regular polygon's parameters.
     obj.set('sodipodi:arg1', angle)
@@ -493,10 +508,12 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def arc(center, rx, ry, ang1, ang2, arc_type='arc',
+def arc(center, radii, angles, arc_type='arc',
         transform=None, conn_avoid=False, **style):
     'Draw an arc.'
     # Construct the arc proper.
+    rx, ry = split_two_or_one(radii)
+    ang1, ang2 = angles
     obj = inkex.PathElement.arc(center, rx, ry, start=ang1, end=ang2)
     if arc_type in ['arc', 'slice', 'chord']:
         obj.set('sodipodi:arc-type', arc_type)
@@ -536,8 +553,10 @@ def arc(center, rx, ry, ang1, ang2, arc_type='arc',
     return SimpleObject(obj, transform, conn_avoid, _common_shape_style, style)
 
 
-def path(*elts, transform=None, conn_avoid=False, **style):
+def path(elts, transform=None, conn_avoid=False, **style):
     'Draw an arbitrary path.'
+    if type(elts) == str:
+        elts = re.split(r'[\s,]+', elts)
     if len(elts) == 0:
         inkex.utils.errormsg(_('A path must contain at least'
                                ' one path element.'))
@@ -631,19 +650,17 @@ def clone(obj, transform=None, conn_avoid=False, **style):
 def group(objs=[], transform=None, conn_avoid=False, **style):
     'Create a container for other objects.'
     g = inkex.Group()
-    obj = SimpleGroup(g, transform, conn_avoid, {}, style)
-    for o in objs:
-        obj.add(o)
-    return obj
+    g_obj = SimpleGroup(g, transform, conn_avoid, {}, style)
+    g_obj.add(objs)
+    return g_obj
 
 
 def layer(name, objs=[], transform=None, conn_avoid=False, **style):
     'Create a container for other objects.'
     layer = inkex.Layer.new(name)
-    obj = SimpleLayer(layer, transform, conn_avoid, {}, style)
-    for o in objs:
-        obj.add(o)
-    return obj
+    l_obj = SimpleLayer(layer, transform, conn_avoid, {}, style)
+    l_obj.add(objs)
+    return l_obj
 
 
 def inkex_object(obj, transform=None, conn_avoid=False, **style):
@@ -667,11 +684,11 @@ def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
                                 **style)
 
 
-def radial_gradient(center=None, r=None, focus=None, fr=None,
+def radial_gradient(center=None, radius=None, focus=None, fr=None,
                     repeat=None, gradient_units=None, template=None,
                     transform=None, **style):
     global _svg_defs
-    return SimpleRadialGradient(_svg_defs, center, r, focus, fr,
+    return SimpleRadialGradient(_svg_defs, center, radius, focus, fr,
                                 repeat, gradient_units, template,
                                 transform, **style)
 

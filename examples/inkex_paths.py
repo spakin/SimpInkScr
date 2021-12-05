@@ -7,4 +7,4 @@
 cmds = [Move(0, 0)]
 for i in range(0, 10, 2):
     cmds.append(Smooth((i + 1)*100, 100, (i + 2)*100, 0))
-path(*cmds, transform='translate(0, 100)', stroke_width=4, stroke='magenta')
+path(cmds, transform='translate(0, 100)', stroke_width=4, stroke='magenta')

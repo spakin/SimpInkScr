@@ -29,4 +29,4 @@ def poly_by_angle(ang, rad, *args, **kwargs):
         y = rad*sin(a*pi/180)
         pts.append((x, y))
         a = (a + ang) % 360
-    polygon(*pts, *args, **kwargs)
+    polygon(pts, *args, **kwargs)

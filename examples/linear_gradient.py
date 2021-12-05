@@ -25,4 +25,4 @@ for s in [8, 5, 4, 3]:
                                   (edge - edge/s, edge - edge/s)))
 
 # Fill the path with the gradient we defined.
-path(*squares, fill_rule='evenodd', fill=colorful, stroke_width=2)
+path(squares, fill_rule='evenodd', fill=colorful, stroke_width=2)

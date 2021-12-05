@@ -4,7 +4,8 @@ def eq_triangle(tx, ty, edge, **style):
     """Draw an equilateral triangle with a given top coordinate and
     edge position.  Return the triangle's height."""
     ht = sqrt(3)*edge/2
-    polygon((tx, ty), (tx + edge/2, ty + ht), (tx - edge/2, ty + ht), **style)
+    polygon([(tx, ty), (tx + edge/2, ty + ht), (tx - edge/2, ty + ht)],
+            **style)
     return ht
 
 

@@ -35,7 +35,7 @@ for tick in range(0, 240 + 4, 4):
          stroke_width=thick, stroke=clr, stroke_linecap='round')
 
 # Draw the surrounding edge.
-arc((cx, cy), r2, r2, ang1, ang2,
+arc((cx, cy), r2, (ang1, ang2),
     stroke_width=15, stroke='white', stroke_linecap='square')
 
 # Draw the needle.
