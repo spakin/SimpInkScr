@@ -30,6 +30,7 @@ import sys
 # The following imports are provided for user convenience.
 from math import *
 from random import *
+from inkex.paths import *
 
 
 # ----------------------------------------------------------------------
@@ -508,7 +509,7 @@ def arc(center, rx, ry, ang1, ang2, arc_type='arc',
     ang2 %= 2*pi
     x0 = rx*cos(ang1) + center[0]
     y0 = ry*sin(ang1) + center[1]
-    p.append(inkex.paths.Move(x0, y0))
+    p.append(Move(x0, y0))
     delta_ang = (ang2 - ang1) % (2*pi)
     if delta_ang == 0.0:
         delta_ang = 2*pi   # Special case for full ellipses
@@ -517,14 +518,14 @@ def arc(center, rx, ry, ang1, ang2, arc_type='arc',
         a = ang1 + delta_ang*(s + 1)/n_segs
         x1 = rx*cos(a) + center[0]
         y1 = ry*sin(a) + center[1]
-        p.append(inkex.paths.Arc(rx, ry, 0, False, True, x1, y1))
+        p.append(Arc(rx, ry, 0, False, True, x1, y1))
     if arc_type == 'arc':
         obj.set('sodipodi:open', 'true')
     elif arc_type == 'slice':
-        p.append(inkex.paths.Line(center[0], center[1]))
-        p.append(inkex.paths.ZoneClose())
+        p.append(Line(center[0], center[1]))
+        p.append(ZoneClose())
     elif arc_type == 'chord':
-        p.append(inkex.paths.ZoneClose())
+        p.append(ZoneClose())
     else:
         inkex.utils.errormsg(_('Invalid arc_type "%s"' % str(arc_type)))
     obj.path = inkex.Path(p)
