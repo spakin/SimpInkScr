@@ -61,9 +61,6 @@ _common_shape_style = {'stroke': 'black',
 # Store the default transform in _default_transform.
 _default_transform = None
 
-# Store the SVG definitions in _svg_defs.
-_svg_defs = None
-
 # Store the top-level SVG tree in _svg_root.
 _svg_root = None
 
@@ -666,15 +663,13 @@ def inkex_object(obj, transform=None, conn_avoid=False, **style):
 def filter_effect(name=None, pt1=None, pt2=None,
                   filter_units=None, primitive_units=None, **style):
     'Return an object representing an empty filter effect.'
-    global _svg_defs
-    return SimpleFilter(_svg_defs, name, pt1, pt2,
+    return SimpleFilter(_svg_root.defs, name, pt1, pt2,
                         filter_units, primitive_units, **style)
 
 
 def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
                     template=None, transform=None, **style):
-    global _svg_defs
-    return SimpleLinearGradient(_svg_defs, pt1, pt2, repeat,
+    return SimpleLinearGradient(_svg_root.defs, pt1, pt2, repeat,
                                 gradient_units, template, transform,
                                 **style)
 
@@ -682,8 +677,7 @@ def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
 def radial_gradient(center=None, radius=None, focus=None, fr=None,
                     repeat=None, gradient_units=None, template=None,
                     transform=None, **style):
-    global _svg_defs
-    return SimpleRadialGradient(_svg_defs, center, radius, focus, fr,
+    return SimpleRadialGradient(_svg_root.defs, center, radius, focus, fr,
                                 repeat, gradient_units, template,
                                 transform, **style)
 
@@ -710,8 +704,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
     def generate(self):
         'Generate objects from user-provided Python code.'
         # Prepare global values we want to export.
-        global _svg_defs, _svg_root
-        _svg_defs = self.svg.defs
+        global _svg_root
         _svg_root = self.svg
         sis_globals = globals().copy()
         sis_globals['width'] = self.svg.width
