@@ -220,6 +220,18 @@ class SimpleLayer(SimpleGroup):
         _svg_root.add(self._inkscape_obj)
 
 
+class SimpleClippingPath(SimpleGroup):
+    'Represent a clipping path.'
+
+    def __init__(self, obj, clip_units):
+        super().__init__(obj, transform=None, conn_avoid=False,
+                         shape_style={}, obj_style={}, track=False)
+        self._children = []
+        if clip_units is not None:
+            self._inkscape_obj.set('clipPathUnits', clip_units)
+        _svg_root.defs.add(self._inkscape_obj)
+
+
 class SimpleFilter(object):
     'Represent an SVG filter effect.'
 
@@ -669,6 +681,7 @@ def filter_effect(name=None, pt1=None, pt2=None,
 
 def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
                     template=None, transform=None, **style):
+    'Return an object representing a linear gradient.'
     return SimpleLinearGradient(_svg_root.defs, pt1, pt2, repeat,
                                 gradient_units, template, transform,
                                 **style)
@@ -677,9 +690,17 @@ def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
 def radial_gradient(center=None, radius=None, focus=None, fr=None,
                     repeat=None, gradient_units=None, template=None,
                     transform=None, **style):
+    'Return an object representing a radial gradient.'
     return SimpleRadialGradient(_svg_root.defs, center, radius, focus, fr,
                                 repeat, gradient_units, template,
                                 transform, **style)
+
+
+def clip_path(obj, clip_units=None):
+    'Convert an object to a clipping path.'
+    clip = SimpleClippingPath(inkex.ClipPath(), clip_units)
+    clip.add(obj)
+    return clip
 
 
 # ----------------------------------------------------------------------
