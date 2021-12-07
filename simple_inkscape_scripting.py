@@ -90,7 +90,7 @@ def split_two_or_one(val):
 
 def abend(msg):
     'Abnormally end execution with an error message.'
-    inkex.utils.debug(msg)
+    inkex.utils.errormsg(msg)
     sys.exit(1)
 
 
