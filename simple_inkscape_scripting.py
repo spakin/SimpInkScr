@@ -97,7 +97,7 @@ def abend(msg):
 class SimpleObject(object):
     'Encapsulate an Inkscape object and additional metadata.'
 
-    def __init__(self, obj, transform, conn_avoid, shape_style,
+    def __init__(self, obj, transform, conn_avoid, base_style,
                  obj_style, track=True):
         'Wrap an Inkscape object within a SimpleObject.'
         # Combine the current and default transforms.
@@ -116,7 +116,7 @@ class SimpleObject(object):
             obj.set('inkscape:connector-avoid', 'true')
 
         # Combine the current and default styles.
-        ext_style = self._construct_style(shape_style, obj_style)
+        ext_style = self._construct_style(base_style, obj_style)
         if ext_style != '':
             obj.style = ext_style
 
@@ -134,11 +134,11 @@ class SimpleObject(object):
         arguments such as shape_inside.'''
         return 'url(#%s)' % self._inkscape_obj.get_id()
 
-    def _construct_style(self, shape_style, new_style):
+    def _construct_style(self, base_style, new_style):
         '''Combine a shape default style, a global default style, and an
         object-specific style and return the result as a string.'''
         # Start with the default style for the shape type.
-        style = shape_style.copy()
+        style = base_style.copy()
 
         # Update the style according to the current global default style.
         style.update(_default_style)
@@ -170,9 +170,9 @@ class SimpleObject(object):
 class SimpleGroup(SimpleObject):
     'Represent a group of objects.'
 
-    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style,
+    def __init__(self, obj, transform, conn_avoid, base_style, obj_style,
                  track=True):
-        super().__init__(obj, transform, conn_avoid, shape_style,
+        super().__init__(obj, transform, conn_avoid, base_style,
                          obj_style, track)
         self._children = []
 
@@ -213,8 +213,8 @@ class SimpleGroup(SimpleObject):
 class SimpleLayer(SimpleGroup):
     'Represent an Inkscape layer.'
 
-    def __init__(self, obj, transform, conn_avoid, shape_style, obj_style):
-        super().__init__(obj, transform, conn_avoid, shape_style,
+    def __init__(self, obj, transform, conn_avoid, base_style, obj_style):
+        super().__init__(obj, transform, conn_avoid, base_style,
                          obj_style, track=False)
         self._children = []
         global _svg_root
@@ -226,7 +226,7 @@ class SimpleClippingPath(SimpleGroup):
 
     def __init__(self, obj, clip_units):
         super().__init__(obj, transform=None, conn_avoid=False,
-                         shape_style={}, obj_style={}, track=False)
+                         base_style={}, obj_style={}, track=False)
         self._children = []
         if clip_units is not None:
             self._inkscape_obj.set('clipPathUnits', clip_units)
@@ -452,8 +452,8 @@ def line(pt1, pt2, transform=None, conn_avoid=False, **style):
     'Draw a line.'
     obj = inkex.Line(x1=str(pt1[0]), y1=str(pt1[1]),
                      x2=str(pt2[0]), y2=str(pt2[1]))
-    shape_style = {'stroke': 'black'}  # No need for fill='none' here.
-    return SimpleObject(obj, transform, conn_avoid, shape_style, style)
+    base_style = {'stroke': 'black'}  # No need for fill='none' here.
+    return SimpleObject(obj, transform, conn_avoid, base_style, style)
 
 
 def polyline(coords, transform=None, conn_avoid=False, **style):
