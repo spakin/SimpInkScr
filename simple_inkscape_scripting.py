@@ -90,7 +90,7 @@ def split_two_or_one(val):
 
 def abend(msg):
     'Abnormally end execution with an error message.'
-    inkex.utils.debug(msg)
+    inkex.utils.errormsg(msg)
     sys.exit(1)
 
 
@@ -102,9 +102,10 @@ class SimpleObject(object):
         'Wrap an Inkscape object within a SimpleObject.'
         # Combine the current and default transforms.
         ts = []
-        transform = str(transform)   # Transform may be an inkex.Transform.
-        if transform is not None and transform != '':
-            ts.append(transform)
+        if transform is not None:
+            transform = str(transform)   # Transform may be an inkex.Transform.
+            if transform != '':
+                ts.append(transform)
         if _default_transform is not None and _default_transform != '':
             ts.append(_default_transform)
         if ts != []:
