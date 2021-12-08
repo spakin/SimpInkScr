@@ -107,6 +107,15 @@ class SvgToPythonScript(inkex.OutputExtension):
             return ''
         return ', conn_avoid=%s' % repr(avoid == 'true')
 
+    def clip_path_arg(self, node):
+        """Return an SVG node's clip-path string as a function argument.
+        Also return additional object dependencies from url(#...) values."""
+        c_path = node.get('clip-path')
+        if c_path is None:
+            return '', []
+        c_path_var = self.Statement.id2var(c_path[5:-1])
+        return ', clip_path=%s' % c_path_var, [c_path_var]
+
     def style_args(self, node, def_svg_style, def_sis_style):
         """Return an SVG node's style string as key=value arguments.  Also
         return additional object dependencies from url(#...) values."""
@@ -161,11 +170,17 @@ class SvgToPythonScript(inkex.OutputExtension):
             def_svg_style = self._common_svg_defaults
         if def_sis_style is None:
             def_sis_style = self._common_sis_defaults
-        style_args, deps = self.style_args(node, def_svg_style, def_sis_style)
+        clip_args, c_deps = self.clip_path_arg(node)
+        style_args, s_deps = \
+            self.style_args(node, def_svg_style, def_sis_style)
         args = [self.transform_arg(node),
                 self.conn_avoid_arg(node),
+                clip_args,
                 style_args]
-        return ''.join(args), deps
+        deps = set()
+        deps.update(c_deps)
+        deps.update(s_deps)
+        return ''.join(args), list(deps)
 
     def convert_circle(self, node):
         'Return Python code for drawing a circle.'
@@ -639,6 +654,16 @@ class SvgToPythonScript(inkex.OutputExtension):
             stmt.need_var_name = True
         return stmt
 
+    def convert_clip_path(self, node):
+        'Return Python code that defines a clipping path.'
+        p_var = self.Statement.id2var(node[0].get_id())
+        c_units = node.get('clipPathUnits')
+        if c_units is None:
+            code = ['clip_path(%s)' % p_var]
+        else:
+            code = ['clip_path(%s, clip_units=%s)' % (p_var, repr(c_units))]
+        return self.Statement(code, node.get_id(), [p_var])
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -655,7 +680,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:g | '
                                    '//svg:filter | '
                                    '//svg:linearGradient | '
-                                   '//svg:radialGradient'):
+                                   '//svg:radialGradient | '
+                                   '//svg:clipPath'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -684,6 +710,12 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_linear_gradient(node))
             elif isinstance(node, inkex.RadialGradient):
                 stmts.append(self.convert_radial_gradient(node))
+            elif isinstance(node, inkex.ClipPath):
+                stmts.append(self.convert_clip_path(node))
+            else:
+                inkex.utils.errormsg(_('Internal error converting %s' %
+                                       repr(node)))
+                sys.exit(1)
         return [st for st in stmts if st is not None]
 
     def find_dependencies(self, code):
