@@ -108,8 +108,11 @@ class SimpleObject(object):
                 ts.append(transform)
         if _default_transform is not None and _default_transform != '':
             ts.append(_default_transform)
-        if ts != []:
+        if ts == []:
+            self._transform = inkex.Transform()
+        else:
             obj.transform = ' '.join(ts)
+            self._transform = inkex.Transform(obj.transform)
 
         # Optionally indicate that connectors are to avoid this object.
         if conn_avoid:
@@ -170,6 +173,25 @@ class SimpleObject(object):
     def bounding_box(self):
         "Return the object's bounding box as an inkex.transforms.BoundingBox."
         return self._inkscape_obj.bounding_box()
+
+    @property
+    def transform(self):
+        "Return the object's current transformation as an inkex.Transform."
+        return self._transform
+
+    @transform.setter
+    def transform(self, xform):
+        '''Assign a new transformation to an object from either a string or
+        an inkex.Transform.'''
+        if isinstance(xform, inkex.Transform):
+            self._transform = xform
+        else:
+            self._transform = inkex.Transform(xform)
+
+    def _apply_transform(self):
+        "Apply the SimpleObject's transform to the underlying SVG object."
+        if self._transform != self._inkscape_obj.transform:
+            self._inkscape_obj.set('transform', self._transform)
 
 
 class SimpleGroup(SimpleObject):
@@ -725,6 +747,7 @@ def radial_gradient(center=None, radius=None, focus=None, fr=None,
 def clip_path(obj, clip_units=None):
     'Convert an object to a clipping path.'
     clip = SimpleClippingPath(inkex.ClipPath(), clip_units)
+    obj._apply_transform()
     clip.add(obj)
     return clip
 
@@ -759,7 +782,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         sis_globals['svg_root'] = self.svg
         sis_globals['print'] = debug_print
 
-        # Launch the user's script and yield all results to the Inkscape core.
+        # Launch the user's script.
         code = ''
         py_source = self.options.py_source
         if py_source != '' and not os.path.isdir(py_source):
@@ -771,7 +794,10 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
         exec(code, sis_globals)
+
+        # Yield all objects created to the Inkscape core.
         for obj in _simple_objs:
+            obj._apply_transform()
             yield obj._inkscape_obj
 
 
