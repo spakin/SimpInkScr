@@ -97,7 +97,7 @@ def abend(msg):
 class SimpleObject(object):
     'Encapsulate an Inkscape object and additional metadata.'
 
-    def __init__(self, obj, transform, conn_avoid, clip_path, base_style,
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
                  obj_style, track=True):
         'Wrap an Inkscape object within a SimpleObject.'
         # Combine the current and default transforms.
@@ -119,8 +119,13 @@ class SimpleObject(object):
             obj.set('inkscape:connector-avoid', 'true')
 
         # Optionally employ a clipping path.
-        if clip_path is not None:
-            clip_str = 'url(#%s)' % clip_path._inkscape_obj.get_id()
+        if clip_path_obj is not None:
+            if isinstance(clip_path_obj, str):
+                clip_str = clip_path_obj
+            else:
+                if not isinstance(clip_path_obj, SimpleClippingPath):
+                    clip_path_obj = clip_path(clip_path_obj)
+                clip_str = 'url(#%s)' % clip_path_obj._inkscape_obj.get_id()
             obj.set('clip-path', clip_str)
 
         # Combine the current and default styles.
@@ -197,9 +202,9 @@ class SimpleObject(object):
 class SimpleGroup(SimpleObject):
     'Represent a group of objects.'
 
-    def __init__(self, obj, transform, conn_avoid, clip_path, base_style,
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
                  obj_style, track=True):
-        super().__init__(obj, transform, conn_avoid, clip_path, base_style,
+        super().__init__(obj, transform, conn_avoid, clip_path_obj, base_style,
                          obj_style, track)
         self._children = []
 
@@ -240,9 +245,9 @@ class SimpleGroup(SimpleObject):
 class SimpleLayer(SimpleGroup):
     'Represent an Inkscape layer.'
 
-    def __init__(self, obj, transform, conn_avoid, clip_path, base_style,
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
                  obj_style):
-        super().__init__(obj, transform, conn_avoid, clip_path, base_style,
+        super().__init__(obj, transform, conn_avoid, clip_path_obj, base_style,
                          obj_style, track=False)
         self._children = []
         global _svg_root
@@ -253,8 +258,9 @@ class SimpleClippingPath(SimpleGroup):
     'Represent a clipping path.'
 
     def __init__(self, obj, clip_units):
-        super().__init__(obj, transform=None, conn_avoid=False, clip_path=None,
-                         base_style={}, obj_style={}, track=False)
+        super().__init__(obj, transform=None, conn_avoid=False,
+                         clip_path_obj=None, base_style={}, obj_style={},
+                         track=False)
         self._children = []
         if clip_units is not None:
             self._inkscape_obj.set('clipPathUnits', clip_units)
