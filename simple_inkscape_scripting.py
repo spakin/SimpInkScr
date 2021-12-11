@@ -24,6 +24,7 @@ import inkex
 import PIL.Image
 import base64
 import io
+import lxml
 import os
 import re
 import sys
@@ -92,6 +93,28 @@ def abend(msg):
     'Abnormally end execution with an error message.'
     inkex.utils.errormsg(msg)
     sys.exit(1)
+
+
+def diff_attributes(objs):
+    '''Given a list of ShapeElements, return a dictionary mapping an attribute
+    name to a list of values it takes on across all of the ShapeElements.'''
+    # Abort on various error conditions.
+    if len(objs) < 2:
+        abend('Expected a list of at least two objects')
+    obj_types = set([type(o) for o in objs])
+    if len(obj_types) != 1:
+        abend('Objects are not all of the same type (%s)' % str(obj_types))
+
+    # For each attribute in the first object, produce a list of
+    # corresponding attributes in all other objects.
+    attr2vals = {}
+    for a in objs[0].attrib:
+        if a in ['id', 'style', 'transform']:
+            continue
+        vs = [o.get(a) for o in objs]
+        if len(set(vs)) > 1:
+            attr2vals[a] = vs
+    return attr2vals
 
 
 class SimpleObject(object):
@@ -197,6 +220,50 @@ class SimpleObject(object):
         "Apply the SimpleObject's transform to the underlying SVG object."
         if self._transform != self._inkscape_obj.transform:
             self._inkscape_obj.set('transform', self._transform)
+
+    def animate(self, objs, duration=None,
+                begin_time=None, end_time=None, key_times=None,
+                repeat_count=None, repeat_time=None, keep=True):
+        "Animate the object through each of the given objects' appearance."
+        # Identify the differences among all the objects.
+        try:
+            iobjs = [o._inkscape_obj for o in objs]
+        except TypeError:
+            objs = [objs]
+            iobjs = [o._inkscape_obj for o in objs]
+        if not isinstance(iobjs[0], type(self._inkscape_obj)):
+            abend('All objects must have the same shape type '
+                  'as the base object.')
+        attr2vals = diff_attributes([self._inkscape_obj] + iobjs)
+
+        # Add one <animate> element per attribute.
+        for a, vs in attr2vals.items():
+            anim = lxml.etree.Element('animate')
+            anim.set('attributeName', a)
+            anim.set('values', '; '.join(vs))
+            if duration is not None:
+                anim.set('dur', str(duration))
+            if begin_time is not None:
+                anim.set('begin', str(begin_time))
+            if end_time is not None:
+                anim.set('end', str(end_time))
+            if key_times is not None:
+                if len(key_times) != len(iobjs):
+                    abend('Expected %d key times but saw %d' %
+                          (len(iobjs), len(key_times)))
+                anim.set('keyTimes', '; '.join([str(kt) for kt in key_times]))
+            if repeat_count is not None:
+                anim.set('repeatCount', str(repeat_count))
+            if repeat_time is not None:
+                anim.set('repeatTime', str(repeat_time))
+            if keep:
+                anim.set('fill', 'freeze')
+            self._inkscape_obj.append(anim)
+
+        # Remove all objects from the top-level set of objects.
+        global _simple_objs
+        rem_objs = set(objs)
+        _simple_objs = [o for o in _simple_objs if o not in rem_objs]
 
 
 class SimpleGroup(SimpleObject):
