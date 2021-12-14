@@ -114,6 +114,17 @@ def diff_attributes(objs):
         vs = [o.get(a) for o in objs]
         if len(set(vs)) > 1:
             attr2vals[a] = vs
+
+    # Handle styles specially.
+    if objs[0].get('style') is not None:
+        style = inkex.Style(objs[0].get('style'))
+        for a in style:
+            vs = []
+            for o in objs:
+                obj_style = inkex.Style(o.get('style'))
+                vs.append(obj_style.get(a))
+            if len(set(vs)) > 1:
+                attr2vals[a] = vs
     return attr2vals
 
 
