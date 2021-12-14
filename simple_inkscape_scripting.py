@@ -221,7 +221,7 @@ class SimpleGroup(SimpleObject):
         'Add one or more SimpleObjects to the group.'
         # Ensure the addition is legitimate.
         global _simple_objs
-        if not hasattr(objs, '__len__'):
+        if type(objs) != list:
             objs = [objs]   # Convert scalar to list
         for obj in objs:
             if not isinstance(obj, SimpleObject):
