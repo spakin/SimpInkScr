@@ -232,6 +232,97 @@ class SimpleObject(object):
         if self._transform != self._inkscape_obj.transform:
             self._inkscape_obj.set('transform', self._transform)
 
+    def _diff_transforms(self, objs):
+        'Return a list of transformations to animate.'
+        # Determine if any object has a different transformation from any
+        # other.
+        xforms = [o.get('transform') for o in objs]
+        if all([x is None for x in xforms]):
+            return []  # No transform on any object: nothing to animate.
+        for i, x in enumerate(xforms):
+            if x is None:
+                xforms[i] = inkex.Transform()
+            else:
+                xforms[i] = inkex.Transform(x)
+        if len(set([str(x) for x in xforms])) == 1:
+            return []  # All transforms are identical: nothing to animate.
+        hexads = [list(x.to_hexad()) for x in xforms]
+
+        # Find changes in translation.
+        xlate_values = []
+        for h in hexads:
+            xlate_values.append('%.5g %.5g' % (h[4], h[5]))
+
+        # Find changes in rotation, initially as numeric radians.
+        rot_values = []
+        for h in hexads:
+            ang1, ang2 = asin(h[1]), -asin(h[2])
+            if abs(ang1 - ang2) > 0.00001:
+                return []   # Transform is too complicated for us to handle.
+            ang = (ang1 + ang2)/2
+            rot_values.append(ang)
+
+        # Find changes in scale.
+        scale_values = []
+        for i, h in enumerate(hexads):
+            ang = rot_values[i]
+            sx, sy = h[0]/cos(ang), h[3]/cos(ang)
+            if abs(sx - sy) <= 0.00001:
+                scale_values.append('%.5g' % ((sx + sy)/2))
+            else:
+                scale_values.append('%.5g %.5g' % (sx, sy))
+
+        # Convert changes in rotation from radians to degrees and floats to
+        # strings.
+        rot_values = ['%.5g' % (r*180/pi) for r in rot_values]
+
+        # Return a list of transformations to apply.
+        xform_list = []
+        if len(set(scale_values)) > 1:
+            xform_list.append(('scale', scale_values))
+        if len(set(rot_values)) > 1:
+            xform_list.append(('rotate', rot_values))
+        if len(set(xlate_values)) > 1:
+            xform_list.append(('translate', xlate_values))
+        return xform_list
+
+    def _animate_transforms(self, objs, duration,
+                            begin_time, end_time, key_times,
+                            repeat_count, repeat_time, keep):
+        'Specially handle animating transforms.'
+        xforms = self._diff_transforms(objs)
+        if len(xforms) == 0:
+            return  # No transforms to animate
+        target = self
+        for i, xf in enumerate(xforms):
+            # Only one transform animation can be applied per object.
+            # Hence, we keep wrapping the object in successive levels of
+            # groups and apply one transform to each group.
+            if i > 0:
+                target = group(target)
+            anim = lxml.etree.Element('animateTransform')
+            anim.set('attributeName', 'transform')
+            anim.set('type', xf[0])
+            anim.set('values', '; '.join(xf[1]))
+            if duration is not None:
+                anim.set('dur', str(duration))
+            if begin_time is not None:
+                anim.set('begin', str(begin_time))
+            if end_time is not None:
+                anim.set('end', str(end_time))
+            if key_times is not None:
+                if len(key_times) != len(iobjs):
+                    abend('Expected %d key times but saw %d' %
+                          (len(iobjs), len(key_times)))
+                anim.set('keyTimes', '; '.join([str(kt) for kt in key_times]))
+            if repeat_count is not None:
+                anim.set('repeatCount', str(repeat_count))
+            if repeat_time is not None:
+                anim.set('repeatTime', str(repeat_time))
+            if keep:
+                anim.set('fill', 'freeze')
+            target._inkscape_obj.append(anim)
+
     def animate(self, objs, duration=None,
                 begin_time=None, end_time=None, key_times=None,
                 repeat_count=None, repeat_time=None, keep=True):
@@ -271,7 +362,12 @@ class SimpleObject(object):
                 anim.set('fill', 'freeze')
             self._inkscape_obj.append(anim)
 
-        # Remove all objects from the top-level set of objects.
+        # Handle animated transform specially.
+        self._animate_transforms([self._inkscape_obj] + iobjs, duration,
+                                 begin_time, end_time, key_times,
+                                 repeat_count, repeat_time, keep)
+
+        # Remove all given objects from the top-level set of objects.
         global _simple_objs
         rem_objs = set(objs)
         _simple_objs = [o for o in _simple_objs if o not in rem_objs]
