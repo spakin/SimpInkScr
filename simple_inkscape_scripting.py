@@ -179,6 +179,14 @@ class SimpleObject(object):
         "Return the object's bounding box as an inkex.transforms.BoundingBox."
         return self._inkscape_obj.bounding_box()
 
+    def to_def(self):
+        '''Convert the object to a definition, removing it from the list of
+        rendered objects.'''
+        global _simple_objs, _svg_root
+        _simple_objs = [o for o in _simple_objs if o is not self]
+        _svg_root.defs.add(self._inkscape_obj)
+        return self
+
     @property
     def transform(self):
         "Return the object's current transformation as an inkex.Transform."
@@ -697,7 +705,7 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False,
 
 def clone(obj, transform=None, conn_avoid=False, clip_path=None, **style):
     'Return a linked clone of the object.'
-    c = inkex.Use(obj._inkscape_obj)
+    c = inkex.Use()
     c.href = obj._inkscape_obj.get_id()
     return SimpleObject(c, transform, conn_avoid, clip_path, {}, style)
 
