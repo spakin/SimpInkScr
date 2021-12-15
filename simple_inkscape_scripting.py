@@ -65,12 +65,12 @@ _default_transform = None
 _svg_root = None
 
 
-def debug_print(*args):
+def _debug_print(*args):
     'Implement print in terms of inkex.utils.debug.'
     inkex.utils.debug(' '.join([str(a) for a in args]))
 
 
-def unique_id():
+def _unique_id():
     'Return a unique ID.'
     global _id_prefix, _next_obj_id
     tag = '%s%d' % (_id_prefix, _next_obj_id)
@@ -78,7 +78,7 @@ def unique_id():
     return tag
 
 
-def split_two_or_one(val):
+def _split_two_or_one(val):
     '''Split a tuple into two values and a scalar into two copies of the
     same value.'''
     try:
@@ -88,7 +88,7 @@ def split_two_or_one(val):
     return a, b
 
 
-def abend(msg):
+def _abend(msg):
     'Abnormally end execution with an error message.'
     inkex.utils.errormsg(msg)
     sys.exit(1)
@@ -134,7 +134,7 @@ class SimpleObject(object):
             obj.style = ext_style
 
         # Assign the object a unique ID.
-        obj.set_id(unique_id())
+        obj.set_id(_unique_id())
 
         # Store the modified Inkscape object.
         self._inkscape_obj = obj
@@ -225,14 +225,14 @@ class SimpleGroup(SimpleObject):
             objs = [objs]   # Convert scalar to list
         for obj in objs:
             if not isinstance(obj, SimpleObject):
-                abend(_('Only Simple Inkscape Scripting '
-                        'objects can be added to a group.'))
+                _abend(_('Only Simple Inkscape Scripting '
+                         'objects can be added to a group.'))
             if isinstance(obj, SimpleLayer):
-                abend(_('Layers cannot be added to groups.'))
+                _abend(_('Layers cannot be added to groups.'))
                 return
             if obj not in _simple_objs:
-                abend(_('Only objects not already in a group '
-                        'or layer can be added to a group.'))
+                _abend(_('Only objects not already in a group '
+                         'or layer can be added to a group.'))
 
             # Remove the object from the top-level set of objects.
             _simple_objs = [o for o in _simple_objs if o is not obj]
@@ -300,7 +300,7 @@ class SimpleFilter(object):
 
         def __init__(self, filt, ftype, **kw_args):
             # Assign a random ID for the default result.
-            all_args = {'result': unique_id()}
+            all_args = {'result': _unique_id()}
 
             # Make "src1" and "src2" smart aliases for "in" and "in2".
             s2i = {'src1': 'in', 'src2': 'in2'}
@@ -453,7 +453,7 @@ def circle(center, radius, transform=None, conn_avoid=False, clip_path=None,
 def ellipse(center, radii, transform=None, conn_avoid=False, clip_path=None,
             **style):
     'Draw an ellipse.'
-    rx, ry = split_two_or_one(radii)
+    rx, ry = _split_two_or_one(radii)
     obj = inkex.Ellipse(cx=str(center[0]), cy=str(center[1]),
                         rx=str(rx), ry=str(ry))
     return SimpleObject(obj, transform, conn_avoid, clip_path,
@@ -501,7 +501,7 @@ def polyline(coords, transform=None, conn_avoid=False, clip_path=None,
              **style):
     'Draw a polyline.'
     if len(coords) < 2:
-        abend(_('A polyline must contain at least two points.'))
+        _abend(_('A polyline must contain at least two points.'))
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polyline(points=pts)
     return SimpleObject(obj, transform, conn_avoid, clip_path,
@@ -511,7 +511,7 @@ def polyline(coords, transform=None, conn_avoid=False, clip_path=None,
 def polygon(coords, transform=None, conn_avoid=False, clip_path=None, **style):
     'Draw a polygon.'
     if len(coords) < 3:
-        abend(_('A polygon must contain at least three points.'))
+        _abend(_('A polygon must contain at least three points.'))
     pts = ' '.join(["%s,%s" % (str(x), str(y)) for x, y in coords])
     obj = inkex.Polygon(points=pts)
     return SimpleObject(obj, transform, conn_avoid, clip_path,
@@ -523,7 +523,7 @@ def regular_polygon(sides, center, radius, angle=-pi/2, round=0.0, random=0.0,
     'Draw a regular polygon.'
     # Create a star object, which is also used for regular polygons.
     if sides < 3:
-        abend(_('A regular polygon must contain at least three points.'))
+        _abend(_('A regular polygon must contain at least three points.'))
     obj = inkex.PathElement.star(center, (radius, radius/2), sides, round)
 
     # Set all the regular polygon's parameters.
@@ -541,7 +541,7 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     'Draw a star.'
     # Create a star object.
     if sides < 3:
-        abend(_('A star must contain at least three points.'))
+        _abend(_('A star must contain at least three points.'))
     obj = inkex.PathElement.star(center, radii, sides, round)
 
     # If no angles were specified, point the star upwards.
@@ -566,13 +566,13 @@ def arc(center, radii, angles, arc_type='arc',
         transform=None, conn_avoid=False, clip_path=None, **style):
     'Draw an arc.'
     # Construct the arc proper.
-    rx, ry = split_two_or_one(radii)
+    rx, ry = _split_two_or_one(radii)
     ang1, ang2 = angles
     obj = inkex.PathElement.arc(center, rx, ry, start=ang1, end=ang2)
     if arc_type in ['arc', 'slice', 'chord']:
         obj.set('sodipodi:arc-type', arc_type)
     else:
-        abend(_('Invalid arc_type "%s"' % str(arc_type)))
+        _abend(_('Invalid arc_type "%s"' % str(arc_type)))
 
     # The arc is visible only in Inkscape because it lacks a path.
     # Here we manually add a path to the object.  (Is there a built-in
@@ -600,7 +600,7 @@ def arc(center, radii, angles, arc_type='arc',
     elif arc_type == 'chord':
         p.append(ZoneClose())
     else:
-        abend(_('Invalid arc_type "%s"' % str(arc_type)))
+        _abend(_('Invalid arc_type "%s"' % str(arc_type)))
     obj.path = inkex.Path(p)
 
     # Return a Simple Inkscape Scripting object.
@@ -613,7 +613,7 @@ def path(elts, transform=None, conn_avoid=False, clip_path=None, **style):
     if type(elts) == str:
         elts = re.split(r'[\s,]+', elts)
     if len(elts) == 0:
-        abend(_('A path must contain at least one path element.'))
+        _abend(_('A path must contain at least one path element.'))
     d = ' '.join([str(e) for e in elts])
     obj = inkex.PathElement(d=d)
     return SimpleObject(obj, transform, conn_avoid, clip_path,
@@ -661,8 +661,8 @@ def more_text(msg, base=None, conn_avoid=False, **style):
     'Append text to the preceding object, which must be text.'
     if len(_simple_objs) == 0 or \
        not isinstance(_simple_objs[-1]._inkscape_obj, inkex.TextElement):
-        abend(_('more_text must immediately follow'
-                ' text or another more_text'))
+        _abend(_('more_text must immediately follow'
+                 ' text or another more_text'))
     obj = _simple_objs[-1]
     tspan = inkex.Tspan()
     tspan.text = msg
@@ -786,7 +786,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         sis_globals['width'] = self.svg.width
         sis_globals['height'] = self.svg.height
         sis_globals['svg_root'] = self.svg
-        sis_globals['print'] = debug_print
+        sis_globals['print'] = _debug_print
 
         # Launch the user's script.
         code = ''
