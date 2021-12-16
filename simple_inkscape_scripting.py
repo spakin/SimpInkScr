@@ -266,34 +266,40 @@ class SimpleObject(object):
         for h in hexads:
             xlate_values.append('%.5g %.5g' % (h[4], h[5]))
 
-        # Find changes in rotation, initially as numeric radians.
-        rot_values = []
-        for h in hexads:
-            ang1, ang2 = asin(h[1]), -asin(h[2])
-            if abs(ang1 - ang2) > 0.00001:
-                return []   # Transform is too complicated for us to handle.
-            ang = (ang1 + ang2)/2
-            rot_values.append(ang)
-
         # Find changes in scale.
         scale_values = []
         for i, h in enumerate(hexads):
-            ang = rot_values[i]
-            sx, sy = h[0]/cos(ang), h[3]/cos(ang)
+            sx = sqrt(h[0]**2 + h[1]**2)
+            sy = sqrt(h[2]**2 + h[3]**2)
             if abs(sx - sy) <= 0.00001:
                 scale_values.append('%.5g' % ((sx + sy)/2))
             else:
                 scale_values.append('%.5g %.5g' % (sx, sy))
+            h[0] /= sx
+            h[1] /= sx
+            h[2] /= sy
+            h[3] /= sy
+            hexads[i] = h
 
-        # As a special case, convert negative scales to 180 degree rotations.
-        for i, s in enumerate(scale_values):
-            try:
-                s = float(s)
-                if s < 0:
-                    rot_values[i] += pi
-                    scale_values[i] = '%.5g' % (-s)
-            except ValueError:
-                pass
+        # Find changes in rotation, initially as numeric radians.
+        rot_values = []
+        for h in hexads:
+            # Ignore transforms with inconsistent rotation angles.
+            angles = [acos(h[0]), asin(h[1]), asin(-h[2]), acos(h[3])]
+            if abs(angles[0] - angles[3]) > 0.00001 or \
+               abs(angles[1] - angles[2]) > 0.00001:
+                return []   # Transform is too complicated for us to handle.
+
+            # Determine the angle in the correct quadrant.
+            if h[0] >= 0 and h[1] >= 0:
+                ang = angles[0]
+            elif h[0] < 0 and h[1] >= 0:
+                ang = angles[0]
+            elif h[0] < 0 and h[1] < 0:
+                ang = pi - angles[1]
+            else:
+                ang = 2*pi + angles[1]
+            rot_values.append(ang)
 
         # Convert changes in rotation from radians to degrees and floats to
         # strings.
