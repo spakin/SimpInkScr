@@ -100,7 +100,7 @@ def diff_attributes(objs):
     name to a list of values it takes on across all of the ShapeElements.'''
     # Abort on various error conditions.
     if len(objs) < 2:
-        abend('Expected a list of at least two objects')
+        return {}  # Too few objects on which to compute differences
     obj_types = set([type(o) for o in objs])
     if len(obj_types) != 1:
         abend('Objects are not all of the same type (%s)' % str(obj_types))
@@ -352,7 +352,7 @@ class SimpleObject(object):
                 anim.set('fill', 'freeze')
             target._inkscape_obj.append(anim)
 
-    def animate(self, objs, duration=None,
+    def animate(self, objs=[], duration=None,
                 begin_time=None, end_time=None, key_times=None,
                 repeat_count=None, repeat_time=None, keep=True,
                 calc_mode=None, path=None, path_rotate=None):
@@ -363,7 +363,7 @@ class SimpleObject(object):
         except TypeError:
             objs = [objs]
             iobjs = [o._inkscape_obj for o in objs]
-        if not isinstance(iobjs[0], type(self._inkscape_obj)):
+        if iobjs != [] and not isinstance(iobjs[0], type(self._inkscape_obj)):
             abend('All objects must have the same shape type '
                   'as the base object.')
         attr2vals = diff_attributes([self._inkscape_obj] + iobjs)
