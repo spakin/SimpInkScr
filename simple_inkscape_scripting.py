@@ -285,17 +285,27 @@ class SimpleObject(object):
             else:
                 scale_values.append('%.5g %.5g' % (sx, sy))
 
+        # As a special case, convert negative scales to 180 degree rotations.
+        for i, s in enumerate(scale_values):
+            try:
+                s = float(s)
+                if s < 0:
+                    rot_values[i] += pi
+                    scale_values[i] = '%.5g' % (-s)
+            except ValueError:
+                pass
+
         # Convert changes in rotation from radians to degrees and floats to
         # strings.
         rot_values = ['%.5g' % (r*180/pi) for r in rot_values]
 
         # Return a list of transformations to apply.
         xform_list = []
-        if len(set(scale_values)) > 1:
+        if len(set(scale_values)) == len(objs):
             xform_list.append(('scale', scale_values))
-        if len(set(rot_values)) > 1:
+        if len(set(rot_values)) == len(objs):
             xform_list.append(('rotate', rot_values))
-        if len(set(xlate_values)) > 1:
+        if len(set(xlate_values)) == len(objs):
             xform_list.append(('translate', xlate_values))
         return xform_list
 
