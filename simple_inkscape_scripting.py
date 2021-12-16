@@ -355,7 +355,8 @@ class SimpleObject(object):
     def animate(self, objs=[], duration=None,
                 begin_time=None, end_time=None, key_times=None,
                 repeat_count=None, repeat_time=None, keep=True,
-                calc_mode=None, path=None, path_rotate=None):
+                calc_mode=None, path=None, path_rotate=None,
+                at_end=False):
         "Animate the object through each of the given objects' appearance."
         # Identify the differences among all the objects.
         try:
@@ -366,7 +367,11 @@ class SimpleObject(object):
         if iobjs != [] and not isinstance(iobjs[0], type(self._inkscape_obj)):
             abend('All objects must have the same shape type '
                   'as the base object.')
-        attr2vals = diff_attributes([self._inkscape_obj] + iobjs)
+        if at_end:
+            all_iobjs = iobjs + [self._inkscape_obj]
+        else:
+            all_iobjs = [self._inkscape_obj] + iobjs
+        attr2vals = diff_attributes(all_iobjs)
 
         # Add one <animate> element per attribute.
         for a, vs in attr2vals.items():
@@ -433,7 +438,7 @@ class SimpleObject(object):
         # Handle animated transforms specially because only one can apply
         # to a given object.  We therefore add levels of grouping, each
         # with one <animateTransform> applied to it, as necessary.
-        self._animate_transforms([self._inkscape_obj] + iobjs, duration,
+        self._animate_transforms(all_iobjs, duration,
                                  begin_time, end_time, key_times,
                                  repeat_count, repeat_time, keep)
 
