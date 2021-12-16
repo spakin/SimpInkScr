@@ -381,19 +381,22 @@ class SimpleObject(object):
                 calc_mode=None, path=None, path_rotate=None,
                 at_end=False):
         "Animate the object through each of the given objects' appearance."
-        # Identify the differences among all the objects.
+        # Prepare the list of objects.
         try:
             iobjs = [o._inkscape_obj for o in objs]
         except TypeError:
             objs = [objs]
             iobjs = [o._inkscape_obj for o in objs]
-        if iobjs != [] and not isinstance(iobjs[0], type(self._inkscape_obj)):
-            _abend('All objects must have the same shape type '
-                   'as the base object.')
+        for o in iobjs:
+            if not isinstance(o, type(self._inkscape_obj)):
+                _abend('All objects must have the same shape type '
+                       'as the base object.')
         if at_end:
             all_iobjs = iobjs + [self._inkscape_obj]
         else:
             all_iobjs = [self._inkscape_obj] + iobjs
+
+        # Identify the differences among all the objects.
         attr2vals = diff_attributes(all_iobjs)
 
         # Add one <animate> element per attribute.
@@ -466,7 +469,7 @@ class SimpleObject(object):
 
         # Remove all given objects from the top-level set of objects.
         global _simple_objs
-        rem_objs = set(objs)
+        rem_objs = set([o for o in objs if o is not self])
         _simple_objs = [o for o in _simple_objs if o not in rem_objs]
 
 
