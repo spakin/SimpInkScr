@@ -103,7 +103,7 @@ def diff_attributes(objs):
         return {}  # Too few objects on which to compute differences
     obj_types = set([type(o) for o in objs])
     if len(obj_types) != 1:
-        abend('Objects are not all of the same type (%s)' % str(obj_types))
+        _abend('Objects are not all of the same type (%s)' % str(obj_types))
 
     # For each attribute in the first object, produce a list of
     # corresponding attributes in all other objects.
@@ -341,8 +341,8 @@ class SimpleObject(object):
                 anim.set('end', str(end_time))
             if key_times is not None:
                 if len(key_times) != len(iobjs):
-                    abend('Expected %d key times but saw %d' %
-                          (len(iobjs), len(key_times)))
+                    _abend('Expected %d key times but saw %d' %
+                           (len(iobjs), len(key_times)))
                 anim.set('keyTimes', '; '.join([str(kt) for kt in key_times]))
             if repeat_count is not None:
                 anim.set('repeatCount', str(repeat_count))
@@ -365,8 +365,8 @@ class SimpleObject(object):
             objs = [objs]
             iobjs = [o._inkscape_obj for o in objs]
         if iobjs != [] and not isinstance(iobjs[0], type(self._inkscape_obj)):
-            abend('All objects must have the same shape type '
-                  'as the base object.')
+            _abend('All objects must have the same shape type '
+                   'as the base object.')
         if at_end:
             all_iobjs = iobjs + [self._inkscape_obj]
         else:
@@ -386,8 +386,8 @@ class SimpleObject(object):
                 anim.set('end', str(end_time))
             if key_times is not None:
                 if len(key_times) != len(iobjs):
-                    abend('Expected %d key times but saw %d' %
-                          (len(iobjs), len(key_times)))
+                    _abend('Expected %d key times but saw %d' %
+                           (len(iobjs), len(key_times)))
                 anim.set('keyTimes', '; '.join([str(kt) for kt in key_times]))
             if repeat_count is not None:
                 anim.set('repeatCount', str(repeat_count))
@@ -411,8 +411,8 @@ class SimpleObject(object):
                 animMo.set('end', str(end_time))
             if key_times is not None:
                 if len(key_times) != len(iobjs):
-                    abend('Expected %d key times but saw %d' %
-                          (len(iobjs), len(key_times)))
+                    _abend('Expected %d key times but saw %d' %
+                           (len(iobjs), len(key_times)))
                 animMo.set('keyTimes',
                            '; '.join([str(kt) for kt in key_times]))
             if repeat_count is not None:
