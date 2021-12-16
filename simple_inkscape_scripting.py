@@ -128,6 +128,11 @@ def diff_attributes(objs):
     return attr2vals
 
 
+class Mpath(inkex.Use):
+    'Point to a path object.'
+    tag_name = 'mpath'
+
+
 class SimpleObject(object):
     'Encapsulate an Inkscape object and additional metadata.'
 
@@ -333,7 +338,8 @@ class SimpleObject(object):
 
     def animate(self, objs, duration=None,
                 begin_time=None, end_time=None, key_times=None,
-                repeat_count=None, repeat_time=None, keep=True):
+                repeat_count=None, repeat_time=None, keep=True,
+                calc_mode=None, path=None, path_rotate=None):
         "Animate the object through each of the given objects' appearance."
         # Identify the differences among all the objects.
         try:
@@ -368,9 +374,49 @@ class SimpleObject(object):
                 anim.set('repeatTime', str(repeat_time))
             if keep:
                 anim.set('fill', 'freeze')
+            if calc_mode is not None:
+                anim.set('calcMode', str(calc_mode))
             self._inkscape_obj.append(anim)
 
-        # Handle animated transform specially.
+        # Add an <animateMotion> element if a path was supplied.
+        if path is not None:
+            # Create an <animateMotion> element.
+            animMo = lxml.etree.Element('animateMotion')
+            if duration is not None:
+                animMo.set('dur', str(duration))
+            if begin_time is not None:
+                animMo.set('begin', str(begin_time))
+            if end_time is not None:
+                animMo.set('end', str(end_time))
+            if key_times is not None:
+                if len(key_times) != len(iobjs):
+                    abend('Expected %d key times but saw %d' %
+                          (len(iobjs), len(key_times)))
+                animMo.set('keyTimes',
+                           '; '.join([str(kt) for kt in key_times]))
+            if repeat_count is not None:
+                animMo.set('repeatCount', str(repeat_count))
+            if repeat_time is not None:
+                animMo.set('repeatTime', str(repeat_time))
+            if keep:
+                animMo.set('fill', 'freeze')
+            if calc_mode is not None:
+                animMo.set('calcMode', str(calc_mode))
+            if path_rotate is not None:
+                animMo.set('rotate', str(path_rotate))
+
+            # Insert an <mpath> child under <animateMotion> that links to
+            # the given path.
+            mpath = Mpath()
+            mpath.href = path._inkscape_obj.get_id()
+            animMo.append(mpath)
+
+            # Add the <animateMotion> to the target object.
+            self._inkscape_obj.append(animMo)
+
+        # Handle animated transforms specially because only one can apply
+        # to a given object.  We therefore add levels of grouping, each
+        # with one <animateTransform> applied to it, as necessary.
         self._animate_transforms([self._inkscape_obj] + iobjs, duration,
                                  begin_time, end_time, key_times,
                                  repeat_count, repeat_time, keep)
