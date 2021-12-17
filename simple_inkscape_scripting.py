@@ -98,12 +98,9 @@ def _abend(msg):
 def diff_attributes(objs):
     '''Given a list of ShapeElements, return a dictionary mapping an attribute
     name to a list of values it takes on across all of the ShapeElements.'''
-    # Abort on various error conditions.
+    # Do nothing if we don't have at least two objects.
     if len(objs) < 2:
         return {}  # Too few objects on which to compute differences
-    obj_types = set([type(o) for o in objs])
-    if len(obj_types) != 1:
-        _abend('Objects are not all of the same type (%s)' % str(obj_types))
 
     # For each attribute in the first object, produce a list of
     # corresponding attributes in all other objects.
@@ -112,7 +109,8 @@ def diff_attributes(objs):
         if a in ['id', 'style', 'transform']:
             continue
         vs = [o.get(a) for o in objs]
-        if len(set(vs)) > 1:
+        vs = [v for v in vs if v is not None]
+        if len(set(vs)) == len(objs):
             attr2vals[a] = vs
 
     # Handle styles specially.
@@ -123,7 +121,7 @@ def diff_attributes(objs):
             for o in objs:
                 obj_style = inkex.Style(o.get('style'))
                 vs.append(obj_style.get(a))
-            if len(set(vs)) > 1:
+            if len(set(vs)) == len(objs):
                 attr2vals[a] = vs
     return attr2vals
 
@@ -394,10 +392,6 @@ class SimpleObject(object):
         except TypeError:
             objs = [objs]
             iobjs = [o._inkscape_obj for o in objs]
-        for o in iobjs:
-            if not isinstance(o, type(self._inkscape_obj)):
-                _abend('All objects must have the same shape type '
-                       'as the base object.')
         if at_end:
             all_iobjs = iobjs + [self._inkscape_obj]
         else:
