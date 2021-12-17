@@ -315,8 +315,9 @@ class SimpleObject(object):
         return xform_list
 
     def _animate_transforms(self, objs, duration,
-                            begin_time, end_time, key_times,
-                            repeat_count, repeat_time, keep, attr_filter):
+                            begin_time, key_times,
+                            repeat_count, repeat_time,
+                            keep, attr_filter):
         'Specially handle animating transforms.'
         # Determine the transforms to apply.  We treat each transform as a
         # filterable attribute.
@@ -342,8 +343,6 @@ class SimpleObject(object):
                 anim.set('dur', str(duration))
             if begin_time is not None:
                 anim.set('begin', str(begin_time))
-            if end_time is not None:
-                anim.set('end', str(end_time))
             if key_times is not None:
                 if len(key_times) != len(iobjs):
                     _abend('Expected %d key times but saw %d' %
@@ -381,7 +380,7 @@ class SimpleObject(object):
         return '; '.join(['%.5g' % v for v in kt])
 
     def animate(self, objs=[], duration=None,
-                begin_time=None, end_time=None, key_times=None,
+                begin_time=None, key_times=None,
                 repeat_count=None, repeat_time=None, keep=True,
                 calc_mode=None, path=None, path_rotate=None,
                 at_end=False, attr_filter=None):
@@ -411,8 +410,6 @@ class SimpleObject(object):
                 anim.set('dur', str(duration))
             if begin_time is not None:
                 anim.set('begin', str(begin_time))
-            if end_time is not None:
-                anim.set('end', str(end_time))
             if key_times is not None:
                 kt_str = self._key_times_string(key_times,
                                                 len(all_iobjs),
@@ -436,8 +433,6 @@ class SimpleObject(object):
                 animMo.set('dur', str(duration))
             if begin_time is not None:
                 animMo.set('begin', str(begin_time))
-            if end_time is not None:
-                animMo.set('end', str(end_time))
             if key_times is not None:
                 kt_str = self._key_times_string(key_times,
                                                 len(all_iobjs),
@@ -467,8 +462,9 @@ class SimpleObject(object):
         # to a given object.  We therefore add levels of grouping, each
         # with one <animateTransform> applied to it, as necessary.
         self._animate_transforms(all_iobjs, duration,
-                                 begin_time, end_time, key_times,
-                                 repeat_count, repeat_time, keep, attr_filter)
+                                 begin_time, key_times,
+                                 repeat_count, repeat_time,
+                                 keep, attr_filter)
 
         # Remove all given objects from the top-level set of objects.
         global _simple_objs
