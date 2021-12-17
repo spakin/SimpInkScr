@@ -239,6 +239,7 @@ class SimpleObject(object):
             self._transform = xform
         else:
             self._transform = inkex.Transform(xform)
+        self._apply_transform()
 
     def _apply_transform(self):
         "Apply the SimpleObject's transform to the underlying SVG object."
