@@ -351,7 +351,7 @@ class SimpleObject(object):
             if repeat_count is not None:
                 anim.set('repeatCount', str(repeat_count))
             if repeat_time is not None:
-                anim.set('repeatTime', str(repeat_time))
+                anim.set('repeatDur', str(repeat_time))
             if keep:
                 anim.set('fill', 'freeze')
             target._inkscape_obj.append(anim)
@@ -418,7 +418,7 @@ class SimpleObject(object):
             if repeat_count is not None:
                 anim.set('repeatCount', str(repeat_count))
             if repeat_time is not None:
-                anim.set('repeatTime', str(repeat_time))
+                anim.set('repeatDur', str(repeat_time))
             if keep:
                 anim.set('fill', 'freeze')
             if calc_mode is not None:
@@ -441,7 +441,7 @@ class SimpleObject(object):
             if repeat_count is not None:
                 animMo.set('repeatCount', str(repeat_count))
             if repeat_time is not None:
-                animMo.set('repeatTime', str(repeat_time))
+                animMo.set('repeatDur', str(repeat_time))
             if keep:
                 animMo.set('fill', 'freeze')
             if calc_mode is not None:
