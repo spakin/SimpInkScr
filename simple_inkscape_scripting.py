@@ -317,11 +317,17 @@ class SimpleObject(object):
 
     def _animate_transforms(self, objs, duration,
                             begin_time, end_time, key_times,
-                            repeat_count, repeat_time, keep):
+                            repeat_count, repeat_time, keep, attr_filter):
         'Specially handle animating transforms.'
+        # Determine the transforms to apply.  We treat each transform as a
+        # filterable attribute.
         xforms = self._diff_transforms(objs)
+        if attr_filter is not None:
+            xforms = [xf for xf in xforms if attr_filter(xf[0])]
         if len(xforms) == 0:
             return  # No transforms to animate
+
+        # Animate each transform in turn.
         target = self
         for i, xf in enumerate(xforms):
             # Only one transform animation can be applied per object.
@@ -379,7 +385,7 @@ class SimpleObject(object):
                 begin_time=None, end_time=None, key_times=None,
                 repeat_count=None, repeat_time=None, keep=True,
                 calc_mode=None, path=None, path_rotate=None,
-                at_end=False):
+                at_end=False, attr_filter=None):
         "Animate the object through each of the given objects' appearance."
         # Prepare the list of objects.
         try:
@@ -398,6 +404,8 @@ class SimpleObject(object):
 
         # Identify the differences among all the objects.
         attr2vals = diff_attributes(all_iobjs)
+        if attr_filter is not None:
+            attr2vals = {k: v for k, v in attr2vals.items() if attr_filter(k)}
 
         # Add one <animate> element per attribute.
         for a, vs in attr2vals.items():
@@ -465,7 +473,7 @@ class SimpleObject(object):
         # with one <animateTransform> applied to it, as necessary.
         self._animate_transforms(all_iobjs, duration,
                                  begin_time, end_time, key_times,
-                                 repeat_count, repeat_time, keep)
+                                 repeat_count, repeat_time, keep, attr_filter)
 
         # Remove all given objects from the top-level set of objects.
         global _simple_objs
