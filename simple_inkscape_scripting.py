@@ -356,7 +356,7 @@ class SimpleObject(object):
                 anim.set('fill', 'freeze')
             target._inkscape_obj.append(anim)
 
-    def _key_times_string(self, key_times, num_objs, calc_mode):
+    def _key_times_string(self, key_times, num_objs, interpolation):
         'Validate key-time values before converting them to a string.'
         # Ensure the argument is the correct type (list of floats) and
         # length and is ordered correctly.
@@ -368,12 +368,12 @@ class SimpleObject(object):
             _abend('Expected a list of %d key times but saw %d' %
                    (num_objs, len(kt)))
 
-        # Ensure the first and last values are as required by calc_mode.
-        if calc_mode is None:
-            calc_mode = 'linear'  # Default for SVG
-        if calc_mode in ['linear', 'spline', 'discrete'] and kt[0] != 0:
+        # Ensure the first and last values are as required by interpolation.
+        if interpolation is None:
+            interpolation = 'linear'  # Default for SVG
+        if interpolation in ['linear', 'spline', 'discrete'] and kt[0] != 0:
             _abend('The first key time must be 0: %s' % repr(kt))
-        if calc_mode in ['linear', 'spline'] and kt[-1] != 1:
+        if interpolation in ['linear', 'spline'] and kt[-1] != 1:
             _abend('The final key time must be 1: %s' % repr(kt))
 
         # Convert the key times to a string, and return it.
@@ -382,7 +382,7 @@ class SimpleObject(object):
     def animate(self, objs=[], duration=None,
                 begin_time=None, key_times=None,
                 repeat_count=None, repeat_time=None, keep=True,
-                calc_mode=None, path=None, path_rotate=None,
+                interpolation=None, path=None, path_rotate=None,
                 at_end=False, attr_filter=None):
         "Animate the object through each of the given objects' appearance."
         # Prepare the list of objects.
@@ -413,7 +413,7 @@ class SimpleObject(object):
             if key_times is not None:
                 kt_str = self._key_times_string(key_times,
                                                 len(all_iobjs),
-                                                calc_mode)
+                                                interpolation)
                 anim.set('keyTimes', kt_str)
             if repeat_count is not None:
                 anim.set('repeatCount', str(repeat_count))
@@ -421,8 +421,8 @@ class SimpleObject(object):
                 anim.set('repeatDur', str(repeat_time))
             if keep:
                 anim.set('fill', 'freeze')
-            if calc_mode is not None:
-                anim.set('calcMode', str(calc_mode))
+            if interpolation is not None:
+                anim.set('calcMode', str(interpolation))
             self._inkscape_obj.append(anim)
 
         # Add an <animateMotion> element if a path was supplied.
@@ -436,7 +436,7 @@ class SimpleObject(object):
             if key_times is not None:
                 kt_str = self._key_times_string(key_times,
                                                 len(all_iobjs),
-                                                calc_mode)
+                                                interpolation)
                 anim.set('keyTimes', kt_str)
             if repeat_count is not None:
                 animMo.set('repeatCount', str(repeat_count))
@@ -444,8 +444,8 @@ class SimpleObject(object):
                 animMo.set('repeatDur', str(repeat_time))
             if keep:
                 animMo.set('fill', 'freeze')
-            if calc_mode is not None:
-                animMo.set('calcMode', str(calc_mode))
+            if interpolation is not None:
+                animMo.set('calcMode', str(interpolation))
             if path_rotate is not None:
                 animMo.set('rotate', str(path_rotate))
 
