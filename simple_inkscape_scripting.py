@@ -472,6 +472,15 @@ class SimpleObject(object):
         _simple_objs = [o for o in _simple_objs if o not in rem_objs]
 
 
+class SimpleMarker(SimpleObject):
+    'Represent a path marker, which wraps an arbitrary object.'
+
+    def __init__(self, obj, **style):
+        super().__init__(obj, transform=None, conn_avoid=False,
+                         clip_path_obj=None, base_style={}, obj_style=style,
+                         track=True)
+
+
 class SimpleGroup(SimpleObject):
     'Represent a group of objects.'
 
@@ -1029,6 +1038,28 @@ def clip_path(obj, clip_units=None):
     obj._apply_transform()
     clip.add(obj)
     return clip
+
+
+def marker(obj, x=None, y=None, orient='auto', marker_units=None,
+           view_box=None, **style):
+    'Convert an object to a marker.'
+    global _simple_objs
+    _simple_objs = [o for o in _simple_objs if o is not obj]
+    m = inkex.Marker(obj._inkscape_obj.copy())  # Copy so we can reuse obj.
+    if x is not None:
+        m.set('refX', str(x))
+    if y is not None:
+        m.set('refY', str(y))
+    m.set('orient', str(orient))
+    if marker_units is not None:
+        m.set('markerUnits', marker_units)
+    if view_box == 'auto':
+        bb = obj.bounding_box()
+        m.set('viewBox', '%.5g %.5g %.5g %.5g' %
+              (bb.left, bb.top, bb.width, bb.height))
+    elif view_box is not None:
+        m.set('viewBox', str(view_box))
+    return SimpleMarker(m, **style).to_def()
 
 
 # ----------------------------------------------------------------------
