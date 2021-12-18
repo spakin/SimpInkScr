@@ -1058,7 +1058,10 @@ def marker(obj, x=None, y=None, orient='auto', marker_units=None,
         m.set('viewBox', '%.5g %.5g %.5g %.5g' %
               (bb.left, bb.top, bb.width, bb.height))
     elif view_box is not None:
-        m.set('viewBox', str(view_box))
+        ul, lr = view_box
+        x0, y0 = ul
+        x1, y1 = lr
+        m.set('viewBox', '%.5g %.5g %.5g %.5g' % (x0, y0, x1 - x0, y1 - y0))
     return SimpleMarker(m, **style).to_def()
 
 

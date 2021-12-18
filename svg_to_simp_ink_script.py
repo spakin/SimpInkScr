@@ -664,6 +664,38 @@ class SvgToPythonScript(inkex.OutputExtension):
             code = ['clip_path(%s, clip_units=%s)' % (p_var, repr(c_units))]
         return self.Statement(code, node.get_id(), [p_var])
 
+    def convert_marker(self, node):
+        'Return Python code that defines a marker.'
+        # Extract all of the parameters that define the shape.
+        x, y = node.get('refX'), node.get('refY')
+        orient = node.get('orient')
+        m_units = node.get('markerUnits')
+        v_box = node.get('viewBox')
+        extra, extra_deps = self.extra_args(node, {}, {})
+        shape_var = self.Statement.id2var(node[0].get_id())
+
+        # Construct a list of optional arguments.
+        marker_args = []
+        if x is not None:
+            marker_args.append('x=%s' % x)
+        if y is not None:
+            marker_args.append('y=%s' % y)
+        if orient is not None:
+            marker_args.append('orient=%s' % repr(orient))
+        if m_units is not None:
+            marker_args.append('marker_units=%s' % repr(m_units))
+        if v_box is not None:
+            x0, y0, wd, ht = [float(c) for c in v_box.split()]
+            marker_args.append('view_box=((%.5g, %.5g), (%.5g, %.5g))' %
+                               (x0, y0, x0 + wd, y0 + ht))
+
+        # Generate code and wrap it in a statement.
+        m_arg_str = ', '.join(marker_args)
+        if m_arg_str != '':
+            m_arg_str = ', ' + m_arg_str
+        code = ['marker(%s%s%s)' % (shape_var, m_arg_str, extra)]
+        return self.Statement(code, node.get_id(), [shape_var] + extra_deps)
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -681,7 +713,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:filter | '
                                    '//svg:linearGradient | '
                                    '//svg:radialGradient | '
-                                   '//svg:clipPath'):
+                                   '//svg:clipPath | '
+                                   '//svg:marker'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -712,6 +745,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_radial_gradient(node))
             elif isinstance(node, inkex.ClipPath):
                 stmts.append(self.convert_clip_path(node))
+            elif isinstance(node, inkex.Marker):
+                stmts.append(self.convert_marker(node))
             else:
                 inkex.utils.errormsg(_('Internal error converting %s' %
                                        repr(node)))
