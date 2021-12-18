@@ -14,9 +14,9 @@ v = polyline([(0, 0), (2, 2), (0, 4)],
 def draw_arrow(begin, end, color, **style):
     'Draw an arrow from given beginning to given ending coordinates.'
     # Define beginning, middle, and ending markers.
-    arrowhead = marker(tri, x=1, y=2, fill=color, stroke='none')
+    arrowhead = marker(tri, ref=(1, 2), fill=color, stroke='none')
     dot = marker(circ, fill=color, stroke='none')
-    chevron = marker(v, x=2, y=2, fill='none',
+    chevron = marker(v, ref=(2, 2), fill='none',
                      stroke=color, stroke_width=0.5, stroke_linecap='round')
 
     # Draw the arrow as a polyline with markers.  We use a polyline

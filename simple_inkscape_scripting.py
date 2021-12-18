@@ -1040,16 +1040,15 @@ def clip_path(obj, clip_units=None):
     return clip
 
 
-def marker(obj, x=None, y=None, orient='auto', marker_units=None,
+def marker(obj, ref=None, orient='auto', marker_units=None,
            view_box=None, **style):
     'Convert an object to a marker.'
     global _simple_objs
     _simple_objs = [o for o in _simple_objs if o is not obj]
     m = inkex.Marker(obj._inkscape_obj.copy())  # Copy so we can reuse obj.
-    if x is not None:
-        m.set('refX', str(x))
-    if y is not None:
-        m.set('refY', str(y))
+    if ref is not None:
+        m.set('refX', str(ref[0]))
+        m.set('refY', str(ref[1]))
     m.set('orient', str(orient))
     if marker_units is not None:
         m.set('markerUnits', marker_units)

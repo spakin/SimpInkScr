@@ -694,10 +694,8 @@ class SvgToPythonScript(inkex.OutputExtension):
 
         # Construct a list of optional arguments.
         marker_args = []
-        if x is not None:
-            marker_args.append('x=%s' % x)
-        if y is not None:
-            marker_args.append('y=%s' % y)
+        if x is not None or y is not None:
+            marker_args.append('ref=(%s, %s)' % (x or '0', y or '0'))
         if orient is not None:
             marker_args.append('orient=%s' % repr(orient))
         if m_units is not None:
