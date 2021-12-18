@@ -24,6 +24,7 @@ import inkex
 import PIL.Image
 import base64
 import io
+import lxml
 import os
 import re
 import sys
@@ -92,6 +93,42 @@ def _abend(msg):
     'Abnormally end execution with an error message.'
     inkex.utils.errormsg(msg)
     sys.exit(1)
+
+
+def diff_attributes(objs):
+    '''Given a list of ShapeElements, return a dictionary mapping an attribute
+    name to a list of values it takes on across all of the ShapeElements.'''
+    # Do nothing if we don't have at least two objects.
+    if len(objs) < 2:
+        return {}  # Too few objects on which to compute differences
+
+    # For each attribute in the first object, produce a list of
+    # corresponding attributes in all other objects.
+    attr2vals = {}
+    for a in objs[0].attrib:
+        if a in ['id', 'style', 'transform']:
+            continue
+        vs = [o.get(a) for o in objs]
+        vs = [v for v in vs if v is not None]
+        if len(set(vs)) == len(objs):
+            attr2vals[a] = vs
+
+    # Handle styles specially.
+    if objs[0].get('style') is not None:
+        style = inkex.Style(objs[0].get('style'))
+        for a in style:
+            vs = []
+            for o in objs:
+                obj_style = inkex.Style(o.get('style'))
+                vs.append(obj_style.get(a))
+            if len(set(vs)) == len(objs):
+                attr2vals[a] = vs
+    return attr2vals
+
+
+class Mpath(inkex.Use):
+    'Point to a path object.'
+    tag_name = 'mpath'
 
 
 class SimpleObject(object):
@@ -200,11 +237,239 @@ class SimpleObject(object):
             self._transform = xform
         else:
             self._transform = inkex.Transform(xform)
+        self._apply_transform()
 
     def _apply_transform(self):
         "Apply the SimpleObject's transform to the underlying SVG object."
         if self._transform != self._inkscape_obj.transform:
             self._inkscape_obj.set('transform', self._transform)
+
+    def _diff_transforms(self, objs):
+        'Return a list of transformations to animate.'
+        # Determine if any object has a different transformation from any
+        # other.
+        xforms = [o.get('transform') for o in objs]
+        if all([x is None for x in xforms]):
+            return []  # No transform on any object: nothing to animate.
+        for i, x in enumerate(xforms):
+            if x is None:
+                xforms[i] = inkex.Transform()
+            else:
+                xforms[i] = inkex.Transform(x)
+        if len(set([str(x) for x in xforms])) == 1:
+            return []  # All transforms are identical: nothing to animate.
+        hexads = [list(x.to_hexad()) for x in xforms]
+
+        # Find changes in translation.
+        xlate_values = []
+        for h in hexads:
+            xlate_values.append('%.5g %.5g' % (h[4], h[5]))
+
+        # Find changes in scale.
+        scale_values = []
+        for i, h in enumerate(hexads):
+            sx = sqrt(h[0]**2 + h[1]**2)
+            sy = sqrt(h[2]**2 + h[3]**2)
+            if abs(sx - sy) <= 0.00001:
+                scale_values.append('%.5g' % ((sx + sy)/2))
+            else:
+                scale_values.append('%.5g %.5g' % (sx, sy))
+            h[0] /= sx
+            h[1] /= sx
+            h[2] /= sy
+            h[3] /= sy
+            hexads[i] = h
+
+        # Find changes in rotation, initially as numeric radians.
+        rot_values = []
+        for h in hexads:
+            # Ignore transforms with inconsistent rotation angles.
+            angles = [acos(h[0]), asin(h[1]), asin(-h[2]), acos(h[3])]
+            if abs(angles[0] - angles[3]) > 0.00001 or \
+               abs(angles[1] - angles[2]) > 0.00001:
+                return []   # Transform is too complicated for us to handle.
+
+            # Determine the angle in the correct quadrant.
+            if h[0] >= 0 and h[1] >= 0:
+                ang = angles[0]
+            elif h[0] < 0 and h[1] >= 0:
+                ang = angles[0]
+            elif h[0] < 0 and h[1] < 0:
+                ang = pi - angles[1]
+            else:
+                ang = 2*pi + angles[1]
+            rot_values.append(ang)
+
+        # Convert changes in rotation from radians to degrees and floats to
+        # strings.
+        rot_values = ['%.5g' % (r*180/pi) for r in rot_values]
+
+        # Return a list of transformations to apply.
+        xform_list = []
+        if len(set(scale_values)) == len(objs):
+            xform_list.append(('scale', scale_values))
+        if len(set(rot_values)) == len(objs):
+            xform_list.append(('rotate', rot_values))
+        if len(set(xlate_values)) == len(objs):
+            xform_list.append(('translate', xlate_values))
+        return xform_list
+
+    def _animate_transforms(self, objs, duration,
+                            begin_time, key_times,
+                            repeat_count, repeat_time,
+                            keep, attr_filter):
+        'Specially handle animating transforms.'
+        # Determine the transforms to apply.  We treat each transform as a
+        # filterable attribute.
+        xforms = self._diff_transforms(objs)
+        if attr_filter is not None:
+            xforms = [xf for xf in xforms if attr_filter(xf[0])]
+        if len(xforms) == 0:
+            return  # No transforms to animate
+
+        # Animate each transform in turn.
+        target = self
+        for i, xf in enumerate(xforms):
+            # Only one transform animation can be applied per object.
+            # Hence, we keep wrapping the object in successive levels of
+            # groups and apply one transform to each group.
+            if i > 0:
+                target = group(target)
+            anim = lxml.etree.Element('animateTransform')
+            anim.set('attributeName', 'transform')
+            anim.set('type', xf[0])
+            anim.set('values', '; '.join(xf[1]))
+            if duration is not None:
+                anim.set('dur', str(duration))
+            if begin_time is not None:
+                anim.set('begin', str(begin_time))
+            if key_times is not None:
+                if len(key_times) != len(iobjs):
+                    _abend('Expected %d key times but saw %d' %
+                           (len(iobjs), len(key_times)))
+                anim.set('keyTimes', '; '.join([str(kt) for kt in key_times]))
+            if repeat_count is not None:
+                anim.set('repeatCount', str(repeat_count))
+            if repeat_time is not None:
+                anim.set('repeatDur', str(repeat_time))
+            if keep:
+                anim.set('fill', 'freeze')
+            target._inkscape_obj.append(anim)
+
+    def _key_times_string(self, key_times, num_objs, interpolation):
+        'Validate key-time values before converting them to a string.'
+        # Ensure the argument is the correct type (list of floats) and
+        # length and is ordered correctly.
+        orig_kt = [float(v) for v in key_times]
+        kt = sorted(orig_kt)
+        if kt != orig_kt:
+            _abend('Key times must be sorted: %s' % repr(orig_kt))
+        if len(kt) != num_objs:
+            _abend('Expected a list of %d key times but saw %d' %
+                   (num_objs, len(kt)))
+
+        # Ensure the first and last values are as required by interpolation.
+        if interpolation is None:
+            interpolation = 'linear'  # Default for SVG
+        if interpolation in ['linear', 'spline', 'discrete'] and kt[0] != 0:
+            _abend('The first key time must be 0: %s' % repr(kt))
+        if interpolation in ['linear', 'spline'] and kt[-1] != 1:
+            _abend('The final key time must be 1: %s' % repr(kt))
+
+        # Convert the key times to a string, and return it.
+        return '; '.join(['%.5g' % v for v in kt])
+
+    def animate(self, objs=[], duration=None,
+                begin_time=None, key_times=None,
+                repeat_count=None, repeat_time=None, keep=True,
+                interpolation=None, path=None, path_rotate=None,
+                at_end=False, attr_filter=None):
+        "Animate the object through each of the given objects' appearance."
+        # Prepare the list of objects.
+        try:
+            iobjs = [o._inkscape_obj for o in objs]
+        except TypeError:
+            objs = [objs]
+            iobjs = [o._inkscape_obj for o in objs]
+        if at_end:
+            all_iobjs = iobjs + [self._inkscape_obj]
+        else:
+            all_iobjs = [self._inkscape_obj] + iobjs
+
+        # Identify the differences among all the objects.
+        attr2vals = diff_attributes(all_iobjs)
+        if attr_filter is not None:
+            attr2vals = {k: v for k, v in attr2vals.items() if attr_filter(k)}
+
+        # Add one <animate> element per attribute.
+        for a, vs in attr2vals.items():
+            anim = lxml.etree.Element('animate')
+            anim.set('attributeName', a)
+            anim.set('values', '; '.join(vs))
+            if duration is not None:
+                anim.set('dur', str(duration))
+            if begin_time is not None:
+                anim.set('begin', str(begin_time))
+            if key_times is not None:
+                kt_str = self._key_times_string(key_times,
+                                                len(all_iobjs),
+                                                interpolation)
+                anim.set('keyTimes', kt_str)
+            if repeat_count is not None:
+                anim.set('repeatCount', str(repeat_count))
+            if repeat_time is not None:
+                anim.set('repeatDur', str(repeat_time))
+            if keep:
+                anim.set('fill', 'freeze')
+            if interpolation is not None:
+                anim.set('calcMode', str(interpolation))
+            self._inkscape_obj.append(anim)
+
+        # Add an <animateMotion> element if a path was supplied.
+        if path is not None:
+            # Create an <animateMotion> element.
+            animMo = lxml.etree.Element('animateMotion')
+            if duration is not None:
+                animMo.set('dur', str(duration))
+            if begin_time is not None:
+                animMo.set('begin', str(begin_time))
+            if key_times is not None:
+                kt_str = self._key_times_string(key_times,
+                                                len(all_iobjs),
+                                                interpolation)
+                anim.set('keyTimes', kt_str)
+            if repeat_count is not None:
+                animMo.set('repeatCount', str(repeat_count))
+            if repeat_time is not None:
+                animMo.set('repeatDur', str(repeat_time))
+            if keep:
+                animMo.set('fill', 'freeze')
+            if interpolation is not None:
+                animMo.set('calcMode', str(interpolation))
+            if path_rotate is not None:
+                animMo.set('rotate', str(path_rotate))
+
+            # Insert an <mpath> child under <animateMotion> that links to
+            # the given path.
+            mpath = Mpath()
+            mpath.href = path._inkscape_obj.get_id()
+            animMo.append(mpath)
+
+            # Add the <animateMotion> to the target object.
+            self._inkscape_obj.append(animMo)
+
+        # Handle animated transforms specially because only one can apply
+        # to a given object.  We therefore add levels of grouping, each
+        # with one <animateTransform> applied to it, as necessary.
+        self._animate_transforms(all_iobjs, duration,
+                                 begin_time, key_times,
+                                 repeat_count, repeat_time,
+                                 keep, attr_filter)
+
+        # Remove all given objects from the top-level set of objects.
+        global _simple_objs
+        rem_objs = set([o for o in objs if o is not self])
+        _simple_objs = [o for o in _simple_objs if o not in rem_objs]
 
 
 class SimpleGroup(SimpleObject):
