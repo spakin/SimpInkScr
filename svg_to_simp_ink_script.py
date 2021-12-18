@@ -119,6 +119,12 @@ class SvgToPythonScript(inkex.OutputExtension):
     def style_args(self, node, def_svg_style, def_sis_style):
         """Return an SVG node's style string as key=value arguments.  Also
         return additional object dependencies from url(#...) values."""
+        # As a special case, if we're within a <marker> element, force
+        # the default styles to empty.
+        if node.get('sis_within_marker') == 'true':
+            def_svg_style = {'stroke': None,
+                             'fill': None}
+
         # Convert the style string to a dictionary.
         style = node.get('style')
         style_dict = def_svg_style.copy()
@@ -154,7 +160,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Replace "url(#...)" values with object references.
         url_ids = set()
         for k, v in style_dict.items():
-            if v[:6] == "'url(#":
+            if v is not None and v[:6] == "'url(#":
                 v = v[6:-2]
                 url_ids.add(v)
                 style_dict[k] = self.Statement.id2var(v)
@@ -181,6 +187,13 @@ class SvgToPythonScript(inkex.OutputExtension):
         deps.update(c_deps)
         deps.update(s_deps)
         return ''.join(args), list(deps)
+
+    def set_within_marker(self, node):
+        '''Recursively mark a node and all its children as lying within an
+        SVG <marker> element.'''
+        node.set('sis_within_marker', 'true')
+        for child in node:
+            self.set_within_marker(child)
 
     def convert_circle(self, node):
         'Return Python code for drawing a circle.'
@@ -666,6 +679,11 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def convert_marker(self, node):
         'Return Python code that defines a marker.'
+        # Mark all of our descendants as lying within a marker.  This
+        # suppresses the use of default styles.
+        for child in node:
+            self.set_within_marker(child)
+
         # Extract all of the parameters that define the shape.
         x, y = node.get('refX'), node.get('refY')
         orient = node.get('orient')
