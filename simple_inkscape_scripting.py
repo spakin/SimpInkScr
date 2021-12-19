@@ -549,6 +549,15 @@ class SimpleClippingPath(SimpleGroup):
         _svg_root.defs.add(self._inkscape_obj)
 
 
+class SimpleHyperlink(SimpleGroup):
+    'Represent a hyperlink.'
+
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
+                 obj_style):
+        super().__init__(obj, transform, conn_avoid, clip_path_obj, base_style,
+                         obj_style, track=True)
+
+
 class SimpleFilter(object):
     'Represent an SVG filter effect.'
 
@@ -1000,6 +1009,29 @@ def layer(name, objs=[], transform=None, conn_avoid=False, clip_path=None,
     l_obj = SimpleLayer(layer, transform, conn_avoid, clip_path, {}, style)
     l_obj.add(objs)
     return l_obj
+
+
+def hyperlink(objs, href, title=None, target=None, mime_type=None,
+              transform=None, conn_avoid=False, clip_path=None, **style):
+    'Hyperlink one or more objects to a given URI.'
+    anc = inkex.Anchor()
+    anc.set('{http://www.w3.org/1999/xlink}href', href)  # Older SVG
+    anc.set('href', href)                                # Newer SVG
+    if title is not None:
+        # Inkscape uses primarily the older SVG xlink:title attribute.
+        anc.set('{http://www.w3.org/1999/xlink}title', title)
+
+        # Newer SVG files should include a <title> element.
+        t_obj = lxml.etree.Element('title')
+        t_obj.text = title
+        anc.append(t_obj)
+    if target is not None:
+        anc.set('target', target)
+    if mime_type is not None:
+        anc.set('type', mime_type)
+    anc_obj = SimpleHyperlink(anc, transform, conn_avoid, clip_path, {}, style)
+    anc_obj.add(objs)
+    return anc_obj
 
 
 def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
