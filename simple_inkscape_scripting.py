@@ -95,37 +95,6 @@ def _abend(msg):
     sys.exit(1)
 
 
-def diff_attributes(objs):
-    '''Given a list of ShapeElements, return a dictionary mapping an attribute
-    name to a list of values it takes on across all of the ShapeElements.'''
-    # Do nothing if we don't have at least two objects.
-    if len(objs) < 2:
-        return {}  # Too few objects on which to compute differences
-
-    # For each attribute in the first object, produce a list of
-    # corresponding attributes in all other objects.
-    attr2vals = {}
-    for a in objs[0].attrib:
-        if a in ['id', 'style', 'transform']:
-            continue
-        vs = [o.get(a) for o in objs]
-        vs = [v for v in vs if v is not None]
-        if len(set(vs)) == len(objs):
-            attr2vals[a] = vs
-
-    # Handle styles specially.
-    if objs[0].get('style') is not None:
-        style = inkex.Style(objs[0].get('style'))
-        for a in style:
-            vs = []
-            for o in objs:
-                obj_style = inkex.Style(o.get('style'))
-                vs.append(obj_style.get(a))
-            if len(set(vs)) == len(objs):
-                attr2vals[a] = vs
-    return attr2vals
-
-
 class Mpath(inkex.Use):
     'Point to a path object.'
     tag_name = 'mpath'
@@ -356,6 +325,37 @@ class SimpleObject(object):
                 anim.set('fill', 'freeze')
             target._inkscape_obj.append(anim)
 
+    def _diff_attributes(self, objs):
+        '''Given a list of ShapeElements, return a dictionary mapping an
+        attribute name to a list of values it takes on across all of the
+        ShapeElements.'''
+        # Do nothing if we don't have at least two objects.
+        if len(objs) < 2:
+            return {}  # Too few objects on which to compute differences
+
+        # For each attribute in the first object, produce a list of
+        # corresponding attributes in all other objects.
+        attr2vals = {}
+        for a in objs[0].attrib:
+            if a in ['id', 'style', 'transform']:
+                continue
+            vs = [o.get(a) for o in objs]
+            vs = [v for v in vs if v is not None]
+            if len(set(vs)) == len(objs):
+                attr2vals[a] = vs
+
+        # Handle styles specially.
+        if objs[0].get('style') is not None:
+            style = inkex.Style(objs[0].get('style'))
+            for a in style:
+                vs = []
+                for o in objs:
+                    obj_style = inkex.Style(o.get('style'))
+                    vs.append(obj_style.get(a))
+                if len(set(vs)) == len(objs):
+                    attr2vals[a] = vs
+        return attr2vals
+
     def _key_times_string(self, key_times, num_objs, interpolation):
         'Validate key-time values before converting them to a string.'
         # Ensure the argument is the correct type (list of floats) and
@@ -397,7 +397,7 @@ class SimpleObject(object):
             all_iobjs = [self._inkscape_obj] + iobjs
 
         # Identify the differences among all the objects.
-        attr2vals = diff_attributes(all_iobjs)
+        attr2vals = self._diff_attributes(all_iobjs)
         if attr_filter is not None:
             attr2vals = {k: v for k, v in attr2vals.items() if attr_filter(k)}
 
