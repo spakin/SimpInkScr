@@ -1,6 +1,8 @@
-# Use Simple Inkscape Scripting to draw a binary tree.  The canvas
-# should be about as wide as A4 or U.S. Letter paper to avoid node
-# overlap in the deepest level of the tree.
+####################################################################
+# Use Simple Inkscape Scripting to draw a binary tree.  The canvas #
+# should be about as wide as A4 or U.S. Letter paper to avoid node #
+# overlap in the deepest level of the tree.                        #
+####################################################################
 
 def tree_from(cx, cy, rad, hsep, vsep, depth, max_depth):
     'Recursively draw a binary tree.'

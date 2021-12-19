@@ -1,5 +1,7 @@
-# Use Simple Inkscape Scripting to draw a spiral out of Inkscape logos
-# downloaded from the Web.
+########################################################################
+# Use Simple Inkscape Scripting to draw a spiral out of Inkscape logos #
+# downloaded from the Web.                                             #
+########################################################################
 
 img_src = 'https://media.inkscape.org/static/images/inkscape-logo.png'
 img = image(img_src, (0, 0), embed=False, transform='scale(0.5)').to_def()

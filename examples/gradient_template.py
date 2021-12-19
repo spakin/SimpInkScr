@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to show how to reuse a gradient pattern.
+##########################################################################
+# Use Simple Inkscape Scripting to show how to reuse a gradient pattern. #
+##########################################################################
 
 edge = 100  # Size of each edge
 

@@ -1,5 +1,7 @@
-# Use Simple Inkscape Scripting to flow text into a frame.
-# (The text shown is an original haiku by Scott Pakin, 26-Nov-2021.)
+######################################################################
+# Use Simple Inkscape Scripting to flow text into a frame.           #
+# (The text shown is an original haiku by Scott Pakin, 26-Nov-2021.) #
+######################################################################
 
 sun = path(['M', 0, 150,
             'C', 0, 68, 68, 0, 150, 0,

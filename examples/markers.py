@@ -1,5 +1,7 @@
-# Use Simple Inkscape Scripting to draw arrows with begin, middle, and
-# ending markers.
+########################################################################
+# Use Simple Inkscape Scripting to draw arrows with begin, middle, and #
+# ending markers.                                                      #
+########################################################################
 
 # Define a triangular arrowhead to use as an end marker, a large dot
 # to use as a begin marker, and a chevron to use as a middle marker.

@@ -1,5 +1,7 @@
-# Demonstrate the use of Simple Inkscape Scripting to create an SVG
-# SMIL animation.
+#####################################################################
+# Demonstrate the use of Simple Inkscape Scripting to create an SVG #
+# SMIL animation.                                                   #
+#####################################################################
 
 # Force the image to a known size.
 svg_root.set('width', 1024)

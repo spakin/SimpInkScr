@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to draw an unnumbered speedometer.
+####################################################################
+# Use Simple Inkscape Scripting to draw an unnumbered speedometer. #
+####################################################################
 
 # Define some drawing parameters.
 r1 = width/4

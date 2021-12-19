@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to fill a shape with a gradient pattern.
+##########################################################################
+# Use Simple Inkscape Scripting to fill a shape with a gradient pattern. #
+##########################################################################
 
 # Define a colorful gradient ranging from upper left to lower right.
 colorful = linear_gradient((0, 0), (1, 1))

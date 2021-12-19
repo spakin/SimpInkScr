@@ -1,5 +1,7 @@
-# Demonstrate how to apply a clipping path to a number of objects
-# using Simple Inkscape Scripting.
+###################################################################
+# Demonstrate how to apply a clipping path to a number of objects #
+# using Simple Inkscape Scripting.                                #
+###################################################################
 
 # Define a circular clipping path.
 edge = min(width, height)

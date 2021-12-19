@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to place text on a curved path.
+#################################################################
+# Use Simple Inkscape Scripting to place text on a curved path. #
+#################################################################
 
 curve = path(['M', 32, 381,
               'C', 112, 141, 144, 205, 224, 381,

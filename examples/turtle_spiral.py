@@ -1,5 +1,7 @@
-# Create a path using turtle graphics and render it using Simple
-# Inkscape Scripting.
+##################################################################
+# Create a path using turtle graphics and render it using Simple #
+# Inkscape Scripting.                                            #
+##################################################################
 
 from inkex import turtle as pturtle
 

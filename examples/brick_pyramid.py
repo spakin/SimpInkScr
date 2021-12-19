@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to draw a brick pyramid.
+##########################################################
+# Use Simple Inkscape Scripting to draw a brick pyramid. #
+##########################################################
 
 bwd, bht = 60, 30
 for row in range(1, 11):

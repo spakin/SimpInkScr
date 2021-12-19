@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to draw a circle with a drop shadow.
+######################################################################
+# Use Simple Inkscape Scripting to draw a circle with a drop shadow. #
+######################################################################
 
 # Define a drop shadow as an offset, blurred, black copy of the input
 # shape placed underneath a copy of the original object.

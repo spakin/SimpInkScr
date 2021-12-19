@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to draw concentric ellipses.
+##############################################################
+# Use Simple Inkscape Scripting to draw concentric ellipses. #
+##############################################################
 
 for i in range(10, 0, -1):
     ellipse((width/2, height/2), (i*30, i*20 + 10),

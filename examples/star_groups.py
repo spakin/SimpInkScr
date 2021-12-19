@@ -1,5 +1,7 @@
-# Use Simple Inkscape Scripting to draw rows of stars with the stars
-# in each row grouped together.
+######################################################################
+# Use Simple Inkscape Scripting to draw rows of stars with the stars #
+# in each row grouped together.                                      #
+######################################################################
 
 rad = width/50
 style(stroke_width=2)

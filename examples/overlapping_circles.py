@@ -1,5 +1,7 @@
-# Use Simple Inkscape Scripting to draw an array of hundreds of
-# overlapping circles.
+#################################################################
+# Use Simple Inkscape Scripting to draw an array of hundreds of #
+# overlapping circles.                                          #
+#################################################################
 
 rad = 30
 edge = 10

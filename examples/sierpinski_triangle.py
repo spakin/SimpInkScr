@@ -1,4 +1,6 @@
-# Use Simple Inkscape Scripting to draw a colorful Sierpinski triangle.
+#########################################################################
+# Use Simple Inkscape Scripting to draw a colorful Sierpinski triangle. #
+#########################################################################
 
 def eq_triangle(tx, ty, edge, **style):
     """Draw an equilateral triangle with a given top coordinate and
