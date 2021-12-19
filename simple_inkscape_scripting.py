@@ -1125,6 +1125,10 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         sis_globals['height'] = self.svg.height
         sis_globals['svg_root'] = self.svg
         sis_globals['print'] = _debug_print
+        for unit in ['mm', 'cm', 'pt', 'px']:
+            sis_globals[unit] = inkex.units.convert_unit('1' + unit, 'px')
+        sis_globals['inch'] = \
+            inkex.units.convert_unit('1in', 'px')  # "in" is a keyword.
 
         # Launch the user's script.
         code = ''
