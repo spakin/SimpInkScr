@@ -712,6 +712,39 @@ class SvgToPythonScript(inkex.OutputExtension):
         code = ['marker(%s%s%s)' % (shape_var, m_arg_str, extra)]
         return self.Statement(code, node.get_id(), [shape_var] + extra_deps)
 
+    def convert_hyperlink(self, node):
+        'Return Python code for wrapping objects within a hyperlink.'
+        # Construct a list of arguments.
+        link_args = []
+        href = node.get('href') or \
+            node.get('{http://www.w3.org/1999/xlink}href')
+        link_args.append(repr(href))
+        try:
+            title = [c for c in node if c.TAG == 'title'][0].text
+        except IndexError:
+            title = node.get('{http://www.w3.org/1999/xlink}title')
+        if title is not None:
+            link_args.append('title=%s' % repr(title))
+        target = node.get('target')
+        if target is not None:
+            link_args.append('target=%s' % repr(target))
+        mime_type = node.get('type')
+        if mime_type is not None:
+            link_args.append('mime_type=%s' % repr(mime_type))
+        link_args_str = ', '.join(link_args)
+        extra, extra_deps = self.extra_args(node, {}, {})
+
+        # Generate code and wrap it in a statement.
+        child_ids = [c.get_id() for c in node if c.TAG != 'title']
+        child_vars = [self.Statement.id2var(i) for i in child_ids]
+        if len(child_vars) == 1:
+            child_vars_str = child_vars[0]
+        else:
+            child_vars_str = '[%s]' % (', '.join(child_vars))
+        code = ['hyperlink(%s, %s%s)' %
+                (child_vars_str, link_args_str, extra)]
+        return self.Statement(code, node.get_id(), child_ids + extra_deps)
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -730,7 +763,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:linearGradient | '
                                    '//svg:radialGradient | '
                                    '//svg:clipPath | '
-                                   '//svg:marker'):
+                                   '//svg:marker | '
+                                   '//svg:a'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -763,6 +797,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_clip_path(node))
             elif isinstance(node, inkex.Marker):
                 stmts.append(self.convert_marker(node))
+            elif isinstance(node, inkex.Anchor):
+                stmts.append(self.convert_hyperlink(node))
             else:
                 inkex.utils.errormsg(_('Internal error converting %s' %
                                        repr(node)))
