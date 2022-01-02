@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 '''
-Copyright (C) 2021 Scott Pakin, scott-ink@pakin.org
+Copyright (C) 2021-2022 Scott Pakin, scott-ink@pakin.org
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
