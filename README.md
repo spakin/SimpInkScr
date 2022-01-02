@@ -48,6 +48,8 @@ If Inkscape is already running, exit and restart it to make it look for new exte
 Usage
 -----
 
+### Python code to Inkscape
+
 Launch the Simple Inkscape Scripting extension from Inkscape via *Extensions* → *Render* → *Simple Inkscape Scripting…*.  This will bring up a dialog box that gives you the option to enter a filename for a Python program or enter Python code directly in a text box.  These options are not mutually exclusive; if both are used, the Python code in the file will be executed first, followed by the Python code in the text box.  This enables one, for example, to define functions in a file and invoke them with different parameters from the text box.
 
 As an initial test, try entering
@@ -55,6 +57,8 @@ As an initial test, try entering
 circle((100, 100), 50)
 ```
 into the text box and clicking *Apply* then *Close*.  This should create a black circle of radius 50 at position (100, 100).  Due to how "generate extensions" work, Inkscape always places the output of Simple Inkscape Scripting within a group so ungroup it if desired.
+
+### Inkscape to Python code
 
 Simple Inkscape Scripting can also *save* illustrations from the Inkscape GUI to a Python script that, when run, reproduces the original illustration.  (Note, though, that not all Inkscape features are currently supported.)  From *File* → *Save a Copy…*, simply select `Simple Inkscape Scripting script (*.py)` from the pull-down menu at the bottom of the dialog box.  This can be useful, for instance, for manually drawing a complex object then using Simple Inkscape Scripting to replicate and transform it.
 
