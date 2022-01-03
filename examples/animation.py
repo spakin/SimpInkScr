@@ -6,6 +6,7 @@
 # Force the image to a known size.
 svg_root.set('width', 1024)
 svg_root.set('height', 768)
+svg_root.set('viewBox', '0 0 1024 768')
 
 # Define the final configuration of the graphics.
 style(font_size='42pt', font_family='Arial Black; Arial, Bold; serif',
