@@ -1121,8 +1121,14 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         global _svg_root
         _svg_root = self.svg
         sis_globals = globals().copy()
-        sis_globals['width'] = self.svg.width
-        sis_globals['height'] = self.svg.height
+        try:
+            # Inkscape 1.2+
+            sis_globals['width'] = self.svg.viewport_width
+            sis_globals['height'] = self.svg.viewport_height
+        except AttributeError:
+            # Inkscape 1.0 and 1.1
+            sis_globals['width'] = self.svg.width
+            sis_globals['height'] = self.svg.height
         sis_globals['svg_root'] = self.svg
         sis_globals['print'] = _debug_print
         for unit in ['mm', 'cm', 'pt', 'px']:
@@ -1133,7 +1139,7 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         # Launch the user's script.
         code = ''
         py_source = self.options.py_source
-        if py_source != '' and not os.path.isdir(py_source):
+        if py_source is not None and not os.path.isdir(py_source):
             # The preceding test for isdir is explained in
             # https://gitlab.com/inkscape/inkscape/-/issues/2822
             with open(self.options.py_source) as fd:
