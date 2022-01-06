@@ -9,7 +9,7 @@ curve = path(['M', 32, 381,
               672, 621, 736, 573, 800, 381,
               848, 253, 896, 109, 992, 381],
              stroke='none')
-text('“May your dreams be larger than mountains and may '
-     'you have the courage to scale their summits.”  — Harley King',
+text('\u201cMay your dreams be larger than mountains and may '
+     'you have the courage to scale their summits.\u201d  \u2014 Harley King',
      (0, 0), path=curve, font_size='24pt',
      font_family='Abyssinica SIL, Times New Roman, serif')
