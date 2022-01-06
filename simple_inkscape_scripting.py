@@ -187,7 +187,7 @@ class SimpleObject(object):
         return self._inkscape_obj.bounding_box()
 
     def remove(self):
-        'Remove the current object from the image.'
+        'Remove the current object from the list of rendered objects.'
         global _simple_objs
         try:
             self.parent.ungroup(self)
@@ -198,8 +198,8 @@ class SimpleObject(object):
     def to_def(self):
         '''Convert the object to a definition, removing it from the list of
         rendered objects.'''
-        global _simple_objs, _svg_root
-        _simple_objs = [o for o in _simple_objs if o is not self]
+        global _svg_root
+        self.remove()
         _svg_root.defs.add(self._inkscape_obj)
         return self
 
@@ -477,9 +477,9 @@ class SimpleObject(object):
                                  keep, attr_filter)
 
         # Remove all given objects from the top-level set of objects.
-        global _simple_objs
-        rem_objs = set([o for o in objs if o is not self])
-        _simple_objs = [o for o in _simple_objs if o not in rem_objs]
+        for o in objs:
+            if o is not self:
+                o.remove()
 
 
 class SimpleMarker(SimpleObject):
@@ -512,7 +512,6 @@ class SimpleGroup(SimpleObject):
     def add(self, objs):
         'Add one or more SimpleObjects to the group.'
         # Ensure the addition is legitimate.
-        global _simple_objs
         if type(objs) != list:
             objs = [objs]   # Convert scalar to list
         for obj in objs:
@@ -527,7 +526,7 @@ class SimpleGroup(SimpleObject):
                          'or layer can be added to a group.'))
 
             # Remove the object from the top-level set of objects.
-            _simple_objs = [o for o in _simple_objs if o is not obj]
+            obj.remove()
 
             # Add the object to both the SimpleGroup and the SVG group.
             self._children.append(obj)
@@ -1116,8 +1115,7 @@ def clip_path(obj, clip_units=None):
 def marker(obj, ref=None, orient='auto', marker_units=None,
            view_box=None, **style):
     'Convert an object to a marker.'
-    global _simple_objs
-    _simple_objs = [o for o in _simple_objs if o is not obj]
+    obj.remove()
     m = inkex.Marker(obj._inkscape_obj.copy())  # Copy so we can reuse obj.
     if ref is not None:
         m.set('refX', str(ref[0]))
