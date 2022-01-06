@@ -146,6 +146,7 @@ class SimpleObject(object):
         self._inkscape_obj = obj
         if track:
             _simple_objs.append(self)
+        self.parent = None
 
     def __str__(self):
         '''Return the object as a string of the form "url(#id)".  This
@@ -184,6 +185,15 @@ class SimpleObject(object):
     def bounding_box(self):
         "Return the object's bounding box as an inkex.transforms.BoundingBox."
         return self._inkscape_obj.bounding_box()
+
+    def remove(self):
+        'Remove the current object from the image.'
+        global _simple_objs
+        try:
+            self.parent.ungroup(self)
+        except AttributeError:
+            pass  # Not within a group
+        _simple_objs = [o for o in _simple_objs if o is not self]
 
     def to_def(self):
         '''Convert the object to a definition, removing it from the list of
@@ -506,12 +516,12 @@ class SimpleGroup(SimpleObject):
         if type(objs) != list:
             objs = [objs]   # Convert scalar to list
         for obj in objs:
+            # Check for various error conditions.
             if not isinstance(obj, SimpleObject):
                 _abend(_('Only Simple Inkscape Scripting '
                          'objects can be added to a group.'))
             if isinstance(obj, SimpleLayer):
                 _abend(_('Layers cannot be added to groups.'))
-                return
             if obj not in _simple_objs:
                 _abend(_('Only objects not already in a group '
                          'or layer can be added to a group.'))
@@ -522,6 +532,33 @@ class SimpleGroup(SimpleObject):
             # Add the object to both the SimpleGroup and the SVG group.
             self._children.append(obj)
             self._inkscape_obj.add(obj._inkscape_obj)
+            obj.parent = self
+
+    def ungroup(self, objs=None):
+        '''Remove one or more objects from the group and add it to the
+        top level.'''
+        # Add each object to the top level.
+        global _simple_objs
+        if objs is None:
+            objs = self._children
+        elif type(objs) != list:
+            objs = [objs]   # Convert scalar to list
+        for o in objs:
+            if o.parent != self:
+                abend(_('Attempt to remove an object from a group to which '
+                        'it does not belong.'))
+            o.parent = None
+            _simple_objs.append(o)
+
+        # Remove each object from the SimpleGroup and the SVG group.
+        objs = set(objs)
+        self._children = [ch for ch in self._children if ch not in objs]
+        for o in objs:
+            self._inkscape_obj.remove(o._inkscape_obj)
+
+        # If the group is empty, remove it entirely.
+        if self._children == []:
+            self.remove()
 
 
 class SimpleLayer(SimpleGroup):
@@ -999,6 +1036,8 @@ def group(objs=[], transform=None, conn_avoid=False, clip_path=None,
     g = inkex.Group()
     g_obj = SimpleGroup(g, transform, conn_avoid, clip_path, {}, style)
     g_obj.add(objs)
+    for o in objs:
+        o.parent = g_obj
     return g_obj
 
 
@@ -1008,6 +1047,8 @@ def layer(name, objs=[], transform=None, conn_avoid=False, clip_path=None,
     layer = inkex.Layer.new(name)
     l_obj = SimpleLayer(layer, transform, conn_avoid, clip_path, {}, style)
     l_obj.add(objs)
+    for o in objs:
+        o.parent = l_obj
     return l_obj
 
 
