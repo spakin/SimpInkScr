@@ -203,14 +203,62 @@ class SimpleObject(object):
         _svg_root.defs.add(self._inkscape_obj)
         return self
 
-    def to_path(self):
+    def _path_to_curve(self, pe):
+        '''Convert a PathElement to a list of PathCommands that are primarily
+        curves.'''
+        # Convert to a CubicSuperPath and from that to a list of segments.
+        csp = pe.path.to_superpath()
+        prev = inkex.Vector2d()
+        prev_prev = inkex.Vector2d()
+        pes = list(csp.to_segments(curves_only=True))
+
+        # Postprocess all linear curves to make them more suitable for
+        # conversion to B-splines.
+        prev = inkex.Vector2d()
+        prev_prev = inkex.Vector2d()
+        for i, seg in enumerate(pes):
+            if i == 0:
+                first = seg.end_point(inkex.Vector2d(), prev)
+            if isinstance(seg, inkex.paths.Curve):
+                # Convert [a, a, b, b] to [a, 1/3[a, b], 2/3[a, b], b].
+                pt1 = prev
+                pt2 = inkex.Vector2d(seg.x2, seg.y2)
+                pt3 = inkex.Vector2d(seg.x3, seg.y3)
+                pt4 = inkex.Vector2d(seg.x4, seg.y4)
+                if pt1.is_close(pt2) and pt3.is_close(pt4):
+                    pt2 = (2*pt1 + pt4)/3
+                    pt3 = (pt1 + 2*pt4)/3
+                    pes[i] = inkex.paths.Curve(pt2.x, pt2.y,
+                                               pt3.x, pt3.y,
+                                               pt4.x, pt4.y)
+            prev_prev = prev
+            prev = seg.end_point(first, prev)
+        return pes
+
+    def to_path(self, all_curves=False):
         '''Convert the object to a path, removing it from the list of
         rendered objects.'''
+        # Get a path version of the underlying object and use this to
+        # construct a path SimpleObject.
         obj = self._inkscape_obj
         p = path(obj.get_path())
         p_obj = p._inkscape_obj
-        for a in ['transform', 'style']:
-            p_obj.set(a, obj.get(a))
+
+        # If only_curves was specified, replace the path with one created
+        # from the current path's CubicSuperPath segments.
+        if all_curves:
+            pes = self._path_to_curve(p_obj)
+            p.remove()
+            p = path(pes)
+            p_obj = p._inkscape_obj
+
+        # Copy over the original object's style and transform.
+        p_obj.set('style', obj.get('style'))
+        xform = obj.get('transform')
+        if xform is not None:
+            p.transform = xform
+
+        # Remove the old object and return the new object.
         self.remove()
         return p
 
