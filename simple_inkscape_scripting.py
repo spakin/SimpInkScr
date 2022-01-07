@@ -203,6 +203,17 @@ class SimpleObject(object):
         _svg_root.defs.add(self._inkscape_obj)
         return self
 
+    def to_path(self):
+        '''Convert the object to a path, removing it from the list of
+        rendered objects.'''
+        obj = self._inkscape_obj
+        p = path(obj.get_path())
+        p_obj = p._inkscape_obj
+        for a in ['transform', 'style']:
+            p_obj.set(a, obj.get(a))
+        self.remove()
+        return p
+
     @property
     def transform(self):
         "Return the object's current transformation as an inkex.Transform."
