@@ -540,6 +540,10 @@ class SimpleObject(object):
             if o is not self:
                 o.remove()
 
+    def get_inkex_object(self):
+        "Return the SimpleObject's underlying inkex object."
+        return self._inkscape_obj
+
 
 class SimpleMarker(SimpleObject):
     'Represent a path marker, which wraps an arbitrary object.'
