@@ -1088,8 +1088,17 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False,
 def clone(obj, transform=None, conn_avoid=False, clip_path=None, **style):
     'Return a linked clone of the object.'
     c = inkex.Use()
-    c.href = obj._inkscape_obj.get_id()
-    return SimpleObject(c, transform, conn_avoid, clip_path, {}, style)
+    i_obj = obj._inkscape_obj
+    c.href = i_obj.get_id()
+    old_style = dict(i_obj.style.items())
+    return SimpleObject(c, transform, conn_avoid, clip_path, old_style, style)
+
+
+def duplicate(obj, transform=None, conn_avoid=False, clip_path=None, **style):
+    'Return a duplicate of the object.'
+    cpy = obj._inkscape_obj.copy()
+    old_style = dict(cpy.style.items())
+    return SimpleObject(cpy, transform, conn_avoid, clip_path, old_style, style)
 
 
 def group(objs=[], transform=None, conn_avoid=False, clip_path=None,
