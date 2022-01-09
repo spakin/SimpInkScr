@@ -1283,7 +1283,7 @@ def pop_defaults():
 
 # ----------------------------------------------------------------------
 
-class SimpleInkscapeScripting(inkex.GenerateExtension):
+class SimpleInkscapeScripting(inkex.EffectExtension):
     'Help the user create Inkscape objects with a simple API.'
 
     def add_arguments(self, pars):
@@ -1295,12 +1295,18 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         pars.add_argument('--py-source', type=str,
                           help='Python source file to execute')
 
-    def container_transform(self):
-        '''Return an empty tranform so as to preserve user-specified
-        coordinates.'''
-        return inkex.Transform()
+    def find_attach_point(self):
+        '''Return a suitable point in the SVG XML tree at which to attach
+        new objects.'''
+        # I *believe* Inkscape will automatically add a <sodipodi:namedview>
+        # element with an inkscape:current-layer attribute, and this will name
+        # either an actual layer or the <svg> element itself.
+        namedview = self.svg.findone('sodipodi:namedview')
+        cur_layer_name = namedview.get('inkscape:current-layer')
+        cur_layer = self.svg.xpath('//*[@id="%s"]' % cur_layer_name)[0]
+        return cur_layer
 
-    def generate(self):
+    def effect(self):
         'Generate objects from user-provided Python code.'
         # Prepare global values we want to export.
         global _svg_root
@@ -1327,6 +1333,9 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
         sis_globals['inch'] = \
             convert_unit('1in')  # "in" is a keyword.
 
+        # Determine where in the SVG hierarchy new objects should be attached.
+        attach_point = self.find_attach_point()
+
         # Launch the user's script.
         code = ''
         py_source = self.options.py_source
@@ -1340,10 +1349,9 @@ class SimpleInkscapeScripting(inkex.GenerateExtension):
             code += self.options.program.replace(r'\n', '\n')
         exec(code, sis_globals)
 
-        # Yield all objects created to the Inkscape core.
+        # Attach all generated objects to the SVG document.
         for obj in _simple_objs:
-            obj._apply_transform()
-            yield obj._inkscape_obj
+            attach_point.append(obj._inkscape_obj)
 
 
 if __name__ == '__main__':
