@@ -52,15 +52,15 @@ _next_obj_id = 1
 # Store all SimpleObjects the user creates in _simple_objs.
 _simple_objs = []
 
-# Store the user-specified default style in _default_style.
-_default_style = {}
+# Store a stack of user-specified default styles in _default_style.
+_default_style = [{}]
 
 # Most shapes use this as their default style.
 _common_shape_style = {'stroke': 'black',
                        'fill': 'none'}
 
-# Store the default transform in _default_transform.
-_default_transform = None
+# Store a stack of user-specified default transforms in _default_transform.
+_default_transform = [None]
 
 # Store the top-level SVG tree in _svg_root.
 _svg_root = None
@@ -112,8 +112,8 @@ class SimpleObject(object):
             transform = str(transform)   # Transform may be an inkex.Transform.
             if transform != '':
                 ts.append(transform)
-        if _default_transform is not None and _default_transform != '':
-            ts.append(_default_transform)
+        if _default_transform[-1] is not None and _default_transform[-1] != '':
+            ts.append(_default_transform[-1])
         if ts == []:
             self._transform = inkex.Transform()
         else:
@@ -161,7 +161,7 @@ class SimpleObject(object):
         style = base_style.copy()
 
         # Update the style according to the current global default style.
-        style.update(_default_style)
+        style.update(_default_style[-1])
 
         # Update the style based on the object-specific style.
         for k, v in new_style.items():
@@ -821,15 +821,15 @@ def style(**kwargs):
     for k, v in kwargs.items():
         k = k.replace('_', '-')
         if v is None:
-            _default_style[k] = None
+            _default_style[-1][k] = None
         else:
-            _default_style[k] = str(v)
+            _default_style[-1][k] = str(v)
 
 
 def transform(t):
     'Set the default transform.'
     global _default_transform
-    _default_transform = str(t).strip()
+    _default_transform[-1] = str(t).strip()
 
 
 def circle(center, radius, transform=None, conn_avoid=False, clip_path=None,
@@ -1098,7 +1098,8 @@ def duplicate(obj, transform=None, conn_avoid=False, clip_path=None, **style):
     'Return a duplicate of the object.'
     cpy = obj._inkscape_obj.copy()
     old_style = dict(cpy.style.items())
-    return SimpleObject(cpy, transform, conn_avoid, clip_path, old_style, style)
+    return SimpleObject(cpy, transform, conn_avoid, clip_path,
+                        old_style, style)
 
 
 def group(objs=[], transform=None, conn_avoid=False, clip_path=None,
@@ -1205,6 +1206,22 @@ def marker(obj, ref=None, orient='auto', marker_units=None,
         x1, y1 = lr
         m.set('viewBox', '%.5g %.5g %.5g %.5g' % (x0, y0, x1 - x0, y1 - y0))
     return SimpleMarker(m, **style).to_def()
+
+
+def push_defaults():
+    'Duplicate the top element of the default style and transform stacks.'
+    global _default_style, _default_transform
+    _default_style.append({k: v for k, v in _default_style[-1].items()})
+    _default_transform.append(_default_transform[-1])
+
+
+def pop_defaults():
+    'Discard the top element of the default style and transform stacks.'
+    global _default_style, _default_transform
+    _default_style.pop()
+    _default_transform.pop()
+    if len(_default_style) == 0 or len(_default_transform) == 0:
+        raise IndexError('more defaults popped than pushed')
 
 
 # ----------------------------------------------------------------------
