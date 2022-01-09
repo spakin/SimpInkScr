@@ -109,6 +109,25 @@ def _python_to_svg_str(val):
     return str(val)  # Everything else is converted to a string as usual.
 
 
+def _svg_str_to_python(str):
+    'Convert an SVG attribute string to an appropriate Python type.'
+    # Recursively convert lists.
+    fields = str.replace(',', ' ').replace(';', ' ').split()
+    if len(fields) > 1:
+        return [_svg_str_to_python(f) for f in fields]
+
+    # Specially handle numerical data types then fall back to strings.
+    try:
+        return int(str)
+    except ValueError:
+        pass
+    try:
+        return float(str)
+    except ValueError:
+        pass
+    return str
+
+
 def _abend(msg):
     'Abnormally end execution with an error message.'
     inkex.utils.errormsg(msg)
@@ -281,6 +300,21 @@ class SimpleObject(object):
         # Remove the old object and return the new object.
         self.remove()
         return p
+
+    def style(self, **style):
+        """Augment the object's current style and return the new style as a
+        Python dict."""
+        # Merge the old and new styles and apply these to the object.
+        obj = self._inkscape_obj
+        obj.style = self._construct_style(dict(obj.style.items()), style)
+
+        # Convert the style to a dictionary with Python-compatible keys.
+        new_style = {}
+        for k, v in obj.style.items():
+            k = k.replace('-', '_')
+            v = _svg_str_to_python(v)
+            new_style[k] = v
+        return new_style
 
     @property
     def transform(self):
