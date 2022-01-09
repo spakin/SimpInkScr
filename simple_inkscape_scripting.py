@@ -1298,13 +1298,30 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
     def find_attach_point(self):
         '''Return a suitable point in the SVG XML tree at which to attach
         new objects.'''
-        # I *believe* Inkscape will automatically add a <sodipodi:namedview>
-        # element with an inkscape:current-layer attribute, and this will name
-        # either an actual layer or the <svg> element itself.
-        namedview = self.svg.findone('sodipodi:namedview')
-        cur_layer_name = namedview.get('inkscape:current-layer')
-        cur_layer = self.svg.xpath('//*[@id="%s"]' % cur_layer_name)[0]
-        return cur_layer
+        # The Inkscape GUI automatically adds a <sodipodi:namedview> element
+        # with an inkscape:current-layer attribute, and this will name either
+        # an actual layer or the <svg> element itself.  In this case, we return
+        # the layer pointed to by inkscape:current-layer.
+        try:
+            namedview = self.svg.findone('sodipodi:namedview')
+            cur_layer_name = namedview.get('inkscape:current-layer')
+            cur_layer = self.svg.xpath('//*[@id="%s"]' % cur_layer_name)[0]
+            return cur_layer
+        except AttributeError:
+            pass
+
+        # If an extension is run from the command line, the input SVG file may
+        # lack a <sodipodi:namedview> element.  (This is the case for
+        # /usr/share/inkscape/templates/default.svg in my installation, for
+        # example.)  In this case, we return the topmost layer.
+        try:
+            return self.svg.xpath('//svg:g[@inkscape:groupmode="layer"]')[-1]
+        except IndexError:
+            pass
+
+        # A very minimal SVG input may contain no layers at all.  In this case,
+        # we return the top-level <svg> element.
+        return self.svg
 
     def effect(self):
         'Generate objects from user-provided Python code.'
