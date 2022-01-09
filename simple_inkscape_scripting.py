@@ -856,6 +856,18 @@ class SimpleRadialGradient(SimpleGradient):
         self.grad = defs.add(grad)
 
 
+class SimplePathEffect(object):
+    'Represent an Inkscape live path effect.'
+
+    def __init__(self, defs, effect, **kwargs):
+        pe = inkex.PathEffect(effect=effect, **kwargs)
+        self._inkscape_obj = defs.add(pe)
+
+    def __str__(self):
+        '''Return a path effect as a "#" and its ID.  This enables directly
+        associating the path effect with a path.'''
+        return '#%s' % self._inkscape_obj.get_id()
+
 # ----------------------------------------------------------------------
 
 # The following functions represent the Simple Inkscape Scripting API
