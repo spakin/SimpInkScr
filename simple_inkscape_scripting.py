@@ -118,8 +118,7 @@ def _svg_str_to_python(str):
 
 def _abend(msg):
     'Abnormally end execution with an error message.'
-    inkex.utils.errormsg(msg)
-    sys.exit(1)
+    raise inkex.AbortExtension(msg)
 
 
 class Mpath(inkex.Use):
