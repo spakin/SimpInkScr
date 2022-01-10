@@ -67,14 +67,6 @@ def _debug_print(*args):
     inkex.utils.debug(' '.join([str(a) for a in args]))
 
 
-def _unique_id():
-    'Return a unique ID.'
-    global _id_prefix, _next_obj_id
-    tag = '%s%d' % (_id_prefix, _next_obj_id)
-    _next_obj_id += 1
-    return tag
-
-
 def _split_two_or_one(val):
     '''Split a tuple into two values and a scalar into two copies of the
     same value.'''
@@ -261,9 +253,6 @@ class SimpleObject(object):
         ext_style = self._construct_style(base_style, obj_style)
         if ext_style != '':
             obj.style = ext_style
-
-        # Assign the object a unique ID.
-        obj.set_id(_unique_id())
 
         # Store the modified Inkscape object.
         self._inkscape_obj = obj
@@ -826,6 +815,7 @@ class SimpleFilter(object):
         style_str = str(inkex.Style(**style))
         if style_str != '':
             self.filt.set('style', style_str)
+        self._prim_tally = {}
 
     def __str__(self):
         return 'url(#%s)' % self.filt.get_id()
@@ -833,9 +823,14 @@ class SimpleFilter(object):
     class SimpleFilterPrimitive(object):
         'Represent one component of an SVG filter effect.'
 
-        def __init__(self, filt, ftype, **kw_args):
-            # Assign a random ID for the default result.
-            all_args = {'result': _unique_id()}
+        def __init__(self, simp_filt, ftype, **kw_args):
+            # Assign a default name to the result.
+            try:
+                res_num = simp_filt._prim_tally[ftype] + 1
+            except KeyError:
+                res_num = 1
+            simp_filt._prim_tally[ftype] = res_num
+            all_args = {'result': '%s%d' % (ftype[2:].lower(), res_num)}
 
             # Make "src1" and "src2" smart aliases for "in" and "in2".
             s2i = {'src1': 'in', 'src2': 'in2'}
@@ -851,12 +846,12 @@ class SimpleFilter(object):
                 else:
                     all_args[k] = _python_to_svg_str(v)
 
-            # Add a primitive to the filter.
-            self.prim = filt.add_primitive(ftype, **all_args)
+            # Add a primitive to the inkex filter.
+            self.prim = simp_filt.filt.add_primitive(ftype, **all_args)
 
     def add(self, ftype, **kw_args):
         'Add a primitive to a filter and return an object representation.'
-        return self.SimpleFilterPrimitive(self.filt, 'fe' + ftype, **kw_args)
+        return self.SimpleFilterPrimitive(self, 'fe' + ftype, **kw_args)
 
 
 class SimpleGradient(object):
