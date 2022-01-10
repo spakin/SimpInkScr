@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 '''
 
 import inkex
+from inkex.localization import inkex_gettext as _
 import PIL.Image
 import base64
 import io
