@@ -731,23 +731,23 @@ class SimpleGroup(SimpleObject):
         '''Remove one or more objects from the group and add it to the
         top level.'''
         # Add each object to the top level.
-        global _simple_objs
         if objs is None:
             objs = self._children
         elif type(objs) != list:
             objs = [objs]   # Convert scalar to list
+        global _simple_top
         for o in objs:
             if o.parent != self:
                 abend(_('Attempt to remove an object from a group to which '
                         'it does not belong.'))
             o.parent = None
-            _simple_objs.append(o)
+            _simple_top.append_obj(o)
 
-        # Remove each object from the SimpleGroup and the SVG group.
+        # Remove each object from the SimpleGroup.  It has already been
+        # removed from the SVG group as a side effect of the call to
+        # append_obj above.
         objs = set(objs)
         self._children = [ch for ch in self._children if ch not in objs]
-        for o in objs:
-            self._inkscape_obj.remove(o._inkscape_obj)
 
         # If the group is empty, remove it entirely.
         if self._children == []:
