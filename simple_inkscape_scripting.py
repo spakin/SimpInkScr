@@ -139,7 +139,7 @@ class SimpleTopLevel(object):
     "Keep track of top-level objects, both ours and inkex's."
 
     def __init__(self, svg_root):
-        self.svg_root = svg_root
+        self._svg_root = svg_root
         self._svg_attach = self.find_attach_point()
         self._simple_objs = []
 
@@ -150,7 +150,7 @@ class SimpleTopLevel(object):
         # with an inkscape:current-layer attribute, and this will name either
         # an actual layer or the <svg> element itself.  In this case, we return
         # the layer pointed to by inkscape:current-layer.
-        svg = self.svg_root
+        svg = self._svg_root
         try:
             namedview = svg.findone('sodipodi:namedview')
             cur_layer_name = namedview.get('inkscape:current-layer')
@@ -186,7 +186,7 @@ class SimpleTopLevel(object):
         # the Simple Inkscape Scripting object to the list of simple
         # objects.
         if to_root:
-            self.svg_root.append(obj._inkscape_obj)
+            self._svg_root.append(obj._inkscape_obj)
         else:
             self._svg_attach.append(obj._inkscape_obj)
         self._simple_objs.append(obj)
@@ -213,9 +213,9 @@ class SimpleTopLevel(object):
         '''Append either an inkex object or a Simple Inkscape Scripting object
         to the document's <defs> section.'''
         try:
-            self.svg_root.defs.append(obj._inkscape_obj)
+            self._svg_root.defs.append(obj._inkscape_obj)
         except AttributeError:
-            self.svg_root.defs.append(obj)
+            self._svg_root.defs.append(obj)
 
     def __contains__(self, obj):
         '''Return True if a given Simple Inkscape Scripting object appears at
