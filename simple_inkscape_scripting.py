@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 02110-1301, USA.
-
 '''
 
 import inkex
@@ -62,8 +61,10 @@ _common_shape_style = {'stroke': 'black',
 # Store a stack of user-specified default transforms in _default_transform.
 _default_transform = [None]
 
-# Store the top-level SVG tree in _svg_root.
+# Store the top-level SVG tree in _svg_root and the top-level <defs> element in
+# _svg_defs.
 _svg_root = None
+_svg_defs = None
 
 
 def _debug_print(*args):
@@ -237,9 +238,9 @@ class SimpleObject(object):
     def to_def(self):
         '''Convert the object to a definition, removing it from the list of
         rendered objects.'''
-        global _svg_root
+        global _svg_defs
         self.remove()
-        _svg_root.defs.add(self._inkscape_obj)
+        _svg_defs.add(self._inkscape_obj)
         return self
 
     def _path_to_curve(self, pe):
@@ -701,7 +702,7 @@ class SimpleClippingPath(SimpleGroup):
         self._children = []
         if clip_units is not None:
             self._inkscape_obj.set('clipPathUnits', clip_units)
-        _svg_root.defs.add(self._inkscape_obj)
+        _svg_defs.add(self._inkscape_obj)
 
 
 class SimpleHyperlink(SimpleGroup):
@@ -716,9 +717,10 @@ class SimpleHyperlink(SimpleGroup):
 class SimpleFilter(object):
     'Represent an SVG filter effect.'
 
-    def __init__(self, defs, name=None, pt1=None, pt2=None,
+    def __init__(self, name=None, pt1=None, pt2=None,
                  filter_units=None, primitive_units=None, **style):
-        self.filt = defs.add(inkex.Filter())
+        global _svg_defs
+        self.filt = _svg_defs.add(inkex.Filter())
         if name is not None and name != '':
             self.filt.set('inkscape:label', name)
         if pt1 is not None or pt2 is not None:
@@ -819,9 +821,10 @@ class SimpleGradient(object):
 class SimpleLinearGradient(SimpleGradient):
     'Represent an SVG linear gradient pattern.'
 
-    def __init__(self, defs, pt1=None, pt2=None, repeat=None,
+    def __init__(self, pt1=None, pt2=None, repeat=None,
                  gradient_units=None, template=None, transform=None,
                  **style):
+        global _svg_defs
         grad = inkex.LinearGradient()
         if pt1 is not None:
             grad.set('x1', pt1[0])
@@ -831,15 +834,16 @@ class SimpleLinearGradient(SimpleGradient):
             grad.set('y2', pt2[1])
         self._set_common(grad, repeat, gradient_units, template,
                          transform, **style)
-        self.grad = defs.add(grad)
+        self.grad = _svg_defs.add(grad)
 
 
 class SimpleRadialGradient(SimpleGradient):
     'Represent an SVG radial gradient pattern.'
 
-    def __init__(self, defs, center=None, radius=None, focus=None, fr=None,
+    def __init__(self, center=None, radius=None, focus=None, fr=None,
                  repeat=None, gradient_units=None, template=None,
                  transform=None, **style):
+        global _svg_defs
         grad = inkex.RadialGradient()
         if center is not None:
             grad.set('cx', center[0])
@@ -853,7 +857,7 @@ class SimpleRadialGradient(SimpleGradient):
             grad.set('fr', fr)
         self._set_common(grad, repeat, gradient_units, template,
                          transform, **style)
-        self.grad = defs.add(grad)
+        self.grad = _svg_defs.add(grad)
 
 
 # ----------------------------------------------------------------------
@@ -1213,14 +1217,14 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
 def filter_effect(name=None, pt1=None, pt2=None,
                   filter_units=None, primitive_units=None, **style):
     'Return an object representing an empty filter effect.'
-    return SimpleFilter(_svg_root.defs, name, pt1, pt2,
+    return SimpleFilter(name, pt1, pt2,
                         filter_units, primitive_units, **style)
 
 
 def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,
                     template=None, transform=None, **style):
     'Return an object representing a linear gradient.'
-    return SimpleLinearGradient(_svg_root.defs, pt1, pt2, repeat,
+    return SimpleLinearGradient(pt1, pt2, repeat,
                                 gradient_units, template, transform,
                                 **style)
 
@@ -1229,7 +1233,7 @@ def radial_gradient(center=None, radius=None, focus=None, fr=None,
                     repeat=None, gradient_units=None, template=None,
                     transform=None, **style):
     'Return an object representing a radial gradient.'
-    return SimpleRadialGradient(_svg_root.defs, center, radius, focus, fr,
+    return SimpleRadialGradient(center, radius, focus, fr,
                                 repeat, gradient_units, template,
                                 transform, **style)
 
@@ -1325,9 +1329,12 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
 
     def effect(self):
         'Generate objects from user-provided Python code.'
-        # Prepare global values we want to export.
-        global _svg_root
+        # Prepare global values we use internally.
+        global _svg_root, _svg_defs
         _svg_root = self.svg
+        _svg_defs = self.svg.defs
+
+        # Prepare global values we want to export.
         sis_globals = globals().copy()
         try:
             # Inkscape 1.2+
