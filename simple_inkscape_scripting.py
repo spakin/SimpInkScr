@@ -172,7 +172,7 @@ class SimpleTopLevel(object):
         # we return the top-level <svg> element.
         return svg
 
-    def append_obj(self, obj):
+    def append_obj(self, obj, to_root=False):
         'Append a Simple Inkscape Scripting object to the document.'
         # Check for a few error conditions.
         if not isinstance(obj, SimpleObject):
@@ -181,10 +181,14 @@ class SimpleTopLevel(object):
         if obj in self._simple_objs:
             raise ValueError('Object has already been appended')
 
-        # Append the underlying inkex object to the SVG attachment point, and
-        # append the Simple Inkscape Scripting object to the list of simple
+        # Attach the underlying inkex object to the SVG attachment point if
+        # to_root is False or to the SVG root if to_root is True.  Append
+        # the Simple Inkscape Scripting object to the list of simple
         # objects.
-        self._svg_attach.append(obj._inkscape_obj)
+        if to_root:
+            self.svg_root.append(obj._inkscape_obj)
+        else:
+            self._svg_attach.append(obj._inkscape_obj)
         self._simple_objs.append(obj)
 
     def remove_obj(self, obj):
@@ -770,7 +774,7 @@ class SimpleLayer(SimpleGroup):
                          obj_style, track=False)
         self._children = []
         global _simple_top
-        _simple_top.append_obj(self)
+        _simple_top.append_obj(self, to_root=True)
 
 
 class SimpleClippingPath(SimpleGroup):
