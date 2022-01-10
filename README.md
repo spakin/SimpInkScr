@@ -56,11 +56,11 @@ As an initial test, try entering
 ```Python
 circle((100, 100), 50)
 ```
-into the text box and clicking *Apply* then *Close*.  This should create a black circle of radius 50 at position (100, 100).  Due to how "generate extensions" work, Inkscape always places the output of Simple Inkscape Scripting within a group so ungroup it if desired.
+into the text box and clicking *Apply* then *Close*.  This should create a black circle of radius 50 at position (100, 100).
 
 ### Inkscape to Python code
 
-Simple Inkscape Scripting can also *save* illustrations from the Inkscape GUI to a Python script that, when run, reproduces the original illustration.  (Note, though, that not all Inkscape features are currently supported.)  From *File* → *Save a Copy…*, simply select `Simple Inkscape Scripting script (*.py)` from the pull-down menu at the bottom of the dialog box.  This can be useful, for instance, for manually drawing a complex object then using Simple Inkscape Scripting to replicate and transform it.
+Simple Inkscape Scripting can also *save* illustrations from the Inkscape GUI to a Python script that, when run from the Simple Inkscape Scripting extension, reproduces the original illustration.  (Note, though, that not all Inkscape features are currently supported.)  From *File* → *Save a Copy…*, simply select `Simple Inkscape Scripting script (*.py)` from the pull-down menu at the bottom of the dialog box.  This can be useful, for instance, for manually drawing a complex object then using Simple Inkscape Scripting to replicate and transform it.
 
 Documentation
 -------------
