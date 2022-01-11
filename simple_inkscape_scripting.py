@@ -675,6 +675,36 @@ class SimpleObject(object):
         return self._inkscape_obj
 
 
+class SimplePathObject(SimpleObject):
+    'A SimplePathObject is a SimpleObject to which LPEs can be applied.'
+
+    def apply_path_effect(self, lpe):
+        'Apply one or more path effects to the path.'
+        # Convert a scalar to a singleton list for consistent access.
+        if isinstance(lpe, list):
+            lpe_list = lpe
+        else:
+            lpe_list = [lpe]
+
+        # Rename the d attribute to inkscape:original-d to notify Inkscape
+        # to compute the modified d.
+        obj = self._inkscape_obj
+        d = obj.get('d')
+        if d is not None:
+            obj.set('inkscape:original-d', d)
+            obj.set('d', None)
+
+        # Apply each LPE in turn.
+        for lpe in lpe_list:
+            # If this is our first LPE, apply it.  Otherwise, append it to the
+            # previous LPE.
+            pe_list = obj.get('inkscape:path-effect')
+            if pe_list is None:
+                obj.set('inkscape:path-effect', str(lpe))
+            else:
+                obj.set('inkscape:path-effect', '%s;%s' % (pe_list, str(lpe)))
+
+
 class SimpleMarker(SimpleObject):
     'Represent a path marker, which wraps an arbitrary object.'
 
@@ -1167,8 +1197,8 @@ def path(elts, transform=None, conn_avoid=False, clip_path=None, **style):
         _abend(_('A path must contain at least one path element.'))
     d = ' '.join([_python_to_svg_str(e) for e in elts])
     obj = inkex.PathElement(d=d)
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
-                        _common_shape_style, style)
+    return SimplePathObject(obj, transform, conn_avoid, clip_path,
+                            _common_shape_style, style)
 
 
 def connector(obj1, obj2, ctype='polyline', curve=0,
@@ -1388,6 +1418,11 @@ def pop_defaults():
     _default_transform.pop()
     if len(_default_style) == 0 or len(_default_transform) == 0:
         raise IndexError('more defaults popped than pushed')
+
+
+def path_effect(effect, **kwargs):
+    'Return an object represent a live path effect.'
+    return SimplePathEffect(effect, **kwargs)
 
 
 # ----------------------------------------------------------------------
