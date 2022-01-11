@@ -58,7 +58,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 self.dep_vars = []
             else:
                 self.dep_vars = [self.id2var(i) for i in dep_ids]
-            self.need_var_name = False
+            self.need_var_name = False     # Dependency from another object?
+            self.delete_if_unused = False  # Definition or other transient?
 
         def __str__(self):
             if self.need_var_name:
@@ -657,6 +658,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         stmt = self.Statement(code, node.get_id(), all_deps)
         if have_stops:
             stmt.need_var_name = True
+        stmt.delete_if_unused = True
         return stmt
 
     def convert_radial_gradient(self, node):
@@ -689,6 +691,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         stmt = self.Statement(code, node.get_id(), all_deps)
         if have_stops:
             stmt.need_var_name = True
+        stmt.delete_if_unused = True
         return stmt
 
     def convert_clip_path(self, node):
@@ -699,7 +702,9 @@ class SvgToPythonScript(inkex.OutputExtension):
             code = ['clip_path(%s)' % p_var]
         else:
             code = ['clip_path(%s, clip_units=%s)' % (p_var, repr(c_units))]
-        return self.Statement(code, node.get_id(), [p_var])
+        stmt = self.Statement(code, node.get_id(), [p_var])
+        stmt.delete_if_unused = True
+        return stmt
 
     def convert_marker(self, node):
         'Return Python code that defines a marker.'
@@ -734,7 +739,9 @@ class SvgToPythonScript(inkex.OutputExtension):
         if m_arg_str != '':
             m_arg_str = ', ' + m_arg_str
         code = ['marker(%s%s%s)' % (shape_var, m_arg_str, extra)]
-        return self.Statement(code, node.get_id(), [shape_var] + extra_deps)
+        stmt = self.Statement(code, node.get_id(), [shape_var] + extra_deps)
+        stmt.delete_if_unused = True
+        return stmt
 
     def convert_hyperlink(self, node):
         'Return Python code for wrapping objects within a hyperlink.'
@@ -805,7 +812,9 @@ class SvgToPythonScript(inkex.OutputExtension):
 
         # Generate code and wrap it in a statement.
         code = ['path_effect(%s)' % ', '.join(args)]
-        return self.Statement(code, node.get_id(), [])
+        stmt = self.Statement(code, node.get_id(), [])
+        stmt.delete_if_unused = True
+        return stmt
 
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
@@ -910,6 +919,8 @@ class SvgToPythonScript(inkex.OutputExtension):
         self.find_dependencies(code)
         code = self.sort_statement_forest(code)
         for stmt in code:
+            if stmt.delete_if_unused and not stmt.need_var_name:
+                continue
             ln = str(stmt) + '\n'
             stream.write(ln.encode('utf-8'))
 
