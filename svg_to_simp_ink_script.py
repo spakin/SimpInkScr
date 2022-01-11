@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 '''
 
 import inkex
+from inkex.localization import inkex_gettext as _
 import re
 
 
@@ -343,7 +344,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             return self.convert_connector(node)
 
         # Handle the case of a generic path.
-        d_str = node.get('d')
+        d_str = node.get('inkscape:original-d') or node.get('d')
         d_str = self.char_re.sub(r' \1 ', d_str).strip()
         toks = self.sep_re.split(d_str)
         cmds = []
@@ -356,8 +357,31 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # String
                 cmds.append(repr(t))
         extra, extra_deps = self.extra_args(node)
+
+        # Depend on any path effects applied to the path.
+        pe_list = node.get('inkscape:path-effect')
+        if pe_list is None:
+            pe_list = []
+        else:
+            pe_list = [pe[1:] for pe in pe_list.split(';')]
+            extra_deps.extend(pe_list)
+
+        # Generate code and wrap it in a statement.
         code = ['path([%s]%s)' % (', '.join(cmds), extra)]
-        return self.Statement(code, node.get_id(), extra_deps)
+        if len(pe_list) == 1:
+            code.append('%s.apply_path_effect(%s)' %
+                        (self.Statement.id2var(node.get_id()),
+                         self.Statement.id2var(pe_list[0])))
+        elif len(pe_list) > 1:
+            pe_list_str = ', '.join([self.Statement.id2var(pe)
+                                    for pe in pe_list])
+            code.append('%s.apply_path_effect([%s])' %
+                        (self.Statement.id2var(node.get_id()),
+                         pe_list_str))
+        stmt = self.Statement(code, node.get_id(), extra_deps)
+        if pe_list != []:
+            stmt.need_var_name = True
+        return stmt
 
     def convert_text(self, node):
         'Return Python code for drawing text.'
@@ -745,6 +769,44 @@ class SvgToPythonScript(inkex.OutputExtension):
                 (child_vars_str, link_args_str, extra)]
         return self.Statement(code, node.get_id(), child_ids + extra_deps)
 
+    def _svg_str_to_python(self, str):
+        'Convert an SVG attribute string to an appropriate Python type.'
+        # Recursively convert lists.
+        fields = str.replace(',', ' ').replace(';', ' ').split()
+        if len(fields) > 1:
+            return [self._svg_str_to_python(f) for f in fields]
+
+        # Specially handle certain data types then fall back to strings.
+        try:
+            return int(str)
+        except ValueError:
+            pass
+        try:
+            return float(str)
+        except ValueError:
+            pass
+        try:
+            str2bool = {'true': True, 'false': False}
+            return str2bool[str]
+        except KeyError:
+            pass
+        return repr(str)
+
+    def convert_path_effect(self, node):
+        'Return Python code for instantiating a path effect.'
+        # Convert the path effect's attributes to Python keyword arguments.
+        args = [repr(node.get('effect'))]
+        str2bool = {'true': True, 'false': False}
+        for k, v in sorted(node.attrib.items()):
+            # Skip "special" keys.
+            if k in ['effect', 'id']:
+                continue
+            args.append('%s=%s' % (k, self._svg_str_to_python(v)))
+
+        # Generate code and wrap it in a statement.
+        code = ['path_effect(%s)' % ', '.join(args)]
+        return self.Statement(code, node.get_id(), [])
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -764,7 +826,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:radialGradient | '
                                    '//svg:clipPath | '
                                    '//svg:marker | '
-                                   '//svg:a'):
+                                   '//svg:a | '
+                                   '//inkscape:path-effect'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -799,10 +862,11 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_marker(node))
             elif isinstance(node, inkex.Anchor):
                 stmts.append(self.convert_hyperlink(node))
+            elif isinstance(node, inkex.PathEffect):
+                stmts.append(self.convert_path_effect(node))
             else:
-                inkex.utils.errormsg(_('Internal error converting %s' %
-                                       repr(node)))
-                sys.exit(1)
+                raise inkex.AbortExtension(_('Internal error converting %s' %
+                                             repr(node)))
         return [st for st in stmts if st is not None]
 
     def find_dependencies(self, code):
