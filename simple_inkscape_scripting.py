@@ -323,7 +323,7 @@ class SimpleObject(object):
         csp = pe.path.to_superpath()
         prev = inkex.Vector2d()
         prev_prev = inkex.Vector2d()
-        pes = list(csp.to_segments(curves_only=True))
+        pes = list(csp.to_segments())
 
         # Postprocess all linear curves to make them more suitable for
         # conversion to B-splines.
@@ -344,6 +344,16 @@ class SimpleObject(object):
                     pes[i] = inkex.paths.Curve(pt2.x, pt2.y,
                                                pt3.x, pt3.y,
                                                pt4.x, pt4.y)
+            elif isinstance(seg, inkex.paths.Line):
+                # Convert the line [a, b] to the curve [a, 1/3[a, b],
+                # 2/3[a, b], b].
+                pt1 = prev
+                pt4 = inkex.Vector2d(seg.x, seg.y)
+                pt2 = (2*pt1 + pt4)/3
+                pt3 = (pt1 + 2*pt4)/3
+                pes[i] = inkex.paths.Curve(pt2.x, pt2.y,
+                                           pt3.x, pt3.y,
+                                           pt4.x, pt4.y)
             prev_prev = prev
             prev = seg.end_point(first, prev)
         return pes
