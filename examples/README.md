@@ -21,31 +21,31 @@ List of examples
 
 | Example | Description |
 | :------ | :---------- |
-| [Animation](animation.py) | Demonstrate the use of Simple Inkscape Scripting to create an SVG SMIL animation. |
-| [Binary tree](binary_tree.py) | Use Simple Inkscape Scripting to draw a binary tree.  The canvas should be about as wide as A4 or U.S. Letter paper to avoid node overlap in the deepest level of the tree. |
-| [Brick pyramid](brick_pyramid.py) | Use Simple Inkscape Scripting to draw a brick pyramid. |
-| [Chalkboard](chalkboard.py) | Use Simple Inkscape Scripting to draw a chalkboard with a repeated message written on it. |
-| [Clipping path](clipping_path.py) | Demonstrate how to apply a clipping path to a number of objects using Simple Inkscape Scripting. |
-| [Clone wave](clone_wave.py) | Use Simple Inkscape Scripting to draw a wave of cloned objects. |
-| [Drop shadow](drop_shadow.py) | Use Simple Inkscape Scripting to draw a circle with a drop shadow. |
-| [Ellipses](ellipses.py) | Use Simple Inkscape Scripting to draw concentric ellipses. |
-| [Gradient template](gradient_template.py) | Use Simple Inkscape Scripting to show how to reuse a gradient pattern. |
-| [Hyperlinks](hyperlinks.py) | Use Simple Inkscape Scripting to create a set of graphical hyperlinks. |
-| [Image spiral](image_spiral.py) | Use Simple Inkscape Scripting to draw a spiral out of Inkscape logos downloaded from the Web. |
-| [Inkex paths](inkex_paths.py) | Show how Simple Inkscape Scripting can draw a path using the functions provided by the inkex.paths module (https://tinyurl.com/2p9dna4f) as an alternative to path commands expressed as alternating strings and floats. |
-| [Linear gradient](linear_gradient.py) | Use Simple Inkscape Scripting to fill a shape with a gradient pattern. |
-| [Markers](markers.py) | Use Simple Inkscape Scripting to draw arrows with begin, middle, and ending markers. |
-| [New layer](new_layer.py) | Use Simple Inkscape Scripting to add a layer to an image. |
-| [Overlapping circles](overlapping_circles.py) | Use Simple Inkscape Scripting to draw an array of hundreds of overlapping circles. |
-| [Path effects](path_effects.py) | Demonstrate the application of live path effects to a curve using Simple Inkscape Scripting. |
-| [Poly by angle](poly_by_angle.py) | Use Simple Inkscape Scripting to draw (possibly self-intersecting) polygons. |
-| [Sierpinski triangle](sierpinski_triangle.py) | Use Simple Inkscape Scripting to draw a colorful Sierpinski triangle. |
-| [Speedometer](speedometer.py) | Use Simple Inkscape Scripting to draw an unnumbered speedometer. |
-| [Star groups](star_groups.py) | Use Simple Inkscape Scripting to draw rows of stars with the stars in each row grouped together. |
-| [Text flow](text_flow.py) | Use Simple Inkscape Scripting to flow text into a frame. (The text shown is an original haiku by Scott Pakin, 26-Nov-2021.) |
-| [Text path](text_path.py) | Use Simple Inkscape Scripting to place text on a curved path. |
-| [Turtle spiral](turtle_spiral.py) | Create a path using turtle graphics and render it using Simple Inkscape Scripting. |
-| [Units](units.py) | Demonstrate the use of explicitly specified units in Simple Inkscape Scripting. |
+| [Animation](animation.py) | Demonstrate how to create an SVG SMIL animation. |
+| [Binary tree](binary_tree.py) | Draw a binary tree.  The canvas should be about as wide as A4 or U.S. Letter paper to avoid node overlap in the deepest level of the tree. |
+| [Brick pyramid](brick_pyramid.py) | Draw a brick pyramid. |
+| [Chalkboard](chalkboard.py) | Draw a chalkboard with a repeated message written on it. |
+| [Clipping path](clipping_path.py) | Demonstrate how to apply a clipping path to a number of objects. |
+| [Clone wave](clone_wave.py) | Draw a wave of cloned objects. |
+| [Drop shadow](drop_shadow.py) | Draw a circle with a drop shadow. |
+| [Ellipses](ellipses.py) | Draw concentric ellipses. |
+| [Gradient template](gradient_template.py) | Show how to reuse a gradient pattern. |
+| [Hyperlinks](hyperlinks.py) | Create a set of graphical hyperlinks. |
+| [Image spiral](image_spiral.py) | Draw a spiral out of Inkscape logos downloaded from the Web. |
+| [Inkex paths](inkex_paths.py) | Show how to draw a path using the functions provided by the inkex.paths module (https://tinyurl.com/2p9dna4f) as an alternative to path commands expressed as alternating strings and floats. |
+| [Linear gradient](linear_gradient.py) | Fill a shape with a gradient pattern. |
+| [Markers](markers.py) | Draw arrows with begin, middle, and ending markers. |
+| [New layer](new_layer.py) | Add a layer to an image. |
+| [Overlapping circles](overlapping_circles.py) | Draw an array of hundreds of overlapping circles. |
+| [Path effects](path_effects.py) | Demonstrate the application of live path effects to a curve. |
+| [Poly by angle](poly_by_angle.py) | Draw (possibly self-intersecting) polygons. |
+| [Sierpinski triangle](sierpinski_triangle.py) | Draw a colorful Sierpinski triangle. |
+| [Speedometer](speedometer.py) | Draw an unnumbered speedometer. |
+| [Star groups](star_groups.py) | Draw rows of stars with the stars in each row grouped together. |
+| [Text flow](text_flow.py) | Flow text into a frame. |
+| [Text path](text_path.py) | Place text on a curved path. |
+| [Turtle spiral](turtle_spiral.py) | Create a path using turtle graphics and render it. |
+| [Units](units.py) | Demonstrate the use of explicitly specified units . |
 
 ### Notes
 
