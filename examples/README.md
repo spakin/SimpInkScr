@@ -37,6 +37,7 @@ List of examples
 | [Markers](markers.py) | Use Simple Inkscape Scripting to draw arrows with begin, middle, and ending markers. |
 | [New layer](new_layer.py) | Use Simple Inkscape Scripting to add a layer to an image. |
 | [Overlapping circles](overlapping_circles.py) | Use Simple Inkscape Scripting to draw an array of hundreds of overlapping circles. |
+| [Path effects](path_effects.py) | Demonstrate the application of live path effects to a curve using Simple Inkscape Scripting. |
 | [Poly by angle](poly_by_angle.py) | Use Simple Inkscape Scripting to draw (possibly self-intersecting) polygons. |
 | [Sierpinski triangle](sierpinski_triangle.py) | Use Simple Inkscape Scripting to draw a colorful Sierpinski triangle. |
 | [Speedometer](speedometer.py) | Use Simple Inkscape Scripting to draw an unnumbered speedometer. |
