@@ -1005,7 +1005,9 @@ class SimplePathEffect(object):
     'Represent an Inkscape live path effect.'
 
     def __init__(self, effect, **kwargs):
-        smart_args = {k: _python_to_svg_str(v) for k, v in kwargs.items()}
+        smart_args = {k: _python_to_svg_str(v)
+                      for k, v in kwargs.items()
+                      if k != 'id'}
         pe = inkex.PathEffect(effect=effect, **smart_args)
         self._inkscape_obj = pe
         global _simple_top
