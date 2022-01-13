@@ -323,16 +323,18 @@ class SimpleObject(object):
         csp = pe.path.to_superpath()
         prev = inkex.Vector2d()
         prev_prev = inkex.Vector2d()
-        pes = list(csp.to_segments())
+        segs = list(csp.to_segments())
+        new_segs = []
 
         # Postprocess all linear curves to make them more suitable for
         # conversion to B-splines.
         prev = inkex.Vector2d()
         prev_prev = inkex.Vector2d()
-        for i, seg in enumerate(pes):
-            if i == 0:
+        for i, seg in enumerate(segs):
+            if isinstance(seg, inkex.paths.Move):
                 first = seg.end_point(inkex.Vector2d(), prev)
-            if isinstance(seg, inkex.paths.Curve):
+                new_segs.append(seg)
+            elif isinstance(seg, inkex.paths.Curve):
                 # Convert [a, a, b, b] to [a, 1/3[a, b], 2/3[a, b], b].
                 pt1 = prev
                 pt2 = inkex.Vector2d(seg.x2, seg.y2)
@@ -341,9 +343,9 @@ class SimpleObject(object):
                 if pt1.is_close(pt2) and pt3.is_close(pt4):
                     pt2 = (2*pt1 + pt4)/3
                     pt3 = (pt1 + 2*pt4)/3
-                    pes[i] = inkex.paths.Curve(pt2.x, pt2.y,
-                                               pt3.x, pt3.y,
-                                               pt4.x, pt4.y)
+                    new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
+                                                      pt3.x, pt3.y,
+                                                      pt4.x, pt4.y))
             elif isinstance(seg, inkex.paths.Line):
                 # Convert the line [a, b] to the curve [a, 1/3[a, b],
                 # 2/3[a, b], b].
@@ -351,12 +353,26 @@ class SimpleObject(object):
                 pt4 = inkex.Vector2d(seg.x, seg.y)
                 pt2 = (2*pt1 + pt4)/3
                 pt3 = (pt1 + 2*pt4)/3
-                pes[i] = inkex.paths.Curve(pt2.x, pt2.y,
-                                           pt3.x, pt3.y,
-                                           pt4.x, pt4.y)
+                new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
+                                                  pt3.x, pt3.y,
+                                                  pt4.x, pt4.y))
+            elif isinstance(seg, inkex.paths.ZoneClose):
+                # Draw a line back to the first point.
+                pt1 = prev
+                pt4 = first
+                if not pt1.is_close(pt4):
+                    pt2 = (2*pt1 + pt4)/3
+                    pt3 = (pt1 + 2*pt4)/3
+                    new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
+                                                      pt3.x, pt3.y,
+                                                      pt4.x, pt4.y))
+                new_segs.append(seg)
+            else:
+                abend(_('internal error: unexpected path command '
+                        'in _path_to_curve'))
             prev_prev = prev
             prev = seg.end_point(first, prev)
-        return pes
+        return new_segs
 
     def to_path(self, all_curves=False):
         '''Convert the object to a path, removing it from the list of
