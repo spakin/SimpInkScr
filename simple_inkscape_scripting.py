@@ -431,9 +431,9 @@ class SimpleObject(object):
                             m_inv[0][2], m_inv[1][2])
         return un_xform
 
-    def rotate(self, angle, around=(0, 0)):
+    def rotate(self, angle, around=(0, 0), first=False):
         'Apply a rotation transformation, optionally around a given point.'
-        # Determine the coordinates around which we're rotate the shape.
+        # Determine the coordinates around which to rotate the shape.
         if type(around) == str:
             obj = self._inkscape_obj
             un_xform = self._inverse_transform()
@@ -456,21 +456,30 @@ class SimpleObject(object):
         # Perform the rotation.
         tr = inkex.Transform()
         tr.add_rotate(angle, around.x, around.y)
-        self._transform = tr * self._transform
+        if first:
+            self._transform = self._transform * tr
+        else:
+            self._transform = tr * self._transform
         self._apply_transform()
 
-    def translate(self, x, y):
+    def translate(self, x, y, first=False):
         'Apply a translation transformation.'
         tr = inkex.Transform()
         tr.add_translate(x, y)
-        self._transform = tr * self._transform
+        if first:
+            self._transform = self._transform * tr
+        else:
+            self._transform = tr * self._transform
         self._apply_transform()
 
-    def scale(self, sx, sy=None):
+    def scale(self, sx, sy=None, first=False):
         'Apply a scaling transformation.'
         tr = inkex.Transform()
         tr.add_scale(sx, sy)
-        self._transform = tr * self._transform
+        if first:
+            self._transform = self._transform * tr
+        else:
+            self._transform = tr * self._transform
         self._apply_transform()
 
     @property
