@@ -482,6 +482,17 @@ class SimpleObject(object):
             self._transform = tr * self._transform
         self._apply_transform()
 
+    def skew(self, sx=0, sy=0, first=False):
+        'Apply a skew transformation.'
+        tr = inkex.Transform()
+        tr.add_skewx(sx)
+        tr.add_skewy(sy)
+        if first:
+            self._transform = self._transform * tr
+        else:
+            self._transform = tr * self._transform
+        self._apply_transform()
+
     @property
     def transform(self):
         "Return the object's current transformation as an inkex.Transform."
