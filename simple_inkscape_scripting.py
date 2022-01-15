@@ -1430,7 +1430,10 @@ def hyperlink(objs, href, title=None, target=None, mime_type=None,
 def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
                  **style):
     'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
-    return SimpleObject(obj, transform, conn_avoid, clip_path, {}, style)
+    merged_xform = inkex.Transform(transform) * obj.transform
+    base_style = obj.style
+    return SimpleObject(obj, merged_xform, conn_avoid, clip_path,
+                        base_style, style)
 
 
 def filter_effect(name=None, pt1=None, pt2=None,
