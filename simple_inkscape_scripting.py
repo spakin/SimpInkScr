@@ -462,18 +462,22 @@ class SimpleObject(object):
             self._transform = tr * self._transform
         self._apply_transform()
 
-    def translate(self, x, y, first=False):
+    def translate(self, dist, first=False):
         'Apply a translation transformation.'
         tr = inkex.Transform()
-        tr.add_translate(x, y)
+        tr.add_translate(dist[0], dist[1])
         if first:
             self._transform = self._transform * tr
         else:
             self._transform = tr * self._transform
         self._apply_transform()
 
-    def scale(self, sx, sy=None, first=False):
+    def scale(self, factor, first=False):
         'Apply a scaling transformation.'
+        try:
+            sx, sy = factor
+        except (TypeError, ValueError):
+            sx, sy = factor, factor
         tr = inkex.Transform()
         tr.add_scale(sx, sy)
         if first:
@@ -482,11 +486,11 @@ class SimpleObject(object):
             self._transform = tr * self._transform
         self._apply_transform()
 
-    def skew(self, sx=0, sy=0, first=False):
+    def skew(self, angles, first=False):
         'Apply a skew transformation.'
         tr = inkex.Transform()
-        tr.add_skewx(sx)
-        tr.add_skewy(sy)
+        tr.add_skewx(angles[0])
+        tr.add_skewy(angles[1])
         if first:
             self._transform = self._transform * tr
         else:
