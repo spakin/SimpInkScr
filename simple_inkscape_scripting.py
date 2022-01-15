@@ -219,7 +219,22 @@ class SimpleTopLevel(object):
         return obj in self._simple_objs
 
 
-class SimpleObject(object):
+class SVGOutputMixin(object):
+    '''Provide an svg method for converting an underlying inkex object to
+    a string.'''
+
+    def svg(self, xmlns=False, pretty_print=False):
+        obj = self.get_inkex_object()
+        if xmlns or pretty_print:
+            # pretty_print currently implies xmlns.
+            return lxml.etree.tostring(obj,
+                                       encoding='unicode',
+                                       pretty_print=pretty_print)
+        else:
+            return obj.tostring().decode('utf-8')
+
+
+class SimpleObject(SVGOutputMixin):
     'Encapsulate an Inkscape object and additional metadata.'
 
     def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
@@ -925,7 +940,7 @@ class SimpleHyperlink(SimpleGroup):
                          obj_style, track=True)
 
 
-class SimpleFilter(object):
+class SimpleFilter(SVGOutputMixin):
     'Represent an SVG filter effect.'
 
     def __init__(self, name=None, pt1=None, pt2=None,
@@ -953,10 +968,14 @@ class SimpleFilter(object):
             self.filt.set('style', style_str)
         self._prim_tally = {}
 
+    def get_inkex_object(self):
+        "Return the SimpleFilter's underlying inkex object."
+        return self.filt
+
     def __str__(self):
         return 'url(#%s)' % self.filt.get_id()
 
-    class SimpleFilterPrimitive(object):
+    class SimpleFilterPrimitive(SVGOutputMixin):
         'Represent one component of an SVG filter effect.'
 
         def __init__(self, simp_filt, ftype, **kw_args):
@@ -985,12 +1004,16 @@ class SimpleFilter(object):
             # Add a primitive to the inkex filter.
             self.prim = simp_filt.filt.add_primitive(ftype, **all_args)
 
+        def get_inkex_object(self):
+            "Return the SimpleFilterPrimitive's underlying inkex object."
+            return self.prim
+
     def add(self, ftype, **kw_args):
         'Add a primitive to a filter and return an object representation.'
         return self.SimpleFilterPrimitive(self, 'fe' + ftype, **kw_args)
 
 
-class SimpleGradient(object):
+class SimpleGradient(SVGOutputMixin):
     'Virtual base class for an SVG linear or radial gradient pattern.'
 
     # Map Inkscape repetition names to SVG names.
@@ -1034,6 +1057,10 @@ class SimpleGradient(object):
         if style_str != '':
             stop.set('style', style_str)
         self.grad.append(stop)
+
+    def get_inkex_object(self):
+        "Return the SimpleGradient's underlying inkex object."
+        return self.grad
 
 
 class SimpleLinearGradient(SimpleGradient):
@@ -1081,7 +1108,7 @@ class SimpleRadialGradient(SimpleGradient):
         self.grad = grad
 
 
-class SimplePathEffect(object):
+class SimplePathEffect(SVGOutputMixin):
     'Represent an Inkscape live path effect.'
 
     def __init__(self, effect, **kwargs):
@@ -1097,6 +1124,10 @@ class SimplePathEffect(object):
         '''Return a path effect as a "#" and its ID.  This enables directly
         associating the path effect with a path.'''
         return '#%s' % self._inkscape_obj.get_id()
+
+    def get_inkex_object(self):
+        "Return the SimplePathEffect's underlying inkex object."
+        return self._inkscape_obj
 
 
 # ----------------------------------------------------------------------
