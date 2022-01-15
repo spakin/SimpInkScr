@@ -606,7 +606,7 @@ class SimpleObject(object):
             # Hence, we keep wrapping the object in successive levels of
             # groups and apply one transform to each group.
             if i > 0:
-                target = group(target)
+                target = group([target])
             anim = lxml.etree.Element('animateTransform')
             anim.set('attributeName', 'transform')
             anim.set('type', xf[0])
