@@ -28,6 +28,10 @@ import lxml
 import os
 import re
 import sys
+try:
+    import numpy
+except ModuleNotFoundError:
+    pass
 
 # The following imports are provided for user convenience.
 from math import *
@@ -416,6 +420,59 @@ class SimpleObject(object):
             new_style[k] = v
         return new_style
 
+    def _inverse_transform(self):
+        'Return an inkex.Transform that undoes the current transformation.'
+        xform = self._transform
+        m = numpy.array(list(xform.matrix) + [[0, 0, 1]])
+        m_inv = numpy.linalg.inv(m)
+        un_xform = inkex.Transform()
+        un_xform.add_matrix(m_inv[0][0], m_inv[1][0],
+                            m_inv[0][1], m_inv[1][1],
+                            m_inv[0][2], m_inv[1][2])
+        return un_xform
+
+    def rotate(self, angle, around=(0, 0)):
+        'Apply a rotation transformation, optionally around a given point.'
+        # Determine the coordinates around which we're rotate the shape.
+        if type(around) == str:
+            obj = self._inkscape_obj
+            un_xform = self._inverse_transform()
+            bbox = obj.bounding_box(un_xform)
+            if around in ['c', 'center']:
+                around = bbox.center
+            elif around == 'ul':
+                around = inkex.Vector2d(bbox.left, bbox.top)
+            elif around == 'ur':
+                around = inkex.Vector2d(bbox.right, bbox.top)
+            elif around == 'll':
+                around = inkex.Vector2d(bbox.left, bbox.bottom)
+            elif around == 'lr':
+                around = inkex.Vector2d(bbox.right, bbox.bottom)
+            else:
+                abend(_('unexpected rotation argument %s') % repr(around))
+        else:
+            around = inkex.Vector2d(around)
+
+        # Perform the rotation.
+        tr = inkex.Transform()
+        tr.add_rotate(angle, around.x, around.y)
+        self._transform = tr * self._transform
+        self._apply_transform()
+
+    def translate(self, x, y):
+        'Apply a translation transformation.'
+        tr = inkex.Transform()
+        tr.add_translate(x, y)
+        self._transform = tr * self._transform
+        self._apply_transform()
+
+    def scale(self, sx, sy=None):
+        'Apply a scaling transformation.'
+        tr = inkex.Transform()
+        tr.add_scale(sx, sy)
+        self._transform = tr * self._transform
+        self._apply_transform()
+
     @property
     def transform(self):
         "Return the object's current transformation as an inkex.Transform."
@@ -433,8 +490,7 @@ class SimpleObject(object):
 
     def _apply_transform(self):
         "Apply the SimpleObject's transform to the underlying SVG object."
-        if self._transform != self._inkscape_obj.transform:
-            self._inkscape_obj.set('transform', self._transform)
+        self._inkscape_obj.set('transform', self._transform)
 
     def _diff_transforms(self, objs):
         'Return a list of transformations to animate.'
