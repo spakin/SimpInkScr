@@ -578,11 +578,11 @@ class SimpleObject(object):
 
         # Return a list of transformations to apply.
         xform_list = []
-        if len(set(scale_values)) == len(objs):
+        if len(set(scale_values)) > 1:
             xform_list.append(('scale', scale_values))
-        if len(set(rot_values)) == len(objs):
+        if len(set(rot_values)) > 1:
             xform_list.append(('rotate', rot_values))
-        if len(set(xlate_values)) == len(objs):
+        if len(set(xlate_values)) > 1:
             xform_list.append(('translate', xlate_values))
         return xform_list
 
@@ -646,7 +646,7 @@ class SimpleObject(object):
                 continue
             vs = [o.get(a) for o in objs]
             vs = [v for v in vs if v is not None]
-            if len(set(vs)) == len(objs):
+            if len(set(vs)) > 1:
                 attr2vals[a] = vs
 
         # Handle styles specially.
@@ -657,7 +657,7 @@ class SimpleObject(object):
                 for o in objs:
                     obj_style = inkex.Style(o.get('style'))
                     vs.append(obj_style.get(a))
-                if len(set(vs)) == len(objs):
+                if len(set(vs)) > 1:
                     attr2vals[a] = vs
         return attr2vals
 
