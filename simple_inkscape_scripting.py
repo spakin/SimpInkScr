@@ -825,6 +825,22 @@ class SimplePathObject(SimpleObject):
             else:
                 obj.set('inkscape:path-effect', '%s;%s' % (pe_list, str(lpe)))
 
+    def reverse(self):
+        'Reverse the path direction.'
+        obj = self._inkscape_obj
+        obj.path = obj.path.to_absolute().reverse()
+        return self
+
+    def append(self, other):
+        'Append another path onto ours, deleting the other path.'
+        if not isinstance(other, SimplePathObject):
+            _abend(_('only paths can be appended to other paths'))
+        path1 = self._inkscape_obj.path
+        path2 = other._inkscape_obj.path
+        self._inkscape_obj.path = path1 + path2
+        other.remove()
+        return self
+
 
 class SimpleMarker(SimpleObject):
     'Represent a path marker, which wraps an arbitrary object.'
