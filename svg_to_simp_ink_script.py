@@ -578,11 +578,11 @@ class SvgToPythonScript(inkex.OutputExtension):
                 continue
             pobj = Primitive(prim, var2prim)
             prim_list.append(pobj)
-            var2prim[pobj.var_name] = pobj
             if pobj.src1 is not None and pobj.src1 in var2prim:
                 var2prim[pobj.src1].need_var_name = True
             if pobj.src2 is not None and pobj.src2 in var2prim:
                 var2prim[pobj.src2].need_var_name = True
+            var2prim[pobj.var_name] = pobj
         for pobj in prim_list:
             code.append(str(pobj))
 
