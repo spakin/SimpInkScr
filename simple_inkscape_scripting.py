@@ -402,7 +402,7 @@ class SimpleObject(SVGOutputMixin):
         try:
             p = path(obj.get_path())
         except TypeError:
-            _abend(_('failed to convert object to a path'))
+            _abend(_('Failed to convert object to a path'))
         p_obj = p._inkscape_obj
 
         # If only_curves was specified, replace the path with one created
@@ -467,7 +467,7 @@ class SimpleObject(SVGOutputMixin):
             elif around == 'lr':
                 around = inkex.Vector2d(bbox.right, bbox.bottom)
             else:
-                abend(_('unexpected rotation argument %s') % repr(around))
+                abend(_('Unexpected rotation argument %s') % repr(around))
         else:
             around = inkex.Vector2d(around)
 
@@ -798,6 +798,64 @@ class SimpleObject(SVGOutputMixin):
         "Return the SimpleObject's underlying inkex object."
         return self._inkscape_obj
 
+    def z_order(self, target, n=None):
+        'Raise or lower the SimpleObject in the stacking order.'
+        # These operations are performed entirely at the inkex level with
+        # no reecord at the Simple Inkscape Scripting level.  We therefore
+        # start by acquiring our inkex object and its parent.
+        obj = self._inkscape_obj
+        p_obj = obj.getparent()
+
+        # Handle the main raising and lowering operations.
+        if target == 'top':
+            # Raise to top.
+            p_obj.append(obj)
+            return
+        if target == 'bottom':
+            # Lower to bottom.
+            p_obj.insert(0, obj)
+            return
+        if target == 'raise':
+            # Raise by n objects.
+            for i in range(n or 1):
+                next = obj.getnext()
+                if next is not None:
+                    next.addnext(obj)
+            return
+        if target == 'lower':
+            # Lower by n objects.
+            for i in range(n or 1):
+                prev = obj.getprevious()
+                if prev is not None:
+                    prev.addprevious(obj)
+            return
+
+        # Handle moving an object to a specific stack position.
+        if target == 'to':
+            # Move to a specific position by inserting right *before* the
+            # next position.
+            if n is None:
+                _abend(_("z_order('to') requires a second argument"))
+            if n >= 0:
+                try:
+                    # Add before the next element.
+                    p_obj[n + 1].addprevious(obj)
+                except IndexError:
+                    # No next element: raise to top.
+                    p_obj.append(obj)
+            else:
+                n += len(p_obj)
+                if n < 1:
+                    # No previous element: lower to bottom.
+                    p_obj.insert(0, obj)
+                else:
+                    # Add after the previous element.
+                    p_obj[n].addnext(obj)
+            return
+
+        # Complain about any other input.
+        _abend(_('Unexpected z_order argument %s' % repr(target)))
+
 
 class SimplePathObject(SimpleObject):
     'A SimplePathObject is a SimpleObject to which LPEs can be applied.'
@@ -845,7 +903,7 @@ class SimplePathObject(SimpleObject):
         # Process in turn each input path.
         for p in others:
             if not isinstance(p, SimplePathObject):
-                _abend(_('only paths can be appended to other paths'))
+                _abend(_('Only paths can be appended to other paths'))
             path1 = self._inkscape_obj.path
             path2 = p._inkscape_obj.path
             self._inkscape_obj.path = path1 + path2
