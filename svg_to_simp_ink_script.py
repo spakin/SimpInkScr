@@ -503,9 +503,7 @@ class SvgToPythonScript(inkex.OutputExtension):
 
             def __init__(self, pnode, var2prim):
                 self.prim = pnode
-                self.var_name = pnode.get('result')
-                if self.var_name is not None:
-                    self.var_name = id2var(self.var_name)
+                self.var_name = id2var(pnode.get('result') or pnode.get_id())
                 self.src1 = pnode.get('in')
                 self.src2 = pnode.get('in2')
                 self.var2prim = var2prim
@@ -513,11 +511,7 @@ class SvgToPythonScript(inkex.OutputExtension):
 
             def __str__(self):
                 # Invoke the add method on the filter_effect object.
-                if self.need_var_name:
-                    code = '%s = ' % self.var_name
-                else:
-                    code = ''
-                code += '%s.add(%s' % (filt_name, repr(self.prim.tag_name[2:]))
+                code = '%s.add(%s' % (filt_name, repr(self.prim.tag_name[2:]))
 
                 # Specially handle src1 and src2.  These point to
                 # either a named filter primitive or a string.
@@ -540,9 +534,30 @@ class SvgToPythonScript(inkex.OutputExtension):
                             code += ', %s=%.5g' % (k, float(v))
                         except ValueError:
                             code += ', %s=%s' % (k, repr(v))
+                code += ')'
+
+                # If the primitive contains any child options, add these, too.
+                if len(self.prim) > 0:
+                    self.need_var_name = True
+                for opt in self.prim:
+                    code += '\n'
+                    ftype = opt.tag[opt.tag.rindex('fe') + 2:]
+                    code += '%s.add(%s' % (self.var_name, repr(ftype))
+                    for k, v in opt.items():
+                        if k != 'id':
+                            k = k.replace('-', '_')
+                            try:
+                                code += ', %s=%.5g' % (k, float(v))
+                            except ValueError:
+                                code += ', %s=%s' % (k, repr(v))
+                    code += ')'
+
+                # Assign a variable name if it was referenced.
+                if self.need_var_name:
+                    code = '%s = %s' % (self.var_name, code)
 
                 # Return the final string.
-                return code + ')'
+                return code
 
         # Generate code for each underlying filter primitive.
         prim_list = []   # Ordered list of Primitives
