@@ -399,7 +399,10 @@ class SimpleObject(SVGOutputMixin):
         # Get a path version of the underlying object and use this to
         # construct a path SimpleObject.
         obj = self._inkscape_obj
-        p = path(obj.get_path())
+        try:
+            p = path(obj.get_path())
+        except TypeError:
+            _abend(_('failed to convert object to a path'))
         p_obj = p._inkscape_obj
 
         # If only_curves was specified, replace the path with one created
