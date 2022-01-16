@@ -509,6 +509,25 @@ class SvgToPythonScript(inkex.OutputExtension):
                 self.var2prim = var2prim
                 self.need_var_name = False
 
+            def _attrib2py(self, key, val):
+                "Convert an attribute's key and value to a Python tuple."
+                key_str = key.replace('-', '_')
+                val_list = []
+                for v in val.split():
+                    try:
+                        # If the value is convertible to a float, append it
+                        # verbatim.
+                        vf = float(v)
+                        val_list.append(v)
+                    except ValueError:
+                        # If the value is not convertible to a float, quote it
+                        # as a string and append it.
+                        val_list.append(repr(v))
+                val_str = ', '.join(val_list)
+                if len(val_list) > 1:
+                    val_str = '[%s]' % val_str
+                return key_str, val_str
+
             def __str__(self):
                 # Invoke the add method on the filter_effect object.
                 code = '%s.add(%s' % (filt_name, repr(self.prim.tag_name[2:]))
@@ -529,11 +548,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # Append all remaining attributes.
                 for k, v in self.prim.items():
                     if k not in ['in', 'in2', 'result', 'id']:
-                        k = k.replace('-', '_')
-                        try:
-                            code += ', %s=%.5g' % (k, float(v))
-                        except ValueError:
-                            code += ', %s=%s' % (k, repr(v))
+                        code += ', %s=%s' % self._attrib2py(k, v)
                 code += ')'
 
                 # If the primitive contains any child options, add these, too.
@@ -545,11 +560,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                     code += '%s.add(%s' % (self.var_name, repr(ftype))
                     for k, v in opt.items():
                         if k != 'id':
-                            k = k.replace('-', '_')
-                            try:
-                                code += ', %s=%.5g' % (k, float(v))
-                            except ValueError:
-                                code += ', %s=%s' % (k, repr(v))
+                            code += ', %s=%s' % self._attrib2py(k, v)
                     code += ')'
 
                 # Assign a variable name if it was referenced.
