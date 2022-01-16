@@ -836,12 +836,20 @@ class SimplePathObject(SimpleObject):
 
     def append(self, other):
         'Append another path onto ours, deleting the other path.'
-        if not isinstance(other, SimplePathObject):
-            _abend(_('only paths can be appended to other paths'))
-        path1 = self._inkscape_obj.path
-        path2 = other._inkscape_obj.path
-        self._inkscape_obj.path = path1 + path2
-        other.remove()
+        # Convert the input to a list if it's not already one.
+        if hasattr(other, '__len__'):
+            others = other
+        else:
+            others = [other]
+
+        # Process in turn each input path.
+        for p in others:
+            if not isinstance(p, SimplePathObject):
+                _abend(_('only paths can be appended to other paths'))
+            path1 = self._inkscape_obj.path
+            path2 = p._inkscape_obj.path
+            self._inkscape_obj.path = path1 + path2
+            p.remove()
         return self
 
 
