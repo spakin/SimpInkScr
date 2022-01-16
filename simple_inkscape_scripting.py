@@ -985,6 +985,7 @@ class SimpleFilter(SVGOutputMixin):
             except KeyError:
                 res_num = 1
             simp_filt._prim_tally[ftype] = res_num
+            self.simp_filt = simp_filt
             all_args = {'result': '%s%d' % (ftype[2:].lower(), res_num)}
 
             # Make "src1" and "src2" smart aliases for "in" and "in2".
@@ -1007,6 +1008,28 @@ class SimpleFilter(SVGOutputMixin):
         def get_inkex_object(self):
             "Return the SimpleFilterPrimitive's underlying inkex object."
             return self.prim
+
+        class SimpleFilterPrimitiveOption(SVGOutputMixin):
+            'Represent an option applied to an SVG filter primitive.'
+
+            def __init__(self, simp_prim, ftype, **kw_args):
+                attribs = {k.replace('_', '-'): v for k, v in kw_args.items()}
+                elem = lxml.etree.SubElement(simp_prim.prim,
+                                             inkex.addNS(ftype, 'svg'))
+                elem.update(**attribs)
+                simp_prim.prim.append(elem)
+                self.prim_opt = elem
+
+            def get_inkex_object(self):
+                "Return the SimpleFilterPrimitive's underlying inkex object."
+                return self.prim_opt
+
+        def add(self, ftype, **kw_args):
+            '''Add an option a child of an existing filter primitive and
+            return an object representation.'''
+            return self.SimpleFilterPrimitiveOption(self,
+                                                    'fe' + ftype,
+                                                    **kw_args)
 
     def add(self, ftype, **kw_args):
         'Add a primitive to a filter and return an object representation.'
