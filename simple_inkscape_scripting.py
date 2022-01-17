@@ -365,9 +365,9 @@ class SimpleObject(SVGOutputMixin):
                 if pt1.is_close(pt2) and pt3.is_close(pt4):
                     pt2 = (2*pt1 + pt4)/3
                     pt3 = (pt1 + 2*pt4)/3
-                    new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
-                                                      pt3.x, pt3.y,
-                                                      pt4.x, pt4.y))
+                new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
+                                                  pt3.x, pt3.y,
+                                                  pt4.x, pt4.y))
             elif isinstance(seg, inkex.paths.Line):
                 # Convert the line [a, b] to the curve [a, 1/3[a, b],
                 # 2/3[a, b], b].
@@ -385,9 +385,9 @@ class SimpleObject(SVGOutputMixin):
                 if not pt1.is_close(pt4):
                     pt2 = (2*pt1 + pt4)/3
                     pt3 = (pt1 + 2*pt4)/3
-                    new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
-                                                      pt3.x, pt3.y,
-                                                      pt4.x, pt4.y))
+                new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
+                                                  pt3.x, pt3.y,
+                                                  pt4.x, pt4.y))
                 new_segs.append(seg)
             else:
                 abend(_('internal error: unexpected path command '
@@ -408,7 +408,7 @@ class SimpleObject(SVGOutputMixin):
             _abend(_('Failed to convert object to a path'))
         p_obj = p._inkscape_obj
 
-        # If only_curves was specified, replace the path with one created
+        # If all_curves was specified, replace the path with one created
         # from the current path's CubicSuperPath segments.
         if all_curves:
             pes = self._path_to_curve(p_obj)
