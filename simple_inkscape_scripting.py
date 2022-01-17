@@ -452,9 +452,8 @@ class SimpleObject(SVGOutputMixin):
                             m_inv[0][2], m_inv[1][2])
         return un_xform
 
-    def rotate(self, angle, around=(0, 0), first=False):
-        'Apply a rotation transformation, optionally around a given point.'
-        # Determine the coordinates around which to rotate the shape.
+    def _find_transform_center(self, around):
+        'Return the center point around which to apply a transformation.'
         if type(around) == str:
             obj = self._inkscape_obj
             un_xform = self._inverse_transform()
@@ -470,12 +469,15 @@ class SimpleObject(SVGOutputMixin):
             elif around == 'lr':
                 around = inkex.Vector2d(bbox.right, bbox.bottom)
             else:
-                abend(_('Unexpected rotation argument %s') % repr(around))
+                abend(_('Unexpected transform argument %s') % repr(around))
         else:
             around = inkex.Vector2d(around)
+        return around
 
-        # Perform the rotation.
+    def rotate(self, angle, around=(0, 0), first=False):
+        'Apply a rotation transformation, optionally around a given point.'
         tr = inkex.Transform()
+        around = self._find_transform_center(around)
         tr.add_rotate(angle, around.x, around.y)
         if first:
             self._transform = self._transform * tr
