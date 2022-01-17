@@ -30,6 +30,7 @@ List of examples
 | [Drop shadow](drop_shadow.py) | Draw a circle with a drop shadow. |
 | [Ellipses](ellipses.py) | Draw concentric ellipses. |
 | [Gradient template](gradient_template.py) | Show how to reuse a gradient pattern. |
+| [Holes](holes.py) | Draw a few shapes with holes in them. |
 | [Hyperlinks](hyperlinks.py) | Create a set of graphical hyperlinks. |
 | [Image spiral](image_spiral.py) | Draw a spiral out of Inkscape logos downloaded from the Web. |
 | [Inkex paths](inkex_paths.py) | Show how to draw a path using the functions provided by the inkex.paths module (https://tinyurl.com/2p9dna4f) as an alternative to path commands expressed as alternating strings and floats. |
