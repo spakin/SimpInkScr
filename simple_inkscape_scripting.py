@@ -273,10 +273,13 @@ class SimpleObject(SVGOutputMixin):
         if ext_style != '':
             obj.style = ext_style
 
-        # Store the modified Inkscape object.
+        # Store the modified Inkscape object.  If the object is new (as
+        # opposed to having been wrapped with inkex_object), attach it to
+        # the top-level connection point.
         self._inkscape_obj = obj
-        if track:
-            _simple_top.append_obj(self)
+        if obj.getparent() is None:
+            if track:
+                _simple_top.append_obj(self)
         self.parent = None
 
     def __str__(self):
