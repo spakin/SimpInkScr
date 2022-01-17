@@ -452,7 +452,7 @@ class SimpleObject(SVGOutputMixin):
                             m_inv[0][2], m_inv[1][2])
         return un_xform
 
-    def _find_transform_center(self, around):
+    def _find_transform_point(self, around):
         'Return the center point around which to apply a transformation.'
         if type(around) == str:
             obj = self._inkscape_obj
@@ -477,7 +477,7 @@ class SimpleObject(SVGOutputMixin):
     def rotate(self, angle, around=(0, 0), first=False):
         'Apply a rotation transformation, optionally around a given point.'
         tr = inkex.Transform()
-        around = self._find_transform_center(around)
+        around = self._find_transform_point(around)
         tr.add_rotate(angle, around.x, around.y)
         if first:
             self._transform = self._transform * tr
@@ -495,14 +495,17 @@ class SimpleObject(SVGOutputMixin):
             self._transform = tr * self._transform
         self._apply_transform()
 
-    def scale(self, factor, first=False):
+    def scale(self, factor, around=(0, 0), first=False):
         'Apply a scaling transformation.'
         try:
             sx, sy = factor
         except (TypeError, ValueError):
             sx, sy = factor, factor
+        around = self._find_transform_point(around)
         tr = inkex.Transform()
+        tr.add_translate(around)
         tr.add_scale(sx, sy)
+        tr.add_translate(-around)
         if first:
             self._transform = self._transform * tr
         else:
