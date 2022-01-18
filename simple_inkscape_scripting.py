@@ -512,11 +512,14 @@ class SimpleObject(SVGOutputMixin):
             self._transform = tr * self._transform
         self._apply_transform()
 
-    def skew(self, angles, first=False):
+    def skew(self, angles, around=(0, 0), first=False):
         'Apply a skew transformation.'
+        around = self._find_transform_point(around)
         tr = inkex.Transform()
+        tr.add_translate(around)
         tr.add_skewx(angles[0])
         tr.add_skewy(angles[1])
+        tr.add_translate(-around)
         if first:
             self._transform = self._transform * tr
         else:
