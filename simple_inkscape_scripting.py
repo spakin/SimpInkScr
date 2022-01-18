@@ -458,6 +458,10 @@ class SimpleObject(SVGOutputMixin):
             obj = self._inkscape_obj
             un_xform = self._inverse_transform()
             bbox = obj.bounding_box(un_xform)
+            if bbox is None:
+                # Special case first encountered in Inkscape 1.2-dev when
+                # an empty layer is selected.
+                return inkex.Vector2d(0, 0)
             if around in ['c', 'center']:
                 around = bbox.center
             elif around == 'ul':
