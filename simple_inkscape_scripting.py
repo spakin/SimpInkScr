@@ -568,6 +568,9 @@ class SimpleObject(SVGOutputMixin):
         if v is None or as_str:
             # None and as_str=True return strings.
             return v
+        elif attr == 'transform':
+            # Return the transform as an inkex.Transform.
+            return inkex.Transform(v)
         elif attr == 'style':
             # Return the style as a dictionary.
             return self.style()
