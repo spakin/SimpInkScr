@@ -36,6 +36,7 @@ List of examples
 | [Inkex paths](inkex_paths.py) | Show how to draw a path using the functions provided by the inkex.paths module (https://tinyurl.com/2p9dna4f) as an alternative to path commands expressed as alternating strings and floats. |
 | [Linear gradient](linear_gradient.py) | Fill a shape with a gradient pattern. |
 | [Markers](markers.py) | Draw arrows with begin, middle, and ending markers. |
+| [Move rectangles](move_rectangles.py) | Move all rectangles in the image 2cm to the right.  All other shapes are left alone. |
 | [New layer](new_layer.py) | Add a layer to an image. |
 | [Overlapping circles](overlapping_circles.py) | Draw an array of hundreds of overlapping circles. |
 | [Path effects](path_effects.py) | Demonstrate the application of live path effects to a curve. |
