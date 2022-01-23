@@ -213,6 +213,11 @@ class SimpleTopLevel(object):
         except AttributeError:
             self._svg_root.defs.append(obj)
 
+    @property
+    def svg_root(self):
+        'Return the root of the SVG tree.'
+        return self._svg_root
+
     def __contains__(self, obj):
         '''Return True if a given Simple Inkscape Scripting object appears at
         the document's top level.'''
@@ -1647,6 +1652,15 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
     if isinstance(obj, inkex.PathElement):
         return SimplePathObject(obj, merged_xform, conn_avoid, clip_path,
                                 base_style, style)
+    if isinstance(obj, inkex.Layer):
+        # Convert the layer and recursively convert and add all its children.
+        lay = SimpleLayer(obj, merged_xform, conn_avoid, clip_path,
+                          base_style, style)
+        for o in [e for e in obj.iter() if e is not obj]:
+            o.getparent().remove(o)
+            io = inkex_object(o)
+            lay.add(io)
+        return lay
     if isinstance(obj, inkex.Group):
         # Convert the group and recursively convert and add all its children.
         gr = SimpleGroup(obj, merged_xform, conn_avoid, clip_path,
@@ -1737,6 +1751,41 @@ def pop_defaults():
 def path_effect(effect, **kwargs):
     'Return an object represent a live path effect.'
     return SimplePathEffect(effect, **kwargs)
+
+
+def selected_shapes():
+    '''Return a list of all directly selected shapes as Simple Inkscape
+    Scripting objects.  Layers do not count as shapes in this context.'''
+    global _simple_top
+    return [inkex_object(o)
+            for o in _simple_top.svg_root.selection
+            if not isinstance(o, inkex.Layer)]
+
+
+def all_shapes():
+    '''Return a list of all shapes in the image as Simple Inkscape
+    Scripting objects.  Layers do not count as shapes in this context.'''
+    # Acquire the root of the SVG tree.
+    global _simple_top
+    svg = _simple_top.svg_root
+
+    # Find all ShapeElements whose parent is a layer.
+    layers = {g
+              for g in svg.xpath('//svg:g')
+              if g.get('inkscape:groupmode') == 'layer'}
+    layer_shapes = [inkex_object(obj)
+                    for lay in layers
+                    for obj in lay
+                    if isinstance(obj, inkex.ShapeElement)]
+
+    # Find all ShapeElements whose parent is the root.
+    root_shapes = [inkex_object(obj)
+                   for obj in svg
+                   if isinstance(obj, inkex.ShapeElement) and
+                   obj not in layers]
+
+    # Return the combination of the two.
+    return root_shapes + layer_shapes
 
 
 # ----------------------------------------------------------------------
