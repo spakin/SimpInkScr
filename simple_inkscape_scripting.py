@@ -545,6 +545,18 @@ class SimpleObject(SVGOutputMixin):
             self._transform = inkex.Transform(xform)
         self._apply_transform()
 
+    @property
+    def tag(self):
+        'Return the element type of our underlying object.'
+        # Strip off the namespace prefix (e.g.,
+        # "{http://www.w3.org/2000/svg}circle" --> "circle").
+        t = self._inkscape_obj.tag
+        try:
+            t = t[t.rindex("}") + 1:]
+        except ValueError:
+            pass
+        return t
+
     def _apply_transform(self):
         "Apply the SimpleObject's transform to the underlying SVG object."
         self._inkscape_obj.set('transform', self._transform)
