@@ -566,8 +566,14 @@ class SimpleObject(SVGOutputMixin):
         'Return the value of an SVG attribute.'
         v = self._inkscape_obj.get(attr)
         if v is None or as_str:
+            # None and as_str=True return strings.
             return v
-        return _svg_str_to_python(v)
+        elif attr == 'style':
+            # Return the style as a dictionary.
+            return self.style()
+        else:
+            # Everything else is returned as a Python data type.
+            return _svg_str_to_python(v)
 
     def svg_set(self, attr, val):
         'Set the value of an SVG attribute.'
@@ -579,6 +585,14 @@ class SimpleObject(SVGOutputMixin):
         elif val is None:
             # None removes an attribute.
             obj.attrib.pop(attr, None)   # "None" suppresses a KeyError
+        elif attr == 'style':
+            # "style" accepts a variety of data types.
+            if isinstance(val, dict):
+                # Dictionary
+                self.style(**val)
+            else:
+                # inkex.Style or other object convertible to str
+                obj.set(attr, str(val))
         else:
             # All other attribute values are applied directly to the
             # underlying inkex object.
