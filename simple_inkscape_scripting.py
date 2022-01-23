@@ -557,6 +557,28 @@ class SimpleObject(SVGOutputMixin):
             pass
         return t
 
+    def svg_get(self, attr, as_str=False):
+        'Return the value of an SVG attribute.'
+        v = self._inkscape_obj.get(attr)
+        if v is None or as_str:
+            return v
+        return _svg_str_to_python(v)
+
+    def svg_set(self, attr, val):
+        'Set the value of an SVG attribute.'
+        obj = self._inkscape_obj
+        if attr == 'transform':
+            # "transform" is a special case because we maintain a shadow
+            # copy of the current transform within the SimpleObject.
+            self.transform = val
+        elif val is None:
+            # None removes an attribute.
+            obj.attrib.pop(attr, None)   # "None" suppresses a KeyError
+        else:
+            # All other attribute values are applied directly to the
+            # underlying inkex object.
+            obj.set(attr, _python_to_svg_str(val))
+
     def _apply_transform(self):
         "Apply the SimpleObject's transform to the underlying SVG object."
         self._inkscape_obj.set('transform', self._transform)
