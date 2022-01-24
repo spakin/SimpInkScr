@@ -1,3 +1,3 @@
 __pycache__/
 tests/__pycache__/
-tests/data/refs/simple_inkscape_scripting__--program__circle____100____100______75__.out.export
+tests/data/refs/simple_inkscape_scripting*.out.export
