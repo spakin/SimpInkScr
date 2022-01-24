@@ -1,8 +1,9 @@
 from simple_inkscape_scripting import SimpleInkscapeScripting
+from svg_to_simp_ink_script import SvgToPythonScript
 from inkex.tester import ComparisonMixin, InkscapeExtensionTestMixin, TestCase
 from inkex.tester.filters import CompareOrderIndependentStyle
 
-class SimpInkScrTrivial(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrBasicTest(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
     effect_class = SimpleInkscapeScripting
     compare_filters = [CompareOrderIndependentStyle()]
     comparisons = [
@@ -119,3 +120,9 @@ p.apply_path_effect(roughen)
 ''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
+
+
+class SimpInkScrOutputBasicTest(ComparisonMixin, TestCase):
+    effect_class = SvgToPythonScript
+    compare_file = 'svg/shapes.svg'
+    comparisons = [()]
