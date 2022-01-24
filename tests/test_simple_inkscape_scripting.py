@@ -6,6 +6,16 @@ from inkex.tester.filters import CompareOrderIndependentStyle
 class SimpInkScrBasicTest(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
     effect_class = SimpleInkscapeScripting
     compare_filters = [CompareOrderIndependentStyle()]
+    animation_base = '''\
+def make_rect(center, fill, edge=100):
+    return rect(inkex.Vector2d(-edge/2, -edge/2) + center,
+                inkex.Vector2d(edge/2, edge/2) + center,
+                fill=fill)
+
+r1 = make_rect((50, 50), '#aade87')
+r2 = make_rect((width/2, height/2), '#9955ff')
+r3 = make_rect((width - 50, height - 50), '#d35f5f')
+'''
     comparisons = [
         # The following tests come from the Shape Construction wiki page.
         ('--program=circle((width/2, height/2), 50)',),
@@ -117,7 +127,22 @@ roughen = path_effect('rough_hatches',
 e = ellipse((150, 100), (150, 100), stroke='#7f2aff', stroke_width=2)
 p = e.to_path()
 p.apply_path_effect(roughen)
+''',),
+
+        # The following tests come from the Animation wiki page.
+        ("--program=%s\nr1.animate([r2, r3], duration='3s', key_times=[0, 0.75, 1])" % animation_base,),
+        ('''--program=
+def make_rect(center, fill, edge=100):
+    return rect(inkex.Vector2d(-edge/2, -edge/2) + center,
+                inkex.Vector2d(edge/2, edge/2) + center,
+                fill=fill)
+
+r1 = make_rect((50, 50), '#aade87')
+r4 = make_rect((0, 0), '#5599ff')
+r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % (width/2, height/2)
+r1.animate(r4, duration='3s')
 ''',)
+        
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 
