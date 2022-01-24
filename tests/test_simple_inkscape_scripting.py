@@ -48,6 +48,35 @@ box = rect((0, 0), (200, 100), fill='#d4aa00').to_path()
 hole1 = rect((25, 25), (75, 75)).to_path()
 hole2 = rect((125, 25), (175, 75)).to_path()
 box.append([hole1.reverse(), hole2.reverse()])
+''',),
+
+        # The following tests come from the Common Arguments wiki page.
+        ('''--program=
+tr = inkex.Transform()
+tr.add_translate(30*pt, -12*pt)
+tr.add_rotate(-15, width/2, height/2)
+text('Transform', (width/2, height/2),
+     transform=tr,
+     font_family='URW Bookman, serif',
+     font_weight='bold',
+     font_size=24*pt,
+     text_align='center',
+     text_anchor='middle',
+     fill='#003380')
+''',),
+        ('''--program=
+r1 = rect((100, 0), (150, 50), fill='#fff6d5')
+r2 = rect((200, 400), (250, 450), fill='#fff6d5')
+connector(r1, r2, ctype='orthogonal', curve=100)
+circle((225, 225), 25, fill='red', conn_avoid=True)
+''',),
+        ('''--program=
+polyline([(64,128), (320,64), (384,128), (640, 64)],
+         stroke='#005544',
+         stroke_width=32,
+         stroke_linecap='round',
+         stroke_linejoin='round',
+         stroke_dasharray=[32, 32, 64, 32])
 ''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
