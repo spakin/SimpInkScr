@@ -6,6 +6,7 @@ class SimpInkScrTrivial(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
     effect_class = SimpleInkscapeScripting
     compare_filters = [CompareOrderIndependentStyle()]
     comparisons = [
+        # The following tests come from the Shape Construction wiki page.
         ('--program=circle((width/2, height/2), 50)',),
         ('--program=ellipse((width/2, height/2), (75, 50))',),
         ('--program=rect((width/2 - 50, height/2 - 30), (width/2 + 50, height/2 + 30))',),
@@ -34,6 +35,19 @@ text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle')
 more_text('Inkscape', font_weight='bold', fill='#800000')
 more_text('!!!')
 ''',),
-        ("--program=image('https://media.inkscape.org/static/images/inkscape-logo.png', (0, 0), embed=False)",)
+        ("--program=image('https://media.inkscape.org/static/images/inkscape-logo.png', (0, 0), embed=False)",),
+
+        # The following tests come from the Path Operations wiki page.
+        ('''--program=
+c1 = circle((50, 50), 50, fill='#005500', fill_rule='evenodd').to_path()
+c2 = circle((100, 50), 50).to_path()
+c1.append(c2)
+''',),
+        ('''--program=
+box = rect((0, 0), (200, 100), fill='#d4aa00').to_path()
+hole1 = rect((25, 25), (75, 75)).to_path()
+hole2 = rect((125, 25), (175, 75)).to_path()
+box.append([hole1.reverse(), hole2.reverse()])
+''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
