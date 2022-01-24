@@ -301,11 +301,11 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Produce either a regular polygon or a star.
         if flat == 'true':
             # Regular polygon
-            code = ['regular_polygon(%s, (%s, %s), %s, ang=%s%s%s)' %
+            code = ['regular_polygon(%s, (%s, %s), %s, angles=%s%s%s)' %
                     (sides, cx, cy, r1, arg1, opt_arg_str, extra)]
         else:
             # Star
-            code = ['star(%s, (%s, %s), (%s, %s), ang=(%s, %s)%s%s)' %
+            code = ['star(%s, (%s, %s), (%s, %s), angles=(%s, %s)%s%s)' %
                     (sides, cx, cy, r1, r2, arg1, arg2, opt_arg_str, extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
