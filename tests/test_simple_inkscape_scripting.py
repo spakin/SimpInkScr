@@ -77,6 +77,45 @@ polyline([(64,128), (320,64), (384,128), (640, 64)],
          stroke_linecap='round',
          stroke_linejoin='round',
          stroke_dasharray=[32, 32, 64, 32])
+''',),
+
+        # The following tests come from the Effects wiki page.
+        ('''--program=
+grad = linear_gradient((0, 0), (0, 1))
+for i in range(5):
+    r, g, b = randint(0, 255), randint(0, 255), randint(0, 255)
+    grad.add_stop(i/4.0, '#%02X%02X%02X' % (r, g, b))
+ellipse((200, 150), (200, 150), fill=grad)
+''',),
+        ('''--program=
+arrowhead = path([Move(0, 0),
+                  Line(4, 2),
+                  Line(0, 4),
+                  Curve(0, 4, 1, 3, 1, 2),
+                  Curve(1, 1, 0, 0, 0, 0),
+                  ZoneClose()],
+                 fill=None, stroke=None)
+
+orange_arrowhead = marker(arrowhead, (1, 2), fill='orange')
+line((20, 20), (120, 20), stroke='orange', stroke_width=4, stroke_linecap='round', marker_end=orange_arrowhead)
+
+blue_arrowhead = marker(arrowhead, (1, 2), fill='blue')
+line((120, 40), (20, 40), stroke='blue', stroke_width=4, stroke_linecap='round', marker_end=blue_arrowhead)
+''',),
+        ('''--program=
+blur = filter_effect('Make Blurry')
+blur.add('GaussianBlur', stdDeviation=10, edgeMode='duplicate')
+circle((width/2, height/2), 100, fill='yellow', stroke='black',
+       stroke_width=5, filter=blur)
+''',),
+        ('''--program=
+roughen = path_effect('rough_hatches',
+                      do_bend=False,
+                      fat_output=False,
+                      dist_rdm=[0, 1])
+e = ellipse((150, 100), (150, 100), stroke='#7f2aff', stroke_width=2)
+p = e.to_path()
+p.apply_path_effect(roughen)
 ''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
