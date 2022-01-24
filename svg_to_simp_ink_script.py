@@ -264,10 +264,12 @@ class SvgToPythonScript(inkex.OutputExtension):
         rx, ry = node.get('sodipodi:rx'), node.get('sodipodi:ry')
         ang1, ang2 = node.get('sodipodi:start'), node.get('sodipodi:end')
         arc_type = node.get('sodipodi:arc-type')
+        if arc_type is None:
+            arc_type = 'slice'
         extra, extra_deps = self.extra_args(node)
         code = 'arc((%s, %s), (%s, %s), (%s, %s)' % \
             (cx, cy, rx, ry, ang1, ang2)
-        if arc_type is not None and arc_type != 'arc':
+        if arc_type != 'arc':
             code += ', arc_type=%s' % repr(arc_type)
         code += extra + ')'
         code = [code]
