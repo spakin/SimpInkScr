@@ -1,0 +1,36 @@
+name: Inkscape extension
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+
+    - name: Install dependencies
+      run: |
+        sudo add-apt-repository ppa:inkscape.dev/stable
+        sudo apt update
+        sudo apt install -y inkscape python3-lxml python3-pytest python3-pil python3-pytest-cov
+
+    - name: Report software versions
+      run: |
+        inkscape --debug-info
+        lsb_release -a
+        python -V
+
+    - name: Test with pytest
+      run: |
+        export PYTHONPATH=/usr/share/inkscape/extensions:$PYTHONPATH
+        pytest-3 -v --cov=$(pwd) tests/test_simple_inkscape_scripting.py
