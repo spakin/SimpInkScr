@@ -23,6 +23,13 @@ r3 = make_rect((width - 50, height - 50), '#d35f5f')
 blue = rect((90, 0), (170, 50), fill='#55ddff')
 red = rect((0, 0), (80, 50), fill='#ff5555')
 '''
+    z_order = '''
+boxes = []
+ul = inkex.Vector2d()
+for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
+    boxes.append(rect(ul, ul + (100, 60), fill=c, opacity=0.9))
+    ul += (10, 10)
+'''
 
     # Define all of the tests to run.  Simple Inkscape Scripting is a
     # large, featureful extension so many tests are needed to achieve even
@@ -165,6 +172,18 @@ r1.animate(r4, duration='3s')
         ("--program=%s\nred.scale(1.5, 'ur')" % blue_red,),
         ('--program=%s\nred.skew((10, 0))' % blue_red,),
         ("--program=%s\nred.skew((0, 10), 'lr')" % blue_red,),
+
+        # The following tests come from the Other Features wiki page.
+        ('''--program=
+house = rect((32, 64), (96, 112), fill='#ff0000', stroke_width=2)
+roof = polygon([(16, 64), (64, 16), (112, 64)], fill='#008000', stroke_width=2)
+hyperlink([house, roof], 'https://www.pakin.org/', title='My home page')
+''',),
+        ("--program=%s\nboxes[0].z_order('top')" % z_order,),
+        ("--program=%s\nboxes[-1].z_order('bottom')" % z_order,),
+        ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
+        ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
+        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,),
 
         # The following are additional tests intended to increase coverage.
         ('''--program=
