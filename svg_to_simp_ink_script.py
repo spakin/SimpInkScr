@@ -130,6 +130,21 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Convert the style string to a dictionary.
         style = node.get('style')
         style_dict = def_svg_style.copy()
+        try:
+            full_style = inkex.Style.specified_style(node)
+        except AttributeError:
+            # specified_style was added in Inkscape 1.2.  In older Inkscape
+            # versions we consider only our immediate parent's style.  This
+            # implies we may return an incorrect style in cases of multiply
+            # nested groups, each applying its own style but at least
+            # handles the case of an immediate parent applying a style.
+            full_style = inkex.Style(node.getparent().style)
+        for k in full_style:
+            # Remove all default styles that are overridden by a parent (or
+            # self).
+            k2 = k.replace('-', '_')
+            if k in style_dict or k2 in style_dict:
+                style_dict[k] = None
         if style is not None:
             for term in style.split(';'):
                 # Convert the key from SVG to Python syntax.
