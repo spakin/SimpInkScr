@@ -1,0 +1,41 @@
+<!-- Created with Inkscape (http://www.inkscape.org/) --><svg xmlns:ns1="https://launchpad.net/jessyink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="1000" height="1000" viewBox="0 0 1000 1000" version="1.1" id="svg8" inkscape:version="0.92.4 5da689c313, 2019-01-14" sodipodi:docname="test.svg">
+  <defs id="defs33">
+    <marker inkscape:stockid="Arrow2Lstart" orient="auto" refY="0.0" refX="0.0" id="Arrow2Lstart" style="overflow:visible" inkscape:isstock="true">
+      <path id="path859" style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1" d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z " transform="scale(1.1) translate(1,0)"/>
+    </marker>
+  </defs>
+  <sodipodi:namedview pagecolor="#ffffff" bordercolor="#666666" borderopacity="1" objecttolerance="10" gridtolerance="10" guidetolerance="10" inkscape:pageopacity="0" inkscape:pageshadow="2" inkscape:window-width="1920" inkscape:window-height="1017" id="base" showgrid="true" inkscape:snap-text-baseline="true" inkscape:zoom="0.6675088" inkscape:cx="202.7349" inkscape:cy="481.16986" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:current-layer="webslicer-layer">
+    <inkscape:grid type="xygrid" id="grid27" spacingx="10" spacingy="10" empspacing="10" color="#8080ff" opacity="0.25098039" empcolor="#0000ff" empopacity="0.25098039"/>
+  </sodipodi:namedview>
+  <g inkscape:groupmode="layer" id="webslicer-layer" inkscape:label="Slide3" style="display:inline">
+    <rect height="201.49811" width="248.69112" y="353.92661" x="651.3089" id="slicerect1" style="opacity:0.5;fill:#ff0000;stroke-width:1.11927199" transform="matrix(0.965926 0.258819 -0.258819 0.965926 144.109 -185.261)">
+      <desc id="desc51">format: png
+dpi: 96
+layout-disposition: bg-el-norepeat
+layout-position-anchor: tl</desc>
+    </rect>
+  </g>
+  <g inkscape:groupmode="layer" id="layer2" inkscape:label="Slide2" style="display:inline">
+    <circle style="display:inline;fill:#000080;stroke:none" id="c1" cx="150" cy="450" r="50" inkscape:label="#path3736" transform="matrix(0.965926 0.258819 -0.258819 0.965926 121.58 -23.4893)"/>
+    <ellipse style="display:inline;fill:none;stroke:#ff0000;stroke-width:16" id="c2" cx="400" cy="450" rx="100" ry="50" inkscape:label="#path3738" transform="matrix(0.965926 0.258819 -0.258819 0.965926 130.098 -88.1938)"/>
+    <path style="display:inline;fill:#ffff00;stroke:#008000;stroke-width:16" id="c3" sodipodi:type="arc" sodipodi:cx="700" sodipodi:cy="450" sodipodi:rx="100" sodipodi:ry="50" sodipodi:start="0.59013865" sodipodi:end="5.6484511" d="m 783.08635,477.82381 a 100,50 0 0 1 -111.09848,20.17442 100,50 0 0 1 -71.96301,-46.88343 100,50 0 0 1 67.71127,-48.44091 100,50 0 0 1 112.7868,17.67793 L 700,450 Z" inkscape:label="#path3740" transform="matrix(0.965926 0.258819 -0.258819 0.965926 140.032 -163.651)"/>
+    <path style="display:inline;fill:none;stroke:#000000;stroke-width:10;marker-start:url(#Arrow2Lstart)" d="M 100,600 200,700 300,600 400,700" id="p1" inkscape:connector-curvature="0" inkscape:label="#path3746" transform="matrix(0.965926 0.258819 -0.258819 0.965926 176.751 -42.5565)"/>
+    <path style="display:inline;fill:none;stroke:#000000;stroke-width:10" d="m 500,600 c 0,0 0,100 100,100 100,0 0,-100 100,-100 100,0 100,100 100,100" id="p2" inkscape:connector-curvature="0" inkscape:label="#path3748" transform="matrix(0.965926 0.258819 -0.258819 0.965926 190.381 -146.084)"/>
+    <path sodipodi:type="star" style="display:inline;fill:#ffff00;stroke:#008000;stroke-width:10" id="s1" sodipodi:sides="5" sodipodi:cx="189.03001" sodipodi:cy="847.93945" sodipodi:r1="69.364868" sodipodi:r2="34.682434" sodipodi:arg1="0.63598373" sodipodi:arg2="1.2643023" inkscape:flatsided="false" inkscape:rounded="0" inkscape:randomized="0" d="m 244.8332,889.14005 -45.33887,-8.13446 -32.40428,32.73753 -6.27415,-45.63352 -41.14872,-20.70184 41.46124,-20.06861 6.97297,-45.53197 31.89861,33.23044 45.45824,-7.43847 -21.74681,40.60615 z" inkscape:transform-center-x="6.4673011" inkscape:transform-center-y="-0.16430137" transform="matrix(0.965926 0.258819 -0.258819 0.965926 225.641 -18.3635)"/>
+    <use style="display:inline" x="0" y="0" xlink:href="#s1" inkscape:transform-center-x="6.4673011" inkscape:transform-center-y="-0.16430137" id="u1" transform="matrix(0.965926 0.258819 -0.258819 0.965926 424.817 -16.8572)" width="100%" height="100%" inkscape:label="#use3808"/>
+  </g>
+  <g inkscape:label="Slide1" inkscape:groupmode="layer" id="layer1" style="display:inline">
+    <text xml:space="preserve" style="font-size:14.66666698px;line-height:1.25;font-family:sans-serif;fill:#000000;stroke:none" x="100" y="100" id="t1" inkscape:label="#text12" transform="matrix(0.965926 0.258819 -0.258819 0.965926 29.2893 -22.4745)"><tspan sodipodi:role="line" id="tspan10" x="100" y="100">Hello World</tspan></text>
+    <flowRoot xml:space="preserve" id="t4" style="font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;stroke:none" transform="matrix(0.255568 0.0684791 -0.0684791 0.255568 398.194 15.7687)" inkscape:label="#flowRoot14"><flowRegion id="flowRegion16"><rect id="rect18" width="264.5675" height="262.16187" x="105.71429" y="219.66254"/></flowRegion><flowPara id="flowPara20" style="font-size:55.43307114px">flow text which wraps</flowPara></flowRoot>    <text xml:space="preserve" style="font-size:14.66666698px;line-height:1.25;font-family:sans-serif;fill:#000000;stroke:none" x="200" y="100" id="t2" inkscape:label="#text3727" transform="matrix(0.965926 0.258819 -0.258819 0.965926 34.5947 -48.1065)"><tspan sodipodi:role="line" id="tspan3725" x="200" y="100" style="font-size:14.66666698px">UPPER</tspan></text>
+    <text xml:space="preserve" style="font-size:10.58333302px;line-height:1.25;font-family:sans-serif;fill:#000000;stroke:none" x="300" y="100" id="t3" inkscape:label="#text3735" transform="matrix(0.965926 0.258819 -0.258819 0.965926 42.7472 -73.3637)"><tspan sodipodi:role="line" id="tspan3733" x="300" y="100" style="font-size:14.66666698px">Multi line</tspan><tspan sodipodi:role="line" x="300" y="118.33334" id="tspan3737" style="font-size:14.66666698px">text</tspan><tspan sodipodi:role="line" x="300" y="136.66667" id="tspan3739" style="font-size:14.66666698px">FOO</tspan></text>
+    <g id="t5" transform="matrix(0.965926 0.258819 -0.258819 0.965926 512.777 -135.113)" inkscape:label="#g3772">
+      <text id="text3762" y="229.64807" x="54.289616" style="font-size:10.58333302px;line-height:1.25;font-family:sans-serif;fill:#000000;stroke:none" xml:space="preserve"/>
+      <tspan y="229.64807" x="54.289616" id="tspan3760" sodipodi:role="line" style="font-size:14.66666698px">Grouped</tspan><text id="text3766" y="259.64807" x="54.289619" style="font-size:14.66666698px;line-height:1.25;font-family:sans-serif;fill:#000000;stroke:none" xml:space="preserve"/>
+    <tspan y="259.64807" x="54.289619" id="tspan3764" sodipodi:role="line" style="font-size:14.66666698px">text</tspan></g>
+    <rect style="fill:#000080;stroke:none" id="r1" width="100" height="100" x="100" y="200" inkscape:label="#rect3732" transform="matrix(0.965926 0.258819 -0.258819 0.965926 69.8159 -30.3043)"/>
+    <rect style="fill:none;stroke:#ff0000;stroke-width:16" id="r2" width="200" height="100" x="300" y="200" inkscape:label="#rect3734" transform="matrix(0.965926 0.258819 -0.258819 0.965926 78.3344 -95.0091)"/>
+    <rect style="fill:#ffff00;stroke:#008000;stroke-width:16" id="r3" width="200" height="100" x="600" y="200" ry="38.950798" rx="44.943226" inkscape:label="#rect3744" transform="matrix(0.965926 0.258819 -0.258819 0.965926 88.5567 -172.655)"/>
+  </g>
+  <script ns1:version="1.5.5" id="JessyInk">// dummy
+</script>
+</svg>

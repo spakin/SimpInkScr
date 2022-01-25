@@ -142,9 +142,21 @@ r4 = make_rect((0, 0), '#5599ff')
 r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % (width/2, height/2)
 r1.animate(r4, duration='3s')
 ''',)
-        
+
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
+
+
+class SimpInkScrModifyTest(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+    compare_file = 'svg/shapes.svg'
+    comparisons = [
+        ('''--program=
+for obj in all_shapes():
+    obj.rotate(15, 'center', first=True)
+''',)
+    ]
 
 
 class SimpInkScrOutputBasicTest(ComparisonMixin, TestCase):
