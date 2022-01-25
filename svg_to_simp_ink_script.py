@@ -469,7 +469,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             # Ignore layers.
             return None
         extra, extra_deps = self.extra_args(node, {}, {})
-        child_ids = [c.get_id() for c in node]
+        child_ids = [c.get_id() for c in node if hasattr(c, 'get_id')]
         child_vars = [self.Statement.id2var(i) for i in child_ids]
         code = ['group([%s]%s)' % (', '.join(child_vars), extra)]
         return self.Statement(code, node.get_id(), child_ids + extra_deps)
