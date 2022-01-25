@@ -390,9 +390,9 @@ class SimpleObject(SVGOutputMixin):
                 if not pt1.is_close(pt4):
                     pt2 = (2*pt1 + pt4)/3
                     pt3 = (pt1 + 2*pt4)/3
-                new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
-                                                  pt3.x, pt3.y,
-                                                  pt4.x, pt4.y))
+                    new_segs.append(inkex.paths.Curve(pt2.x, pt2.y,
+                                                      pt3.x, pt3.y,
+                                                      pt4.x, pt4.y))
                 new_segs.append(seg)
             else:
                 abend(_('internal error: unexpected path command '

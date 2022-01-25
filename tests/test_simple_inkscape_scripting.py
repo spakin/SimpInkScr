@@ -141,8 +141,20 @@ r1 = make_rect((50, 50), '#aade87')
 r4 = make_rect((0, 0), '#5599ff')
 r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % (width/2, height/2)
 r1.animate(r4, duration='3s')
-''',)
+''',),
 
+        # The following are additional tests intended to increase coverage.
+        ('''--program=
+p = path(['M', 150, 50,
+          'C', 100, 50, 50, 100, 50, 192,
+          'V', 300,
+          'H', 250,
+          'V', 192,
+          'C', 250, 100, 200, 50, 150, 50,
+          'Z'],
+         fill='#0055d4', stroke_width=3)
+p.to_path(all_curves=True)
+''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 
