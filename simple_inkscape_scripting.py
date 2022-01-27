@@ -27,7 +27,6 @@ import io
 import lxml
 import os
 import re
-import sys
 try:
     import numpy
 except ModuleNotFoundError:
@@ -84,13 +83,13 @@ def _split_two_or_one(val):
 
 def _python_to_svg_str(val):
     'Convert a Python value to a string suitable for use in an SVG attribute.'
-    if type(val) == str:
+    if isinstance(val, str):
         # Strings are used unmodified
         return val
-    if type(val) == bool:
+    if isinstance(val, bool):
         # Booleans are converted to lowercase strings.
         return str(val).lower()
-    if type(val) == float:
+    if isinstance(val, float):
         # Floats are converted using a fair number of significant digits.
         return '%.10g' % val
     try:
@@ -102,23 +101,23 @@ def _python_to_svg_str(val):
     return str(val)  # Everything else is converted to a string as usual.
 
 
-def _svg_str_to_python(str):
+def _svg_str_to_python(s):
     'Convert an SVG attribute string to an appropriate Python type.'
     # Recursively convert lists.
-    fields = str.replace(',', ' ').replace(';', ' ').split()
+    fields = s.replace(',', ' ').replace(';', ' ').split()
     if len(fields) > 1:
         return [_svg_str_to_python(f) for f in fields]
 
     # Specially handle numerical data types then fall back to strings.
     try:
-        return int(str)
+        return int(s)
     except ValueError:
         pass
     try:
-        return float(str)
+        return float(s)
     except ValueError:
         pass
-    return str
+    return s
 
 
 def _abend(msg):
@@ -131,7 +130,7 @@ class Mpath(inkex.Use):
     tag_name = 'mpath'
 
 
-class SimpleTopLevel(object):
+class SimpleTopLevel():
     "Keep track of top-level objects, both ours and inkex's."
 
     def __init__(self, svg_root):
@@ -224,19 +223,19 @@ class SimpleTopLevel(object):
         return obj in self._simple_objs
 
 
-class SVGOutputMixin(object):
+class SVGOutputMixin():
     '''Provide an svg method for converting an underlying inkex object to
     a string.'''
 
     def svg(self, xmlns=False, pretty_print=False):
+        'Return our underlying inkex object as a string.'
         obj = self.get_inkex_object()
         if xmlns or pretty_print:
             # pretty_print currently implies xmlns.
             return lxml.etree.tostring(obj,
                                        encoding='unicode',
                                        pretty_print=pretty_print)
-        else:
-            return obj.tostring().decode('utf-8')
+        return obj.tostring().decode('utf-8')
 
 
 class SimpleObject(SVGOutputMixin):
@@ -293,7 +292,8 @@ class SimpleObject(SVGOutputMixin):
         arguments such as shape_inside.'''
         return 'url(#%s)' % self._inkscape_obj.get_id()
 
-    def _construct_style(self, base_style, new_style):
+    @staticmethod
+    def _construct_style(base_style, new_style):
         '''Combine a shape default style, a global default style, and an
         object-specific style and return the result as a string.'''
         # Start with the default style for the shape type.
@@ -343,21 +343,19 @@ class SimpleObject(SVGOutputMixin):
         _simple_top.append_def(self)
         return self
 
-    def _path_to_curve(self, pe):
+    @staticmethod
+    def _path_to_curve(pe):
         '''Convert a PathElement to a list of PathCommands that are primarily
         curves.'''
         # Convert to a CubicSuperPath and from that to a list of segments.
         csp = pe.path.to_superpath()
-        prev = inkex.Vector2d()
-        prev_prev = inkex.Vector2d()
         segs = list(csp.to_segments())
         new_segs = []
 
         # Postprocess all linear curves to make them more suitable for
         # conversion to B-splines.
         prev = inkex.Vector2d()
-        prev_prev = inkex.Vector2d()
-        for i, seg in enumerate(segs):
+        for seg in segs:
             if isinstance(seg, inkex.paths.Move):
                 first = seg.end_point(inkex.Vector2d(), prev)
                 new_segs.append(seg)
@@ -397,7 +395,6 @@ class SimpleObject(SVGOutputMixin):
             else:
                 _abend(_('internal error: unexpected path command '
                          'in _path_to_curve'))
-            prev_prev = prev
             prev = seg.end_point(first, prev)
         return new_segs
 
@@ -459,7 +456,7 @@ class SimpleObject(SVGOutputMixin):
 
     def _find_transform_point(self, around):
         'Return the center point around which to apply a transformation.'
-        if type(around) == str:
+        if isinstance(around, str):
             obj = self._inkscape_obj
             un_xform = self._inverse_transform()
             bbox = obj.bounding_box(un_xform)
@@ -510,7 +507,7 @@ class SimpleObject(SVGOutputMixin):
             sx, sy = factor
         except (TypeError, ValueError):
             sx, sy = factor, factor
-        around = self._find_transform_point(around)
+        around = inkex.Vector2d(self._find_transform_point(around))
         tr = inkex.Transform()
         tr.add_translate(around)
         tr.add_scale(sx, sy)
@@ -523,7 +520,7 @@ class SimpleObject(SVGOutputMixin):
 
     def skew(self, angles, around=(0, 0), first=False):
         'Apply a skew transformation.'
-        around = self._find_transform_point(around)
+        around = inkex.Vector2d(self._find_transform_point(around))
         tr = inkex.Transform()
         tr.add_translate(around)
         tr.add_skewx(angles[0])
@@ -568,15 +565,14 @@ class SimpleObject(SVGOutputMixin):
         if v is None or as_str:
             # None and as_str=True return strings.
             return v
-        elif attr == 'transform':
+        if attr == 'transform':
             # Return the transform as an inkex.Transform.
             return inkex.Transform(v)
-        elif attr == 'style':
+        if attr == 'style':
             # Return the style as a dictionary.
             return self.style()
-        else:
-            # Everything else is returned as a Python data type.
-            return _svg_str_to_python(v)
+        # Everything else is returned as a Python data type.
+        return _svg_str_to_python(v)
 
     def svg_set(self, attr, val):
         'Set the value of an SVG attribute.'
@@ -605,19 +601,20 @@ class SimpleObject(SVGOutputMixin):
         "Apply the SimpleObject's transform to the underlying SVG object."
         self._inkscape_obj.set('transform', self._transform)
 
-    def _diff_transforms(self, objs):
+    @staticmethod
+    def _diff_transforms(objs):
         'Return a list of transformations to animate.'
         # Determine if any object has a different transformation from any
         # other.
         xforms = [o.get('transform') for o in objs]
-        if all([x is None for x in xforms]):
+        if all(x is None for x in xforms):
             return []  # No transform on any object: nothing to animate.
         for i, x in enumerate(xforms):
             if x is None:
                 xforms[i] = inkex.Transform()
             else:
                 xforms[i] = inkex.Transform(x)
-        if len(set([str(x) for x in xforms])) == 1:
+        if len({str(x) for x in xforms}) == 1:
             return []  # All transforms are identical: nothing to animate.
         hexads = [list(x.to_hexad()) for x in xforms]
 
@@ -719,7 +716,8 @@ class SimpleObject(SVGOutputMixin):
                 anim.set('fill', 'freeze')
             target._inkscape_obj.append(anim)
 
-    def _diff_attributes(self, objs):
+    @staticmethod
+    def _diff_attributes(objs):
         '''Given a list of ShapeElements, return a dictionary mapping an
         attribute name to a list of values it takes on across all of the
         ShapeElements.'''
@@ -750,7 +748,8 @@ class SimpleObject(SVGOutputMixin):
                     attr2vals[a] = vs
         return attr2vals
 
-    def _key_times_string(self, key_times, num_objs, interpolation):
+    @staticmethod
+    def _key_times_string(key_times, num_objs, interpolation):
         'Validate key-time values before converting them to a string.'
         # Ensure the argument is the correct type (list of floats) and
         # length and is ordered correctly.
@@ -773,13 +772,14 @@ class SimpleObject(SVGOutputMixin):
         # Convert the key times to a string, and return it.
         return '; '.join(['%.5g' % v for v in kt])
 
-    def animate(self, objs=[], duration=None,
+    def animate(self, objs=None, duration=None,
                 begin_time=None, key_times=None,
                 repeat_count=None, repeat_time=None, keep=True,
                 interpolation=None, path=None, path_rotate=None,
                 at_end=False, attr_filter=None):
         "Animate the object through each of the given objects' appearance."
         # Prepare the list of objects.
+        objs = objs or []
         try:
             iobjs = [o._inkscape_obj for o in objs]
         except TypeError:
@@ -822,35 +822,35 @@ class SimpleObject(SVGOutputMixin):
         # Add an <animateMotion> element if a path was supplied.
         if path is not None:
             # Create an <animateMotion> element.
-            animMo = lxml.etree.Element('animateMotion')
+            anim_mo = lxml.etree.Element('animateMotion')
             if duration is not None:
-                animMo.set('dur', _python_to_svg_str(duration))
+                anim_mo.set('dur', _python_to_svg_str(duration))
             if begin_time is not None:
-                animMo.set('begin', _python_to_svg_str(begin_time))
+                anim_mo.set('begin', _python_to_svg_str(begin_time))
             if key_times is not None:
                 kt_str = self._key_times_string(key_times,
                                                 len(all_iobjs),
                                                 interpolation)
                 anim.set('keyTimes', kt_str)
             if repeat_count is not None:
-                animMo.set('repeatCount', _python_to_svg_str(repeat_count))
+                anim_mo.set('repeatCount', _python_to_svg_str(repeat_count))
             if repeat_time is not None:
-                animMo.set('repeatDur', _python_to_svg_str(repeat_time))
+                anim_mo.set('repeatDur', _python_to_svg_str(repeat_time))
             if keep:
-                animMo.set('fill', 'freeze')
+                anim_mo.set('fill', 'freeze')
             if interpolation is not None:
-                animMo.set('calcMode', _python_to_svg_str(interpolation))
+                anim_mo.set('calcMode', _python_to_svg_str(interpolation))
             if path_rotate is not None:
-                animMo.set('rotate', _python_to_svg_str(path_rotate))
+                anim_mo.set('rotate', _python_to_svg_str(path_rotate))
 
             # Insert an <mpath> child under <animateMotion> that links to
             # the given path.
             mpath = Mpath()
             mpath.href = path._inkscape_obj.get_id()
-            animMo.append(mpath)
+            anim_mo.append(mpath)
 
             # Add the <animateMotion> to the target object.
-            self._inkscape_obj.append(animMo)
+            self._inkscape_obj.append(anim_mo)
 
         # Handle animated transforms specially because only one can apply
         # to a given object.  We therefore add levels of grouping, each
@@ -948,14 +948,15 @@ class SimplePathObject(SimpleObject):
             obj.set('d', None)
 
         # Apply each LPE in turn.
-        for lpe in lpe_list:
+        for one_lpe in lpe_list:
             # If this is our first LPE, apply it.  Otherwise, append it to the
             # previous LPE.
             pe_list = obj.get('inkscape:path-effect')
             if pe_list is None:
-                obj.set('inkscape:path-effect', str(lpe))
+                obj.set('inkscape:path-effect', str(one_lpe))
             else:
-                obj.set('inkscape:path-effect', '%s;%s' % (pe_list, str(lpe)))
+                obj.set('inkscape:path-effect', '%s;%s' %
+                        (pe_list, str(one_lpe)))
 
     def reverse(self):
         'Reverse the path direction.'
@@ -1013,7 +1014,7 @@ class SimpleGroup(SimpleObject):
         'Add one or more SimpleObjects to the group.'
         # Ensure the addition is legitimate.
         global _simple_top
-        if type(objs) != list:
+        if not isinstance(objs, list):
             objs = [objs]   # Convert scalar to list
         for obj in objs:
             # Check for various error conditions.
@@ -1040,7 +1041,7 @@ class SimpleGroup(SimpleObject):
         # Add each object to the top level.
         if objs is None:
             objs = self._children
-        elif type(objs) != list:
+        elif not isinstance(objs, list):
             objs = [objs]   # Convert scalar to list
         global _simple_top
         for o in objs:
@@ -1200,6 +1201,8 @@ class SimpleGradient(SVGOutputMixin):
                         'reflected': 'reflect',
                         'direct':    'repeat'}
 
+    grad = None  # Keep pylint from complaining that self.grad is undefined.
+
     def _set_common(self, grad, repeat=None, gradient_units=None,
                     template=None, transform=None, **style):
         'Set arguments that are common to both linear and radial gradients.'
@@ -1268,7 +1271,6 @@ class SimpleRadialGradient(SimpleGradient):
     def __init__(self, center=None, radius=None, focus=None, fr=None,
                  repeat=None, gradient_units=None, template=None,
                  transform=None, **style):
-        global _svg_defs
         grad = inkex.RadialGradient()
         if center is not None:
             grad.set('cx', center[0])
@@ -1509,7 +1511,7 @@ def arc(center, radii, angles, arc_type='arc',
 
 def path(elts, transform=None, conn_avoid=False, clip_path=None, **style):
     'Draw an arbitrary path.'
-    if type(elts) == str:
+    if isinstance(elts, str):
         elts = re.split(r'[\s,]+', elts)
     if len(elts) == 0:
         _abend(_('A path must contain at least one path element.'))
@@ -1616,9 +1618,10 @@ def duplicate(obj, transform=None, conn_avoid=False, clip_path=None, **style):
                         old_style, style)
 
 
-def group(objs=[], transform=None, conn_avoid=False, clip_path=None,
+def group(objs=None, transform=None, conn_avoid=False, clip_path=None,
           **style):
     'Create a container for other objects.'
+    objs = objs or []
     g = inkex.Group()
     g_obj = SimpleGroup(g, transform, conn_avoid, clip_path, {}, style)
     g_obj.add(objs)
@@ -1627,9 +1630,10 @@ def group(objs=[], transform=None, conn_avoid=False, clip_path=None,
     return g_obj
 
 
-def layer(name, objs=[], transform=None, conn_avoid=False, clip_path=None,
+def layer(name, objs=None, transform=None, conn_avoid=False, clip_path=None,
           **style):
     'Create a container for other objects.'
+    objs = objs or []
     layer = inkex.Layer.new(name)
     l_obj = SimpleLayer(layer, transform, conn_avoid, clip_path, {}, style)
     l_obj.add(objs)
@@ -1688,8 +1692,7 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
             gr.add(io)
         return gr
     if isinstance(obj, inkex.Marker):
-        return SimpleMarker(obj, merged_xform, conn_avoid, clip_path,
-                            base_style, style)
+        return SimpleMarker(obj, **style)
     return SimpleObject(obj, merged_xform, conn_avoid, clip_path,
                         base_style, style)
 
@@ -1752,7 +1755,7 @@ def marker(obj, ref=None, orient='auto', marker_units=None,
 def push_defaults():
     'Duplicate the top element of the default style and transform stacks.'
     global _default_style, _default_transform
-    _default_style.append({k: v for k, v in _default_style[-1].items()})
+    _default_style.append(_default_style[-1].items())
     _default_transform.append(_default_transform[-1])
 
 
