@@ -395,8 +395,8 @@ class SimpleObject(SVGOutputMixin):
                                                       pt4.x, pt4.y))
                 new_segs.append(seg)
             else:
-                abend(_('internal error: unexpected path command '
-                        'in _path_to_curve'))
+                _abend(_('internal error: unexpected path command '
+                         'in _path_to_curve'))
             prev_prev = prev
             prev = seg.end_point(first, prev)
         return new_segs
@@ -478,7 +478,7 @@ class SimpleObject(SVGOutputMixin):
             elif around == 'lr':
                 around = inkex.Vector2d(bbox.right, bbox.bottom)
             else:
-                abend(_('Unexpected transform argument %s') % repr(around))
+                _abend(_('Unexpected transform argument %s') % repr(around))
         else:
             around = inkex.Vector2d(around)
         return around
@@ -705,9 +705,9 @@ class SimpleObject(SVGOutputMixin):
             if begin_time is not None:
                 anim.set('begin', _python_to_svg_str(begin_time))
             if key_times is not None:
-                if len(key_times) != len(iobjs):
+                if len(key_times) != len(objs):
                     _abend('Expected %d key times but saw %d' %
-                           (len(iobjs), len(key_times)))
+                           (len(objs), len(key_times)))
                 anim.set('keyTimes',
                          '; '.join([_python_to_svg_str(kt)
                                     for kt in key_times]))
@@ -889,16 +889,16 @@ class SimpleObject(SVGOutputMixin):
         if target == 'raise':
             # Raise by n objects.
             for i in range(n or 1):
-                next = obj.getnext()
-                if next is not None:
-                    next.addnext(obj)
+                next_obj = obj.getnext()
+                if next_obj is not None:
+                    next_obj.addnext(obj)
             return
         if target == 'lower':
             # Lower by n objects.
             for i in range(n or 1):
-                prev = obj.getprevious()
-                if prev is not None:
-                    prev.addprevious(obj)
+                prev_obj = obj.getprevious()
+                if prev_obj is not None:
+                    prev_obj.addprevious(obj)
             return
 
         # Handle moving an object to a specific stack position.
@@ -1045,8 +1045,8 @@ class SimpleGroup(SimpleObject):
         global _simple_top
         for o in objs:
             if o.parent != self:
-                abend(_('Attempt to remove an object from a group to which '
-                        'it does not belong.'))
+                _abend(_('Attempt to remove an object from a group to which '
+                         'it does not belong.'))
             o.parent = None
             _simple_top.append_obj(o)
 
@@ -1875,9 +1875,6 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
             sis_globals[unit] = convert_unit('1' + unit)
         sis_globals['inch'] = \
             convert_unit('1in')  # "in" is a keyword.
-
-        # Determine where in the SVG hierarchy new objects should be attached.
-        attach_point = self.find_attach_point()
 
         # Launch the user's script.
         code = ''
