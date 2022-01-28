@@ -19,25 +19,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 02110-1301, USA.
 '''
 
-import inkex
-from inkex.localization import inkex_gettext as _
-import PIL.Image
 import base64
 import io
-import lxml
+import math
 import os
+import random
 import re
 try:
     import numpy
 except ModuleNotFoundError:
     pass
-
-# The following imports are provided for user convenience.
-from math import *
-from random import *
-from inkex.paths import *
-from inkex.transforms import Transform
-
+import PIL.Image
+import lxml
+import inkex
+from inkex.localization import inkex_gettext as _
 
 # ----------------------------------------------------------------------
 
@@ -47,7 +42,7 @@ from inkex.transforms import Transform
 # Define a prefix for all IDs we assign.  This contains randomness so
 # running the same script repeatedly will be unlikely to produce
 # conflicting IDs.
-_id_prefix = 'simp-ink-scr-%d-' % randint(100000, 999999)
+_id_prefix = 'simp-ink-scr-%d-' % random.randint(100000, 999999)
 
 # Keep track of the next ID to append to _id_prefix.
 _next_obj_id = 1
@@ -626,8 +621,8 @@ class SimpleObject(SVGOutputMixin):
         # Find changes in scale.
         scale_values = []
         for i, h in enumerate(hexads):
-            sx = sqrt(h[0]**2 + h[1]**2)
-            sy = sqrt(h[2]**2 + h[3]**2)
+            sx = math.sqrt(h[0]**2 + h[1]**2)
+            sy = math.sqrt(h[2]**2 + h[3]**2)
             if abs(sx - sy) <= 0.00001:
                 scale_values.append('%.5g' % ((sx + sy)/2))
             else:
@@ -642,7 +637,8 @@ class SimpleObject(SVGOutputMixin):
         rot_values = []
         for h in hexads:
             # Ignore transforms with inconsistent rotation angles.
-            angles = [acos(h[0]), asin(h[1]), asin(-h[2]), acos(h[3])]
+            angles = [math.acos(h[0]), math.asin(h[1]),
+                      math.asin(-h[2]), math.acos(h[3])]
             if abs(angles[0] - angles[3]) > 0.00001 or \
                abs(angles[1] - angles[2]) > 0.00001:
                 return []   # Transform is too complicated for us to handle.
@@ -653,14 +649,14 @@ class SimpleObject(SVGOutputMixin):
             elif h[0] < 0 and h[1] >= 0:
                 ang = angles[0]
             elif h[0] < 0 and h[1] < 0:
-                ang = pi - angles[1]
+                ang = math.pi - angles[1]
             else:
-                ang = 2*pi + angles[1]
+                ang = 2*math.pi + angles[1]
             rot_values.append(ang)
 
         # Convert changes in rotation from radians to degrees and floats to
         # strings.
-        rot_values = ['%.5g' % (r*180/pi) for r in rot_values]
+        rot_values = ['%.5g' % (r*180/math.pi) for r in rot_values]
 
         # Return a list of transformations to apply.
         xform_list = []
@@ -1419,8 +1415,9 @@ def polygon(coords, transform=None, conn_avoid=False, clip_path=None, **style):
                         _common_shape_style, style)
 
 
-def regular_polygon(sides, center, radius, angle=-pi/2, round=0.0, random=0.0,
-                    transform=None, conn_avoid=False, clip_path=None, **style):
+def regular_polygon(sides, center, radius, angle=-math.pi/2, round=0.0,
+                    random=0.0, transform=None, conn_avoid=False,
+                    clip_path=None, **style):
     'Draw a regular polygon.'
     # Create a star object, which is also used for regular polygons.
     if sides < 3:
@@ -1429,7 +1426,7 @@ def regular_polygon(sides, center, radius, angle=-pi/2, round=0.0, random=0.0,
 
     # Set all the regular polygon's parameters.
     obj.set('sodipodi:arg1', angle)
-    obj.set('sodipodi:arg2', angle + pi/sides)
+    obj.set('sodipodi:arg2', angle + math.pi/sides)
     obj.set('inkscape:flatsided', 'true')   # Regular polygon, not star
     obj.set('inkscape:rounded', round)
     obj.set('inkscape:randomized', random)
@@ -1449,9 +1446,9 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     if angles is not None:
         pass
     elif radii[0] >= radii[1]:
-        angles = (-pi/2, pi/sides - pi/2)
+        angles = (-math.pi/2, math.pi/sides - math.pi/2)
     else:
-        angles = (pi/2, pi/sides + pi/2)
+        angles = (math.pi/2, math.pi/sides + math.pi/2)
 
     # Set all the star's parameters.
     obj.set('sodipodi:arg1', angles[0])
@@ -1479,27 +1476,27 @@ def arc(center, radii, angles, arc_type='arc',
     # Here we manually add a path to the object.  (Is there a built-in
     # method for doing this?)
     p = []
-    ang1 %= 2*pi
-    ang2 %= 2*pi
-    x0 = rx*cos(ang1) + center[0]
-    y0 = ry*sin(ang1) + center[1]
-    p.append(Move(x0, y0))
-    delta_ang = (ang2 - ang1) % (2*pi)
+    ang1 %= 2*math.pi
+    ang2 %= 2*math.pi
+    x0 = rx*math.cos(ang1) + center[0]
+    y0 = ry*math.sin(ang1) + center[1]
+    p.append(inkex.paths.Move(x0, y0))
+    delta_ang = (ang2 - ang1) % (2*math.pi)
     if delta_ang == 0.0:
-        delta_ang = 2*pi   # Special case for full ellipses
-    n_segs = int((delta_ang + pi/2) / (pi/2))
+        delta_ang = 2*math.pi   # Special case for full ellipses
+    n_segs = int((delta_ang + math.pi/2) / (math.pi/2))
     for s in range(n_segs):
         a = ang1 + delta_ang*(s + 1)/n_segs
-        x1 = rx*cos(a) + center[0]
-        y1 = ry*sin(a) + center[1]
-        p.append(Arc(rx, ry, 0, False, True, x1, y1))
+        x1 = rx*math.cos(a) + center[0]
+        y1 = ry*math.sin(a) + center[1]
+        p.append(inkex.paths.Arc(rx, ry, 0, False, True, x1, y1))
     if arc_type == 'arc':
         obj.set('sodipodi:open', 'true')
     elif arc_type == 'slice':
-        p.append(Line(center[0], center[1]))
-        p.append(ZoneClose())
+        p.append(inkex.paths.Line(center[0], center[1]))
+        p.append(inkex.paths.ZoneClose())
     elif arc_type == 'chord':
-        p.append(ZoneClose())
+        p.append(inkex.paths.ZoneClose())
     else:
         _abend(_('Invalid arc_type "%s"' % str(arc_type)))
     obj.path = inkex.Path(p)
@@ -1880,7 +1877,13 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
             convert_unit('1in')  # "in" is a keyword.
 
         # Launch the user's script.
-        code = ''
+        code = '''
+# The following imports are provided for user convenience.
+from math import *
+from random import *
+from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
+    TepidQuadratic, Vert, ZoneClose
+'''
         py_source = self.options.py_source
         if py_source is not None and not os.path.isdir(py_source):
             # The preceding test for isdir is explained in
