@@ -475,17 +475,6 @@ class SimpleObject(SVGOutputMixin):
             around = inkex.Vector2d(around)
         return around
 
-    def rotate(self, angle, around=(0, 0), first=False):
-        'Apply a rotation transformation, optionally around a given point.'
-        tr = inkex.Transform()
-        around = self._find_transform_point(around)
-        tr.add_rotate(angle, around.x, around.y)
-        if first:
-            self._transform = self._transform * tr
-        else:
-            self._transform = tr * self._transform
-        self._apply_transform()
-
     def translate(self, dist, first=False):
         'Apply a translation transformation.'
         tr = inkex.Transform()
@@ -496,7 +485,18 @@ class SimpleObject(SVGOutputMixin):
             self._transform = tr * self._transform
         self._apply_transform()
 
-    def scale(self, factor, around=(0, 0), first=False):
+    def rotate(self, angle, around='center', first=False):
+        'Apply a rotation transformation, optionally around a given point.'
+        tr = inkex.Transform()
+        around = self._find_transform_point(around)
+        tr.add_rotate(angle, around.x, around.y)
+        if first:
+            self._transform = self._transform * tr
+        else:
+            self._transform = tr * self._transform
+        self._apply_transform()
+
+    def scale(self, factor, around='center', first=False):
         'Apply a scaling transformation.'
         try:
             sx, sy = factor
@@ -513,7 +513,7 @@ class SimpleObject(SVGOutputMixin):
             self._transform = tr * self._transform
         self._apply_transform()
 
-    def skew(self, angles, around=(0, 0), first=False):
+    def skew(self, angles, around='center', first=False):
         'Apply a skew transformation.'
         around = inkex.Vector2d(self._find_transform_point(around))
         tr = inkex.Transform()
