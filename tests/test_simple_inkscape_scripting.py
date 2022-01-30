@@ -60,9 +60,9 @@ connector(r, c, ctype='orthogonal', curve=15)
 ''',),
         ("--program=text('Simple Inkscape Scripting', (0, height), font_size='36pt')",),
         ('''--program=
-text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle')
-more_text('Inkscape', font_weight='bold', fill='#800000')
-more_text('!!!')
+t = text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle')
+t.add_text('Inkscape', font_weight='bold', fill='#800000')
+t.add_text('!!!')
 ''',),
         ("--program=image('https://media.inkscape.org/static/images/inkscape-logo.png', (0, 0), embed=False)",),
 

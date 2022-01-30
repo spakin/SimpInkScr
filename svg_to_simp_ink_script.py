@@ -426,26 +426,33 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Convert all sub-text objects.  We assume that <tspan> tags are
         # not nested.  (SVG allows this, but it's not currently supported
         # by Simple Inkscape Scripting.)
+        var_name = self.Statement.id2var(node.get_id())
+        need_var_name = False
         for tspan in [c for c in node.iter() if c.tag[-5:] == 'tspan']:
             if tspan.text is not None:
                 # The text within a <tspan> can have a specified position
                 # and style.
+                need_var_name = True
                 x, y = tspan.get('x'), tspan.get('y')
                 extra, extra_deps = self.extra_args(tspan, {})
                 all_deps = all_deps.union(extra_deps)
                 if x is not None and y is not None:
                     # Specified position
-                    code.append('more_text(%s, (%s, %s)%s)' %
-                                (repr(tspan.text), x, y, extra))
+                    code.append('%s.add_text(%s, (%s, %s)%s)' %
+                                (var_name, repr(tspan.text), x, y, extra))
                 else:
                     # Unspecified position
-                    code.append('more_text(%s%s)' %
-                                (repr(tspan.text), extra))
+                    code.append('%s.add_text(%s%s)' %
+                                (var_name, repr(tspan.text), extra))
             if tspan.tail is not None:
                 # The text following a <tspan> has neither a specified
                 # position nor style.
-                code.append('more_text(%s)' % repr(tspan.tail))
-        return self.Statement(code, node.get_id(), sorted(all_deps))
+                need_var_name = True
+                code.append('%s.add_text(%s)' % (var_name, repr(tspan.tail)))
+        stmt = self.Statement(code, node.get_id(), sorted(all_deps))
+        if need_var_name:
+            stmt.need_var_name = True
+        return stmt
 
     def convert_image(self, node):
         'Return Python code for including an image.'

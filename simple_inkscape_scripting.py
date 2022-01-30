@@ -979,6 +979,23 @@ class SimplePathObject(SimpleObject):
         return self
 
 
+class SimpleTextObject(SimpleObject):
+    '''A SimpleTextObject is a SimpleObject to which additional text can
+    be added.'''
+
+    def add_text(self, msg, base=None, **style):
+        '''Append text, possibly at a non-adjacent position and possibly
+        with a different style.'''
+        tspan = inkex.Tspan()
+        tspan.text = msg
+        tspan.style = self._construct_style({}, style)
+        if base is not None:
+            tspan.set('x', _python_to_svg_str(base[0]))
+            tspan.set('y', _python_to_svg_str(base[1]))
+        self._inkscape_obj.append(tspan)
+        return self
+
+
 class SimpleMarker(SimpleObject):
     'Represent a path marker, which wraps an arbitrary object.'
 
@@ -1552,29 +1569,8 @@ def text(msg, base, path=None, transform=None, conn_avoid=False,
         tp = obj.add(inkex.TextPath())
         tp.href = path._inkscape_obj.get_id()
 
-    # Wrap the text object within a SimpleObject.
-    return SimpleObject(obj, transform, conn_avoid, clip_path, {}, style)
-
-
-def more_text(msg, base=None, conn_avoid=False, **style):
-    'Append text to the preceding object, which must be text.'
-    global _simple_top
-    try:
-        obj = _simple_top.last_obj()
-    except IndexError:
-        _abend(_('more_text must immediately follow'
-                 ' text or another more_text'))
-    if not isinstance(obj._inkscape_obj, inkex.TextElement):
-        _abend(_('more_text must immediately follow'
-                 ' text or another more_text'))
-    tspan = inkex.Tspan()
-    tspan.text = msg
-    tspan.style = obj._construct_style({}, style)
-    if base is not None:
-        tspan.set('x', _python_to_svg_str(base[0]))
-        tspan.set('y', _python_to_svg_str(base[1]))
-    obj._inkscape_obj.append(tspan)
-    return obj
+    # Wrap the text object within a SimpleTextObject.
+    return SimpleTextObject(obj, transform, conn_avoid, clip_path, {}, style)
 
 
 def image(fname, ul, embed=True, transform=None, conn_avoid=False,
