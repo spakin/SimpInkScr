@@ -1889,7 +1889,10 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
             code += '\n'
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
-        exec(code, sis_globals)
+        try:
+            exec(code, sis_globals)
+        except SystemExit:
+            pass
 
 
 if __name__ == '__main__':
