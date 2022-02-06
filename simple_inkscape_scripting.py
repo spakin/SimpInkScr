@@ -1748,7 +1748,7 @@ def marker(obj, ref=None, orient='auto', marker_units=None,
 def push_defaults():
     'Duplicate the top element of the default style and transform stacks.'
     global _default_style, _default_transform
-    _default_style.append(_default_style[-1].items())
+    _default_style.append(dict(_default_style[-1].items()))
     _default_transform.append(_default_transform[-1])
 
 
