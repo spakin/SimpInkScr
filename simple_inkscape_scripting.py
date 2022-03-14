@@ -1370,23 +1370,42 @@ class Guide(SVGOutputMixin):
         # In contrast, inkex expects pos to be relative to a
         # lower-left origin and angle to be counter-clockwise.
         global _simple_top
-        self._pos = pos
-        self._angle = angle
         self._inkscape_obj = inkex.elements.Guide()
-        self.move_to(pos)
+        self._move_to_wrapper(pos, angle)
         self.color = color
 
     def get_inkex_object(self):
         "Return the guide's underlying inkex object."
         return self._inkscape_obj
 
+    def _move_to_wrapper(self, pos, angle):
+        "Wrap inkex's move_to with a coordinate transformation."
+        global _simple_top
+        self._pos = pos
+        self._angle = angle
+        pos = (pos[0], _simple_top.height - pos[1])
+        angle = -angle
+        self._inkscape_obj.move_to(pos[0], pos[1], angle)
+
+    @property
     def position(self):
         "Return the guide's current position."
         return self._pos
 
+    @position.setter
+    def position(self, pos):
+        "Set the guide's current position."
+        self._move_to_wrapper(pos, self._angle)
+
+    @property
     def angle(self):
         "Return the guide's current angle."
         return self._angle
+
+    @angle.setter
+    def angle(self, ang):
+        "Set the guide's current angle."
+        self._move_to_wrapper(self._pos, ang)
 
     @property
     def color(self):
@@ -1401,23 +1420,6 @@ class Guide(SVGOutputMixin):
         else:
             self._inkscape_obj.set('inkscape:color', str(c))
         self._color = c
-
-    def _move_to_wrapper(self, pos, angle):
-        "Wrap inkex's move_to with a coordinate transformation."
-        global _simple_top
-        self._pos = pos
-        self._angle = angle
-        pos = (pos[0], _simple_top.height - pos[1])
-        angle = -angle
-        self._inkscape_obj.move_to(pos[0], pos[1], angle)
-
-    def move_to(self, pos):
-        'Move the guide to a new position.'
-        self._move_to_wrapper(pos, self._angle)
-
-    def rotate_to(self, angle):
-        'Rotate the guide to a given angle.'
-        self._move_to_wrapper(self._pos, angle)
 
     @classmethod
     def _from_inkex_object(self, iobj):
