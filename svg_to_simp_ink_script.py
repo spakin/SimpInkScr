@@ -898,7 +898,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             extra = ', color=%s' % repr(color)
 
         # Generate code and wrap it in a statement.
-        code = ['guides.append(Guide((%.10g, %.10g), %.10g%s))' %
+        code = ['guides.append(guide((%.10g, %.10g), %.10g%s))' %
                 (pos[0], pos[1], angle, extra)]
         return self.Statement(code, node.get_id(), [])
 

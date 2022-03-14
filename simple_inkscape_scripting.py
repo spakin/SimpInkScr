@@ -1917,6 +1917,11 @@ def all_shapes():
     return root_shapes + layer_shapes
 
 
+def guide(pos, angle, color=None):
+    'Create a new guide without adding it to the document.'
+    return Guide(pos, angle, color)
+
+
 # ----------------------------------------------------------------------
 
 class SimpleInkscapeScripting(inkex.EffectExtension):
