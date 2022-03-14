@@ -1364,7 +1364,7 @@ class SimplePathEffect(SVGOutputMixin):
 class Guide(SVGOutputMixin):
     'Represent an Inkscape guide.'
 
-    def __init__(self, pos, angle):
+    def __init__(self, pos, angle, color=None):
         'Create a guide at a given position and angle.'
         # pos is stored in user coordinates, and angle is clockwise.
         # In contrast, inkex expects pos to be relative to a
@@ -1374,6 +1374,7 @@ class Guide(SVGOutputMixin):
         self._angle = angle
         self._inkscape_obj = inkex.elements.Guide()
         self.move_to(pos)
+        self.color = color
 
     def get_inkex_object(self):
         "Return the guide's underlying inkex object."
@@ -1386,6 +1387,20 @@ class Guide(SVGOutputMixin):
     def angle(self):
         "Return the guide's current angle."
         return self._angle
+
+    @property
+    def color(self):
+        "Return the guide's current color."
+        return self._color
+
+    @color.setter
+    def color(self, c):
+        "Change the guide's color."
+        if c is None:
+            self._inkscape_obj.attrib.pop('inkscape:color', None)
+        else:
+            self._inkscape_obj.set('inkscape:color', str(c))
+        self._color = c
 
     def _move_to_wrapper(self, pos, angle):
         "Wrap inkex's move_to with a coordinate transformation."

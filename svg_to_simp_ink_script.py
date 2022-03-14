@@ -891,9 +891,15 @@ class SvgToPythonScript(inkex.OutputExtension):
             angle = 180 - math.degrees(math.atan2(orient[0], orient[1]))
         angle = -angle
 
+        # Determine if we were given a color.
+        extra = ''
+        color = node.get('inkscape:color')
+        if color is not None:
+            extra = ', color=%s' % repr(color)
+
         # Generate code and wrap it in a statement.
-        code = ['guides.append(Guide((%.10g, %.10g), %.10g))' %
-                (pos[0], pos[1], angle)]
+        code = ['guides.append(Guide((%.10g, %.10g), %.10g%s))' %
+                (pos[0], pos[1], angle, extra)]
         return self.Statement(code, node.get_id(), [])
 
     def convert_all_shapes(self):
