@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
 import inkex
 from inkex.localization import inkex_gettext as _
+import math
 import re
 
 
@@ -866,6 +867,35 @@ class SvgToPythonScript(inkex.OutputExtension):
         stmt.delete_if_unused = True
         return stmt
 
+    def convert_guide(self, node):
+        'Return Python code for creating an Inkscape guide.'
+        # Acquire the document's height.
+        try:
+            # Inkscape 1.2+
+            height = self.svg.viewbox_height
+        except AttributeError:
+            # Inkscape 1.0 and 1.1
+            height = self.svg.height
+
+        # Convert the point from the pre-Inkscape 1.0 coordinate system.
+        pt = node.point
+        pos = (pt.x, height - pt.y)
+
+        # Compute the angle at which the guide is oriented.
+        try:
+            # Inkscape 1.2+
+            angle = math.degrees(node.orientation.angle)
+        except AttributeError:
+            # Inkscape 1.0 and 1.1
+            orient = [float(s) for s in node.get('orientation').split(',')]
+            angle = 180 - math.degrees(math.atan2(orient[0], orient[1]))
+        angle = -angle
+
+        # Generate code and wrap it in a statement.
+        code = ['guides.append(Guide((%.10g, %.10g), %.10g))' %
+                (pos[0], pos[1], angle)]
+        return self.Statement(code, node.get_id(), [])
+
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
@@ -886,7 +916,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                                    '//svg:clipPath | '
                                    '//svg:marker | '
                                    '//svg:a | '
-                                   '//inkscape:path-effect'):
+                                   '//inkscape:path-effect | '
+                                   '//sodipodi:guide'):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -923,6 +954,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_hyperlink(node))
             elif isinstance(node, inkex.PathEffect):
                 stmts.append(self.convert_path_effect(node))
+            elif isinstance(node, inkex.Guide):
+                stmts.append(self.convert_guide(node))
             else:
                 raise inkex.AbortExtension(_('Internal error converting %s' %
                                              repr(node)))
