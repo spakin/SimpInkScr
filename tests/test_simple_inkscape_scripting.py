@@ -179,6 +179,11 @@ house = rect((32, 64), (96, 112), fill='#ff0000', stroke_width=2)
 roof = polygon([(16, 64), (64, 16), (112, 64)], fill='#008000', stroke_width=2)
 hyperlink([house, roof], 'https://www.pakin.org/', title='My home page')
 ''',),
+        ('''--program=
+g1 = guide((0, 0), 10)
+g2 = guide((width, height), 10, color='#00ff00')
+guides.extend([g1, g2])
+''',),
         ("--program=%s\nboxes[0].z_order('top')" % z_order,),
         ("--program=%s\nboxes[-1].z_order('bottom')" % z_order,),
         ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
