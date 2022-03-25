@@ -1774,7 +1774,12 @@ def hyperlink(objs, href, title=None, target=None, mime_type=None,
 def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
                  **style):
     'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
-    merged_xform = inkex.Transform(transform) * obj.transform
+    try:
+        # Inkscape 1.2+
+        merged_xform = inkex.Transform(transform) @ obj.transform
+    except TypeError:
+        # Inkscape 1.0 and 1.1
+        merged_xform = inkex.Transform(transform) * obj.transform
     base_style = obj.style
     if isinstance(obj, inkex.PathElement):
         return SimplePathObject(obj, merged_xform, conn_avoid, clip_path,
