@@ -348,11 +348,6 @@ class SimpleObject(SVGOutputMixin):
         # Concatenate the style into a string.
         return ';'.join(['%s:%s' % kv for kv in style.items()])
 
-    def _get_bbox_center(self):
-        "Return the center of an object's bounding box."
-        bbox = self._inkscape_obj.bounding_box()
-        return (bbox.center_x, bbox.center_y)
-
     def bounding_box(self):
         "Return the object's bounding box as an inkex.transforms.BoundingBox."
         return self._inkscape_obj.bounding_box()
@@ -1657,8 +1652,8 @@ def connector(obj1, obj2, ctype='polyline', curve=0,
               transform=None, conn_avoid=False, clip_path=None, **style):
     'Connect two objects with a path.'
     # Create a path that links the two objects' centers.
-    center1 = obj1._get_bbox_center()
-    center2 = obj2._get_bbox_center()
+    center1 = obj1.bounding_box().center
+    center2 = obj2.bounding_box().center
     d = 'M %g,%g L %g,%g' % (center1[0], center1[1], center2[0], center2[1])
     path = inkex.PathElement(d=d)
 
