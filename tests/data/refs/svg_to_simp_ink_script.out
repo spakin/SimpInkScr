@@ -3,7 +3,7 @@
 
 path859 = path(['M', 8.7185878, 4.0337352, 'L', -2.2072895, 0.016013256, 'L', 8.7185884, -4.0017078, 'C', 6.9730900, -1.6296469, 6.9831476, 1.6157441, 8.7185878, 4.0337352, 'z'], transform='matrix(1.1 0 0 1.1 1.1 0)', fill='#000000', fill_rule='evenodd', stroke_width=0.625, stroke_linejoin='round', stroke_opacity=1, fill_opacity=1)
 Arrow2Lstart = marker(path859, ref=(0.0, 0.0), orient='auto', overflow='visible')
-rect((651.31, 353.93), (900, 555.42), stroke='none', fill='#ff0000', opacity=0.5, stroke_width=1.1193)
+rect((651.3089, 353.92661), (900.00002, 555.42472), stroke='none', fill='#ff0000', opacity=0.5, stroke_width=1.11927199)
 circle((150, 450), 50, stroke='none', fill='#000080', display='inline')
 ellipse((400, 450), (100, 50), stroke='#ff0000', display='inline', stroke_width=16)
 arc((700, 450), (100, 50), (0.59013865, 5.6484511), arc_type='slice', stroke='#008000', fill='#ffff00', display='inline', stroke_width=16)
@@ -13,7 +13,7 @@ s1 = star(5, (189.03001, 847.93945), (69.364868, 34.682434), angles=(0.63598373,
 clone(s1, transform='translate(200, 2.99622)', display='inline')
 t1 = text('', (100, 100), font_size='14.66666698px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
 t1.add_text('Hello World', (100, 100))
-rect((105.71, 219.66), (370.28, 481.82), stroke='none', fill='black')
+rect((105.71429, 219.66254), (370.28179, 481.82441), stroke='none', fill='black')
 t2 = text('', (200, 100), font_size='14.66666698px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
 t2.add_text('UPPER', (200, 100), font_size='14.66666698px')
 t3 = text('', (300, 100), font_size='10.58333302px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')

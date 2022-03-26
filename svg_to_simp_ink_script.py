@@ -96,6 +96,29 @@ class SvgToPythonScript(inkex.OutputExtension):
                 except KeyError:
                     pass
 
+    def number_to_pixels(self, val, pct_of=None, default=None):
+        '''Convert a textual number that may include units (e.g., "3mm") to a
+        floating-point number of pixels.'''
+        # Return the default if given None.
+        if val is None:
+            return default
+
+        # Convert a percentage to a number.
+        try:
+            pidx = val.index('%')
+            if pct_of is None:
+                raise ValueError('unexpected percentage value')
+            elif pct_of == 'wd':
+                pct_of = self.svg.viewport_width
+            elif pct_of == 'ht':
+                pct_of = self.svg.viewport_height
+            return float(val[:pidx])*pct_of/100.0
+        except ValueError:
+            pass   # Not a percentage
+
+        # Convert from any unit to pixels.
+        return inkex.units.convert_unit(val, 'px')
+
     def transform_arg(self, node):
         "Return an SVG node's transform string as a function argument."
         xform = node.get('transform')
@@ -190,7 +213,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # Convert the value from a string to another type if possible.
                 try:
                     # Number -- format and use.
-                    style_dict[k] = '%.5g' % float(v)
+                    style_dict[k] = '%.10g' % float(v)
                 except ValueError:
                     # String -- quote if not already quoted.
                     try:
@@ -256,24 +279,31 @@ class SvgToPythonScript(inkex.OutputExtension):
             return self.convert_arc(node)
 
         # Handle the case of an ordinary circle.
-        cx, cy, r = node.get('cx'), node.get('cy'), node.get('r')
+        cx = self.number_to_pixels(node.get('cx'), pct_of='wd', default=0)
+        cy = self.number_to_pixels(node.get('cy'), pct_of='ht', default=0)
+        r = self.number_to_pixels(node.get('r'), default=0)
         extra, extra_deps = self.extra_args(node)
-        code = ['circle((%s, %s), %s%s)' % (cx, cy, r, extra)]
+        code = ['circle((%.10g, %.10g), %.10g%s)' % (cx, cy, r, extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_ellipse(self, node):
         'Return Python code for drawing an ellipse.'
-        cx, cy = node.get('cx'), node.get('cy')
-        rx, ry = node.get('rx'), node.get('ry')
+        cx = self.number_to_pixels(node.get('cx'), pct_of='wd', default=0)
+        cy = self.number_to_pixels(node.get('cy'), pct_of='ht', default=0)
+        rx = self.number_to_pixels(node.get('rx'), pct_of='wd')
+        ry = self.number_to_pixels(node.get('ry'), pct_of='ht')
         extra, extra_deps = self.extra_args(node)
-        code = ['ellipse((%s, %s), (%s, %s)%s)' % (cx, cy, rx, ry, extra)]
+        code = ['ellipse((%.10g, %.10g), (%.10g, %.10g)%s)' %
+                (cx, cy, rx, ry, extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_rectangle(self, node):
         'Return Python code for drawing a rectangle.'
         # Acquire a rect's required parameters.
-        x, y = float(node.get('x')), float(node.get('y'))
-        wd, ht = float(node.get('width')), float(node.get('height'))
+        x = self.number_to_pixels(node.get('x'), pct_of='wd', default=0)
+        y = self.number_to_pixels(node.get('y'), pct_of='ht', default=0)
+        wd = self.number_to_pixels(node.get('width'), pct_of='wd', default=0)
+        ht = self.number_to_pixels(node.get('height'), pct_of='ht', default=0)
         extra, extra_deps = self.extra_args(node)
 
         # Handle the optional corner-rounding parameter.
@@ -286,16 +316,19 @@ class SvgToPythonScript(inkex.OutputExtension):
             extra = ', round%s%s' % (ry, extra)
 
         # Return a complete call to rect.
-        code = ['rect((%.5g, %.5g), (%.5g, %.5g)%s)' %
+        code = ['rect((%.10g, %.10g), (%.10g, %.10g)%s)' %
                 (x, y, x + wd, y + ht, extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_line(self, node):
         'Return Python code for drawing a line.'
-        x1, y1 = node.get('x1'), node.get('y1')
-        x2, y2 = node.get('x2'), node.get('y2')
+        x1 = self.number_to_pixels(node.get('x1'), pct_of='wd', default=0)
+        y1 = self.number_to_pixels(node.get('y1'), pct_of='ht', default=0)
+        x2 = self.number_to_pixels(node.get('x2'), pct_of='wd', default=0)
+        y2 = self.number_to_pixels(node.get('y2'), pct_of='ht', default=0)
         extra, extra_deps = self.extra_args(node)
-        code = ['line((%s, %s), (%s, %s)%s)' % (x1, y1, x2, y2, extra)]
+        code = ['line((%.10g, %.10g), (%.10g, %.10g)%s)' %
+                (x1, y1, x2, y2, extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
     def convert_poly(self, node, poly):
@@ -450,12 +483,13 @@ class SvgToPythonScript(inkex.OutputExtension):
         all_deps = set(tpaths)
 
         # Convert the initial text object.
-        x, y = node.get('x'), node.get('y')
+        x = self.number_to_pixels(node.get('x'), pct_of='wd', default=0)
+        y = self.number_to_pixels(node.get('y'), pct_of='ht', default=0)
         msg = node.text
         if msg is None:
             msg = ''
         extra, extra_deps = self.extra_args(node, {}, {})
-        code = ['text(%s, (%s, %s)%s%s)' %
+        code = ['text(%s, (%.10g, %.10g)%s%s)' %
                 (repr(msg), x, y, tpath_str, extra)]
         all_deps = all_deps.union(extra_deps)
 
@@ -469,12 +503,15 @@ class SvgToPythonScript(inkex.OutputExtension):
                 # The text within a <tspan> can have a specified position
                 # and style.
                 need_var_name = True
-                x, y = tspan.get('x'), tspan.get('y')
+                x = self.number_to_pixels(tspan.get('x'),
+                                          pct_of='wd', default=0)
+                y = self.number_to_pixels(tspan.get('y'),
+                                          pct_of='ht', default=0)
                 extra, extra_deps = self.extra_args(tspan, {})
                 all_deps = all_deps.union(extra_deps)
                 if x is not None and y is not None:
                     # Specified position
-                    code.append('%s.add_text(%s, (%s, %s)%s)' %
+                    code.append('%s.add_text(%s, (%.10g, %.10g)%s)' %
                                 (var_name, repr(tspan.text), x, y, extra))
                 else:
                     # Unspecified position
@@ -492,7 +529,8 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def convert_image(self, node):
         'Return Python code for including an image.'
-        x, y = node.get('x'), node.get('y')
+        x = self.number_to_pixels(node.get('x'), pct_of='wd', default=0)
+        y = self.number_to_pixels(node.get('y'), pct_of='ht', default=0)
         href = node.get('xlink:href')
         absref = node.get('sodipodi:absref')
         extra, extra_deps = self.extra_args(node, {}, {})
@@ -817,7 +855,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             marker_args.append('marker_units=%s' % repr(m_units))
         if v_box is not None:
             x0, y0, wd, ht = [float(c) for c in v_box.split()]
-            marker_args.append('view_box=((%.5g, %.5g), (%.5g, %.5g))' %
+            marker_args.append('view_box=((%.10g, %.10g), (%.10g, %.10g))' %
                                (x0, y0, x0 + wd, y0 + ht))
 
         # Generate code and wrap it in a statement.
