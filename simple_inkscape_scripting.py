@@ -367,15 +367,27 @@ class SimpleObject(SVGOutputMixin):
                 raise ValueError('Bounding box computation failed')
             return inkex.BoundingBox.new_xywh(*out)
 
+    def _need_inkscape_bbox(self, iobj):
+        'Return True if we need Inkscape to compute a bounding box.'
+        for elt in iobj.iter():
+            if elt.TAG == 'text':
+                return True
+            if elt.TAG == 'image':
+                uri = elt.get('xlink:href', elt.get('href', ''))
+                if uri[:5] != 'data:':
+                    return True
+        return False
+
     def bounding_box(self):
         "Return the object's bounding box as an inkex.transforms.BoundingBox."
         # Ask inkex to compute a bounding box.
         iobj = self._inkscape_obj
         bbox = iobj.bounding_box()
 
-        # Bounding boxes for text or groups containing text are inaccurate.
-        # In those cases, try using a slow but more accurate approach.
-        if iobj.TAG == 'text' or iobj.xpath('.//svg:text') != []:
+        # Bounding boxes for text, non-embedded images, or groups
+        # containing either of those are inaccurate.  In such cases, try
+        # using a slow but more accurate approach.
+        if self._need_inkscape_bbox(iobj):
             try:
                 bbox = self._inkscape_bbox()
             except AttributeError:
