@@ -370,12 +370,13 @@ class SimpleObject(SVGOutputMixin):
     def _need_inkscape_bbox(self, iobj):
         'Return True if we need Inkscape to compute a bounding box.'
         for elt in iobj.iter():
-            if elt.TAG == 'text':
+            if elt.TAG in ['text', 'use', 'image']:
+                # <text> requires Inkscape.  <use> can be anything so we
+                # assume pessimistally that it requires Inkscape.  <image>
+                # requires Inkscape if the image is not embedded or if
+                # width and height are not specified.  Rather than take
+                # chances we always invoke Inkscape if given an image.
                 return True
-            if elt.TAG == 'image':
-                uri = elt.get('xlink:href', elt.get('href', ''))
-                if uri[:5] != 'data:':
-                    return True
         return False
 
     def bounding_box(self):
