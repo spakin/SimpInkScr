@@ -34,6 +34,7 @@ import PIL.Image
 import lxml
 import inkex
 from inkex.localization import inkex_gettext as _
+from tempfile import TemporaryDirectory
 
 # ----------------------------------------------------------------------
 
@@ -348,9 +349,42 @@ class SimpleObject(SVGOutputMixin):
         # Concatenate the style into a string.
         return ';'.join(['%s:%s' % kv for kv in style.items()])
 
+    def _inkscape_bbox(self):
+        """Return the object's bounding box as an inkex.transforms.BoundingBox.
+        This method works by writing the object to its own file and
+        spawning another copy of Inkscape to compute the bounding box.  It
+        can therefore be expected to be quite slow.  The code is derived
+        from inkex's get_inkscape_bbox but adapted to work with any object, not
+        just text, which is a limitation at the time of this writing."""
+        iobj = self.get_inkex_object()
+        with TemporaryDirectory(prefix='inkscape-command') as tmpdir:
+            svg_file = inkex.command.write_svg(iobj.root, tmpdir, 'input.svg')
+            out = inkex.command.inkscape(svg_file,
+                                         '-X', '-Y', '-W', '-H',
+                                         query_id=iobj.get_id())
+            out = list(map(iobj.root.viewport_to_unit, out.splitlines()))
+            if len(out) != 4:
+                raise ValueError('Bounding box computation failed')
+            return inkex.BoundingBox.new_xywh(*out)
+
     def bounding_box(self):
         "Return the object's bounding box as an inkex.transforms.BoundingBox."
-        return self._inkscape_obj.bounding_box()
+        # Ask inkex to compute a bounding box.
+        iobj = self._inkscape_obj
+        bbox = iobj.bounding_box()
+
+        # Bounding boxes for text or groups containing text are inaccurate.
+        # In those cases, try using a slow but more accurate approach.
+        if iobj.tag[-4:] == 'text' or iobj.xpath('.//svg:text') != []:
+            try:
+                bbox = self._inkscape_bbox()
+            except AttributeError:
+                # Running from Inkscape 1.0 or 1.1 instead of Inkscape 1.2+
+                pass
+            except inkex.command.ProgramRunError:
+                # Running from an AppImage build of Inkscape
+                pass
+        return bbox
 
     def remove(self):
         'Remove the current object from the list of rendered objects.'
