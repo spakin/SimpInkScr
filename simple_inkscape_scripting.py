@@ -1826,7 +1826,7 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
         # Convert the group and recursively convert and add all its children.
         gr = SimpleGroup(obj, merged_xform, conn_avoid, clip_path,
                          base_style, style)
-        for o in [e for e in obj.iter() if e is not obj]:
+        for o in [e for e in obj if e is not obj]:
             o.getparent().remove(o)
             io = inkex_object(o)
             gr.add(io)
