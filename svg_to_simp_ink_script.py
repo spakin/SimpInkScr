@@ -119,6 +119,32 @@ class SvgToPythonScript(inkex.OutputExtension):
         c_path_var = self.Statement.id2var(c_path[5:-1])
         return ', clip_path=%s' % c_path_var, [c_path_var]
 
+    # Enumerate known presentation attributes.
+    presentation_attributes = [
+        'clip-rule',
+        'color',
+        'color-interpolation',
+        'color-rendering',
+        'cursor',
+        'display',
+        'fill',
+        'fill-opacity',
+        'fill-rule',
+        'filter',
+        'opacity',
+        'pointer-events',
+        'shape-rendering',
+        'stroke',
+        'stroke-dasharray',
+        'stroke-dashoffset',
+        'stroke-linecap',
+        'stroke-linejoin',
+        'stroke-miterlimit',
+        'stroke-opacity',
+        'stroke-width',
+        'vector-effect',
+        'visibility']
+
     def style_args(self, node, def_svg_style, def_sis_style):
         """Return an SVG node's style string as key=value arguments.  Also
         return additional object dependencies from url(#...) values."""
@@ -128,7 +154,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             def_svg_style = {'stroke': None,
                              'fill': None}
 
-        # Convert the style string to a dictionary.
+        # Start with the default SVG style.
         style = node.get('style')
         style_dict = def_svg_style.copy()
         try:
@@ -146,6 +172,15 @@ class SvgToPythonScript(inkex.OutputExtension):
             k2 = k.replace('-', '_')
             if k in style_dict or k2 in style_dict:
                 style_dict[k] = None
+
+        # Append known presentation attributes to the dictionary.
+        for attr in self.presentation_attributes:
+            val = node.get(attr)
+            if val is not None:
+                k = attr.replace('-', '_')
+                style_dict[k] = str(self._svg_str_to_python(val))
+
+        # Append styles specified in the style string to the dictionary.
         if style is not None:
             for term in style.split(';'):
                 # Convert the key from SVG to Python syntax.
