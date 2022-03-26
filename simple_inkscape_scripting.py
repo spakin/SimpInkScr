@@ -375,7 +375,7 @@ class SimpleObject(SVGOutputMixin):
 
         # Bounding boxes for text or groups containing text are inaccurate.
         # In those cases, try using a slow but more accurate approach.
-        if iobj.tag[-4:] == 'text' or iobj.xpath('.//svg:text') != []:
+        if iobj.TAG == 'text' or iobj.xpath('.//svg:text') != []:
             try:
                 bbox = self._inkscape_bbox()
             except AttributeError:
@@ -613,12 +613,7 @@ class SimpleObject(SVGOutputMixin):
         'Return the element type of our underlying object.'
         # Strip off the namespace prefix (e.g.,
         # "{http://www.w3.org/2000/svg}circle" --> "circle").
-        t = self._inkscape_obj.tag
-        try:
-            t = t[t.rindex("}") + 1:]
-        except ValueError:
-            pass
-        return t
+        return self._inkscape_obj.TAG
 
     def svg_get(self, attr, as_str=False):
         'Return the value of an SVG attribute.'
