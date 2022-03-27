@@ -274,8 +274,8 @@ class SVGOutputMixin():
 class SimpleObject(SVGOutputMixin):
     'Encapsulate an Inkscape object and additional metadata.'
 
-    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
-                 obj_style, track=True):
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, mask_obj,
+                 base_style, obj_style, track=True):
         'Wrap an Inkscape object within a SimpleObject.'
         # Combine the current and default transforms.
         ts = []
@@ -304,6 +304,16 @@ class SimpleObject(SVGOutputMixin):
                     clip_path_obj = clip_path(clip_path_obj)
                 clip_str = 'url(#%s)' % clip_path_obj._inkscape_obj.get_id()
             obj.set('clip-path', clip_str)
+
+        # Optionally employ a mask.
+        if mask_obj is not None:
+            if isinstance(mask_obj, str):
+                mask_str = mask_obj
+            else:
+                if not isinstance(mask_obj, SimpleMask):
+                    mask_obj = mask(mask_obj)
+                mask_str = 'url(#%s)' % mask_obj._inkscape_obj.get_id()
+            obj.set('mask', mask_str)
 
         # Combine the current and default styles.
         ext_style = self._construct_style(base_style, obj_style)
@@ -1075,17 +1085,17 @@ class SimpleMarker(SimpleObject):
 
     def __init__(self, obj, **style):
         super().__init__(obj, transform=None, conn_avoid=False,
-                         clip_path_obj=None, base_style={}, obj_style=style,
-                         track=True)
+                         clip_path_obj=None, mask_obj=None, base_style={},
+                         obj_style=style, track=True)
 
 
 class SimpleGroup(SimpleObject):
     'Represent a group of objects.'
 
-    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
-                 obj_style, track=True):
-        super().__init__(obj, transform, conn_avoid, clip_path_obj, base_style,
-                         obj_style, track)
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, mask_obj,
+                 base_style, obj_style, track=True):
+        super().__init__(obj, transform, conn_avoid, clip_path_obj, mask_obj,
+                         base_style, obj_style, track)
         self._children = []
 
     def __len__(self):
@@ -1152,10 +1162,10 @@ class SimpleGroup(SimpleObject):
 class SimpleLayer(SimpleGroup):
     'Represent an Inkscape layer.'
 
-    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
-                 obj_style):
-        super().__init__(obj, transform, conn_avoid, clip_path_obj, base_style,
-                         obj_style, track=False)
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, mask_obj,
+                 base_style, obj_style):
+        super().__init__(obj, transform, conn_avoid, clip_path_obj, mask_obj,
+                         base_style, obj_style, track=False)
         self._children = []
         global _simple_top
         _simple_top.append_obj(self, to_root=True)
@@ -1166,8 +1176,8 @@ class SimpleClippingPath(SimpleGroup):
 
     def __init__(self, obj, clip_units):
         super().__init__(obj, transform=None, conn_avoid=False,
-                         clip_path_obj=None, base_style={}, obj_style={},
-                         track=False)
+                         clip_path_obj=None, mask_obj=None, base_style={},
+                         obj_style={}, track=False)
         self._children = []
         if clip_units is not None:
             self._inkscape_obj.set('clipPathUnits', clip_units)
@@ -1175,13 +1185,27 @@ class SimpleClippingPath(SimpleGroup):
         _simple_top.append_def(self)
 
 
+class SimpleMask(SimpleGroup):
+    'Represent an object mask.'
+
+    def __init__(self, obj, mask_units):
+        super().__init__(obj, transform=None, conn_avoid=False,
+                         clip_path_obj=None, mask_obj=None, base_style={},
+                         obj_style={}, track=False)
+        self._children = []
+        if mask_units is not None:
+            self._inkscape_obj.set('maskUnits', mask_units)
+        global _simple_top
+        _simple_top.append_def(self)
+
+
 class SimpleHyperlink(SimpleGroup):
     'Represent a hyperlink.'
 
-    def __init__(self, obj, transform, conn_avoid, clip_path_obj, base_style,
-                 obj_style):
-        super().__init__(obj, transform, conn_avoid, clip_path_obj, base_style,
-                         obj_style, track=True)
+    def __init__(self, obj, transform, conn_avoid, clip_path_obj, mask_obj,
+                 base_style, obj_style):
+        super().__init__(obj, transform, conn_avoid, clip_path_obj, mask_obj,
+                         base_style, obj_style, track=True)
 
 
 class SimpleFilter(SVGOutputMixin):
@@ -1502,29 +1526,29 @@ def transform(t):
 
 
 def circle(center, radius, transform=None, conn_avoid=False, clip_path=None,
-           **style):
+           mask=None, **style):
     'Draw a circle.'
     obj = inkex.Circle(cx=_python_to_svg_str(center[0]),
                        cy=_python_to_svg_str(center[1]),
                        r=_python_to_svg_str(radius))
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
 def ellipse(center, radii, transform=None, conn_avoid=False, clip_path=None,
-            **style):
+            mask=None, **style):
     'Draw an ellipse.'
     rx, ry = _split_two_or_one(radii)
     obj = inkex.Ellipse(cx=_python_to_svg_str(center[0]),
                         cy=_python_to_svg_str(center[1]),
                         rx=_python_to_svg_str(rx),
                         ry=_python_to_svg_str(ry))
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
 def rect(pt1, pt2, round=None, transform=None, conn_avoid=False,
-         clip_path=None, **style):
+         clip_path=None, mask=None, **style):
     'Draw a rectangle.'
     # Convert pt1 and pt2 to an upper-left starting point and
     # rectangle dimensions.
@@ -1549,47 +1573,49 @@ def rect(pt1, pt2, round=None, transform=None, conn_avoid=False,
             rx, ry = round, round
         obj.set('rx', _python_to_svg_str(rx))
         obj.set('ry', _python_to_svg_str(ry))
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
-def line(pt1, pt2, transform=None, conn_avoid=False, clip_path=None, **style):
+def line(pt1, pt2, transform=None, conn_avoid=False, clip_path=None, mask=None,
+         **style):
     'Draw a line.'
     obj = inkex.Line(x1=_python_to_svg_str(pt1[0]),
                      y1=_python_to_svg_str(pt1[1]),
                      x2=_python_to_svg_str(pt2[0]),
                      y2=_python_to_svg_str(pt2[1]))
     base_style = {'stroke': 'black'}  # No need for fill='none' here.
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         base_style, style)
 
 
 def polyline(coords, transform=None, conn_avoid=False, clip_path=None,
-             **style):
+             mask=None, **style):
     'Draw a polyline.'
     if len(coords) < 2:
         _abend(_('A polyline must contain at least two points.'))
     pts = ' '.join(["%s,%s" % (_python_to_svg_str(x), _python_to_svg_str(y))
                     for x, y in coords])
     obj = inkex.Polyline(points=pts)
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
-def polygon(coords, transform=None, conn_avoid=False, clip_path=None, **style):
+def polygon(coords, transform=None, conn_avoid=False, clip_path=None,
+            mask=None, **style):
     'Draw a polygon.'
     if len(coords) < 3:
         _abend(_('A polygon must contain at least three points.'))
     pts = ' '.join(["%s,%s" % (_python_to_svg_str(x), _python_to_svg_str(y))
                     for x, y in coords])
     obj = inkex.Polygon(points=pts)
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
 def regular_polygon(sides, center, radius, angle=-math.pi/2, round=0.0,
                     random=0.0, transform=None, conn_avoid=False,
-                    clip_path=None, **style):
+                    clip_path=None, mask=None, **style):
     'Draw a regular polygon.'
     # Create a star object, which is also used for regular polygons.
     if sides < 3:
@@ -1602,12 +1628,12 @@ def regular_polygon(sides, center, radius, angle=-math.pi/2, round=0.0,
     obj.set('inkscape:flatsided', 'true')   # Regular polygon, not star
     obj.set('inkscape:rounded', round)
     obj.set('inkscape:randomized', random)
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
 def star(sides, center, radii, angles=None, round=0.0, random=0.0,
-         transform=None, conn_avoid=False, clip_path=None, **style):
+         transform=None, conn_avoid=False, clip_path=None, mask=None, **style):
     'Draw a star.'
     # Create a star object.
     if sides < 3:
@@ -1628,12 +1654,12 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     obj.set('inkscape:flatsided', 'false')   # Star, not regular polygon
     obj.set('inkscape:rounded', round)
     obj.set('inkscape:randomized', random)
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
 def arc(center, radii, angles, arc_type='arc',
-        transform=None, conn_avoid=False, clip_path=None, **style):
+        transform=None, conn_avoid=False, clip_path=None, mask=None, **style):
     'Draw an arc.'
     # Construct the arc proper.
     rx, ry = _split_two_or_one(radii)
@@ -1674,11 +1700,12 @@ def arc(center, radii, angles, arc_type='arc',
     obj.path = inkex.Path(p)
 
     # Return a Simple Inkscape Scripting object.
-    return SimpleObject(obj, transform, conn_avoid, clip_path,
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
-def path(elts, transform=None, conn_avoid=False, clip_path=None, **style):
+def path(elts, transform=None, conn_avoid=False, clip_path=None, mask=None,
+         **style):
     'Draw an arbitrary path.'
     if isinstance(elts, str):
         elts = re.split(r'[\s,]+', elts)
@@ -1686,12 +1713,13 @@ def path(elts, transform=None, conn_avoid=False, clip_path=None, **style):
         _abend(_('A path must contain at least one path element.'))
     d = ' '.join([_python_to_svg_str(e) for e in elts])
     obj = inkex.PathElement(d=d)
-    return SimplePathObject(obj, transform, conn_avoid, clip_path,
+    return SimplePathObject(obj, transform, conn_avoid, clip_path, mask,
                             _common_shape_style, style)
 
 
 def connector(obj1, obj2, ctype='polyline', curve=0,
-              transform=None, conn_avoid=False, clip_path=None, **style):
+              transform=None, conn_avoid=False, clip_path=None, mask=None,
+              **style):
     'Connect two objects with a path.'
     # Create a path that links the two objects' centers.
     center1 = obj1.bounding_box().center
@@ -1706,12 +1734,12 @@ def connector(obj1, obj2, ctype='polyline', curve=0,
     path.set('inkscape:connection-end', '#%s' % obj2._inkscape_obj.get_id())
 
     # Store the connector as its own object.
-    return SimpleObject(path, transform, conn_avoid, clip_path,
+    return SimpleObject(path, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
 
 
 def text(msg, base, path=None, transform=None, conn_avoid=False,
-         clip_path=None, **style):
+         clip_path=None, mask=None, **style):
     'Typeset a piece of text, optionally along a path.'
     # Create the basic text object.
     obj = inkex.TextElement(x=_python_to_svg_str(base[0]),
@@ -1725,11 +1753,12 @@ def text(msg, base, path=None, transform=None, conn_avoid=False,
         tp.href = path._inkscape_obj.get_id()
 
     # Wrap the text object within a SimpleTextObject.
-    return SimpleTextObject(obj, transform, conn_avoid, clip_path, {}, style)
+    return SimpleTextObject(obj, transform, conn_avoid, clip_path, mask,
+                            {}, style)
 
 
 def image(fname, ul, embed=True, transform=None, conn_avoid=False,
-          clip_path=None, **style):
+          clip_path=None, mask=None, **style):
     'Include an image, either embedded or linked.'
     obj = inkex.Image()
     obj.set('x', ul[0])
@@ -1746,32 +1775,35 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False,
         # Point to an external file.
         uri = fname
     obj.set('xlink:href', uri)
-    return SimpleObject(obj, transform, conn_avoid, clip_path, {}, style)
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask, {}, style)
 
 
-def clone(obj, transform=None, conn_avoid=False, clip_path=None, **style):
+def clone(obj, transform=None, conn_avoid=False, clip_path=None, mask=None,
+          **style):
     'Return a linked clone of the object.'
     c = inkex.Use()
     i_obj = obj._inkscape_obj
     c.href = i_obj.get_id()
     old_style = dict(i_obj.style.items())
-    return SimpleObject(c, transform, conn_avoid, clip_path, old_style, style)
+    return SimpleObject(c, transform, conn_avoid, clip_path, mask,
+                        old_style, style)
 
 
-def duplicate(obj, transform=None, conn_avoid=False, clip_path=None, **style):
+def duplicate(obj, transform=None, conn_avoid=False, clip_path=None, mask=None,
+              **style):
     'Return a duplicate of the object.'
     cpy = obj._inkscape_obj.copy()
     old_style = dict(cpy.style.items())
-    return SimpleObject(cpy, transform, conn_avoid, clip_path,
+    return SimpleObject(cpy, transform, conn_avoid, clip_path, mask,
                         old_style, style)
 
 
 def group(objs=None, transform=None, conn_avoid=False, clip_path=None,
-          **style):
+          mask=None, **style):
     'Create a container for other objects.'
     objs = objs or []
     g = inkex.Group()
-    g_obj = SimpleGroup(g, transform, conn_avoid, clip_path, {}, style)
+    g_obj = SimpleGroup(g, transform, conn_avoid, clip_path, mask, {}, style)
     g_obj.add(objs)
     for o in objs:
         o.parent = g_obj
@@ -1779,11 +1811,12 @@ def group(objs=None, transform=None, conn_avoid=False, clip_path=None,
 
 
 def layer(name, objs=None, transform=None, conn_avoid=False, clip_path=None,
-          **style):
+          mask=None, **style):
     'Create a container for other objects.'
     objs = objs or []
     layer = inkex.Layer.new(name)
-    l_obj = SimpleLayer(layer, transform, conn_avoid, clip_path, {}, style)
+    l_obj = SimpleLayer(layer, transform, conn_avoid, clip_path, mask,
+                        {}, style)
     l_obj.add(objs)
     for o in objs:
         o.parent = l_obj
@@ -1791,7 +1824,8 @@ def layer(name, objs=None, transform=None, conn_avoid=False, clip_path=None,
 
 
 def hyperlink(objs, href, title=None, target=None, mime_type=None,
-              transform=None, conn_avoid=False, clip_path=None, **style):
+              transform=None, conn_avoid=False, clip_path=None, mask=None,
+              **style):
     'Hyperlink one or more objects to a given URI.'
     anc = inkex.Anchor()
     anc.set('{http://www.w3.org/1999/xlink}href', href)  # Older SVG
@@ -1808,13 +1842,14 @@ def hyperlink(objs, href, title=None, target=None, mime_type=None,
         anc.set('target', target)
     if mime_type is not None:
         anc.set('type', mime_type)
-    anc_obj = SimpleHyperlink(anc, transform, conn_avoid, clip_path, {}, style)
+    anc_obj = SimpleHyperlink(anc, transform, conn_avoid, clip_path, mask,
+                              {}, style)
     anc_obj.add(objs)
     return anc_obj
 
 
 def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
-                 **style):
+                 mask=None, **style):
     'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
     try:
         # Inkscape 1.2+
@@ -1824,11 +1859,11 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
         merged_xform = inkex.Transform(transform) * obj.transform
     base_style = obj.style
     if isinstance(obj, inkex.PathElement):
-        return SimplePathObject(obj, merged_xform, conn_avoid, clip_path,
+        return SimplePathObject(obj, merged_xform, conn_avoid, clip_path, mask,
                                 base_style, style)
     if isinstance(obj, inkex.Layer):
         # Convert the layer and recursively convert and add all its children.
-        lay = SimpleLayer(obj, merged_xform, conn_avoid, clip_path,
+        lay = SimpleLayer(obj, merged_xform, conn_avoid, clip_path, mask,
                           base_style, style)
         for o in [e for e in obj.iter() if e is not obj]:
             o.getparent().remove(o)
@@ -1837,7 +1872,7 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
         return lay
     if isinstance(obj, inkex.Group):
         # Convert the group and recursively convert and add all its children.
-        gr = SimpleGroup(obj, merged_xform, conn_avoid, clip_path,
+        gr = SimpleGroup(obj, merged_xform, conn_avoid, clip_path, mask,
                          base_style, style)
         for o in [e for e in obj if e is not obj]:
             o.getparent().remove(o)
@@ -1846,7 +1881,7 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
         return gr
     if isinstance(obj, inkex.Marker):
         return SimpleMarker(obj, **style)
-    return SimpleObject(obj, merged_xform, conn_avoid, clip_path,
+    return SimpleObject(obj, merged_xform, conn_avoid, clip_path, mask,
                         base_style, style)
 
 
@@ -1880,6 +1915,14 @@ def clip_path(obj, clip_units=None):
     obj._apply_transform()
     clip.add(obj)
     return clip
+
+
+def mask(obj, mask_units=None):
+    'Convert an object to a mask.'
+    m = SimpleMask(inkex.Mask(), mask_units)  # Requires Inkscape 1.2+.
+    obj._apply_transform()
+    m.add(obj)
+    return m
 
 
 def marker(obj, ref=None, orient='auto', marker_units=None,
