@@ -142,6 +142,15 @@ class SvgToPythonScript(inkex.OutputExtension):
         c_path_var = self.Statement.id2var(c_path[5:-1])
         return ', clip_path=%s' % c_path_var, [c_path_var]
 
+    def mask_arg(self, node):
+        """Return an SVG node's mask string as a function argument.
+        Also return additional object dependencies from url(#...) values."""
+        m = node.get('mask')
+        if m is None:
+            return '', []
+        mask_var = self.Statement.id2var(m[5:-1])
+        return ', mask=%s' % mask_var, [mask_var]
+
     # Enumerate known presentation attributes.
     presentation_attributes = [
         'clip-rule',
@@ -253,14 +262,17 @@ class SvgToPythonScript(inkex.OutputExtension):
         if def_sis_style is None:
             def_sis_style = self._common_sis_defaults
         clip_args, c_deps = self.clip_path_arg(node)
+        mask_args, m_deps = self.mask_arg(node)
         style_args, s_deps = \
             self.style_args(node, def_svg_style, def_sis_style)
         args = [self.transform_arg(node),
                 self.conn_avoid_arg(node),
                 clip_args,
+                mask_args,
                 style_args]
         deps = set()
         deps.update(c_deps)
+        deps.update(m_deps)
         deps.update(s_deps)
         return ''.join(args), list(deps)
 
@@ -830,6 +842,18 @@ class SvgToPythonScript(inkex.OutputExtension):
         stmt.delete_if_unused = True
         return stmt
 
+    def convert_mask(self, node):
+        'Return Python code that defines a mask.'
+        m_var = self.Statement.id2var(node[0].get_id())
+        m_units = node.get('maskUnits')
+        if m_units is None:
+            code = ['mask(%s)' % m_var]
+        else:
+            code = ['mask(%s, mask_units=%s)' % (m_var, repr(m_units))]
+        stmt = self.Statement(code, node.get_id(), [m_var])
+        stmt.delete_if_unused = True
+        return stmt
+
     def convert_marker(self, node):
         'Return Python code that defines a marker.'
         # Mark all of our descendants as lying within a marker.  This
@@ -978,25 +1002,28 @@ class SvgToPythonScript(inkex.OutputExtension):
     def convert_all_shapes(self):
         'Convert each SVG shape to a Python statement.'
         stmts = []
-        for node in self.svg.xpath('//svg:circle | '
-                                   '//svg:ellipse | '
-                                   '//svg:rect | '
-                                   '//svg:line | '
-                                   '//svg:polyline | '
-                                   '//svg:polygon | '
-                                   '//svg:path | '
-                                   '//svg:text | '
-                                   '//svg:image | '
-                                   '//svg:use | '
-                                   '//svg:g | '
-                                   '//svg:filter | '
-                                   '//svg:linearGradient | '
-                                   '//svg:radialGradient | '
-                                   '//svg:clipPath | '
-                                   '//svg:marker | '
-                                   '//svg:a | '
-                                   '//inkscape:path-effect | '
-                                   '//sodipodi:guide'):
+        known_tags = ('//svg:circle | '
+                      '//svg:ellipse | '
+                      '//svg:rect | '
+                      '//svg:line | '
+                      '//svg:polyline | '
+                      '//svg:polygon | '
+                      '//svg:path | '
+                      '//svg:text | '
+                      '//svg:image | '
+                      '//svg:use | '
+                      '//svg:g | '
+                      '//svg:filter | '
+                      '//svg:linearGradient | '
+                      '//svg:radialGradient | '
+                      '//svg:clipPath | '
+                      '//svg:marker | '
+                      '//svg:a | '
+                      '//inkscape:path-effect | '
+                      '//sodipodi:guide')
+        if hasattr(inkex, 'Mask'):
+            known_tags += ' | //svg:mask'  # Inkscape 1.2+
+        for node in self.svg.xpath(known_tags):
             if isinstance(node, inkex.Circle):
                 stmts.append(self.convert_circle(node))
             elif isinstance(node, inkex.Ellipse):
@@ -1027,6 +1054,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_radial_gradient(node))
             elif isinstance(node, inkex.ClipPath):
                 stmts.append(self.convert_clip_path(node))
+            elif hasattr(inkex, 'Mask') and isinstance(node, inkex.Mask):
+                stmts.append(self.convert_mask(node))  # Inkscape 1.2+
             elif isinstance(node, inkex.Marker):
                 stmts.append(self.convert_marker(node))
             elif isinstance(node, inkex.Anchor):
