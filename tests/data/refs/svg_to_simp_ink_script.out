@@ -13,7 +13,7 @@ s1 = star(5, (189.03001, 847.93945), (69.364868, 34.682434), angles=(0.63598373,
 clone(s1, transform='translate(200, 2.99622)', display='inline')
 t1 = text('', (100, 100), font_size='14.66666698px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
 t1.add_text('Hello World', (100, 100))
-rect((105.71429, 219.66254), (370.28179, 481.82441), stroke='none', fill='black')
+rect((105.71429, 219.66254), (370.28179, 481.82441), stroke=None, fill=None)
 t2 = text('', (200, 100), font_size='14.66666698px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
 t2.add_text('UPPER', (200, 100), font_size='14.66666698px')
 t3 = text('', (300, 100), font_size='10.58333302px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')

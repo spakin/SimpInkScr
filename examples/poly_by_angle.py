@@ -21,6 +21,7 @@
 #   poly_by_angle(140, 70, stroke='#00ff00')                             #
 ##########################################################################
 
+
 def poly_by_angle(ang, rad, *args, **kwargs):
     '''Draw a (possibly self-intersecting) polygon given an angle in
     degrees for each corner.'''

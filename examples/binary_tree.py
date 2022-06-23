@@ -4,6 +4,7 @@
 # overlap in the deepest level of the tree.                        #
 ####################################################################
 
+
 def tree_from(cx, cy, rad, hsep, vsep, depth, max_depth):
     'Recursively draw a binary tree.'
     left, right = None, None
