@@ -824,6 +824,7 @@ class SimpleObject(SVGOutputMixin):
                 for o in objs:
                     obj_style = inkex.Style(o.get('style'))
                     vs.append(obj_style.get(a))
+                vs = [v for v in vs if v is not None]
                 if len(set(vs)) > 1:
                     attr2vals[a] = vs
         return attr2vals
