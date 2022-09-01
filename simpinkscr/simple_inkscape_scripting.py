@@ -2093,12 +2093,16 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
             code += '\n'
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
+        #remove unnecessary import
+        code.replace("from simpinkscr import *", "")
         try:
             exec(code, sis_globals)
         except SystemExit:
             pass
         _simple_top.replace_all_guides(sis_globals['guides'])
 
+def main():
+    SimpleInkscapeScripting().run()
 
 if __name__ == '__main__':
-    SimpleInkscapeScripting().run()
+    main()
