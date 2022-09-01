@@ -10,6 +10,6 @@
     <dataloss>true</dataloss>
   </output>
   <script>
-    <command location="inx" interpreter="python">svg_to_simp_ink_script.py</command>
+    <command location="inx" interpreter="python">simpinkscr/svg_to_simp_ink_script.py</command>
   </script>
 </inkscape-extension>

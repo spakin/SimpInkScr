@@ -40,6 +40,6 @@
     </effects-menu>
   </effect>
   <script>
-    <command location="inx" interpreter="python">simple_inkscape_scripting.py</command>
+    <command location="inx" interpreter="python">simpinkscr/simple_inkscape_scripting.py</command>
   </script>
 </inkscape-extension>
