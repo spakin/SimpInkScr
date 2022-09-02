@@ -1,5 +1,5 @@
-from simple_inkscape_scripting import SimpleInkscapeScripting
-from svg_to_simp_ink_script import SvgToPythonScript
+from simpinkscr.simple_inkscape_scripting import SimpleInkscapeScripting
+from simpinkscr.svg_to_simp_ink_script import SvgToPythonScript
 from inkex.tester import ComparisonMixin, InkscapeExtensionTestMixin, TestCase
 from inkex.tester.filters import CompareOrderIndependentStyle
 
