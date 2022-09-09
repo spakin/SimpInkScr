@@ -1116,5 +1116,8 @@ class SvgToPythonScript(inkex.OutputExtension):
             stream.write(ln.encode('utf-8'))
 
 
-if __name__ == '__main__':
+def main():
     SvgToPythonScript().run()
+
+if __name__ == '__main__':
+    main()
