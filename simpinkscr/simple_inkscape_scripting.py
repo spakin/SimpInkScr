@@ -564,26 +564,41 @@ class SimpleObject(SVGOutputMixin):
             around = inkex.Vector2d(around)
         return around
 
+    def _apply_transform(self):
+        "Apply the SimpleObject's transform to the underlying SVG object."
+        self._inkscape_obj.set('transform', self._transform)
+
+    def _multiply_transform(self, tr, first):
+        '''Multiply an arbitrary transformation by self._transform (or vice
+        versa, depending on first) then apply the transform to the underlying
+        SVG object.  This method maintains code compatibility with both
+        Inkscape 1.1 and Inkscape 1.2+.'''
+        try:
+            # Inkscape 1.2+
+            if first:
+                self._transform = self._transform @ tr
+            else:
+                self._transform = tr @ self._transform
+        except TypeError:
+            # Inkscape 1.1
+            if first:
+                self._transform = self._transform * tr
+            else:
+                self._transform = tr * self._transform
+        self._apply_transform()
+
     def translate(self, dist, first=False):
         'Apply a translation transformation.'
         tr = inkex.Transform()
         tr.add_translate(dist[0], dist[1])
-        if first:
-            self._transform = self._transform * tr
-        else:
-            self._transform = tr * self._transform
-        self._apply_transform()
+        self._multiply_transform(tr, first)
 
     def rotate(self, angle, around='center', first=False):
         'Apply a rotation transformation, optionally around a given point.'
         tr = inkex.Transform()
         around = self._find_transform_point(around)
         tr.add_rotate(angle, around.x, around.y)
-        if first:
-            self._transform = self._transform * tr
-        else:
-            self._transform = tr * self._transform
-        self._apply_transform()
+        self._multiply_transform(tr, first)
 
     def scale(self, factor, around='center', first=False):
         'Apply a scaling transformation.'
@@ -596,11 +611,7 @@ class SimpleObject(SVGOutputMixin):
         tr.add_translate(around)
         tr.add_scale(sx, sy)
         tr.add_translate(-around)
-        if first:
-            self._transform = self._transform * tr
-        else:
-            self._transform = tr * self._transform
-        self._apply_transform()
+        self._multiply_transform(tr, first)
 
     def skew(self, angles, around='center', first=False):
         'Apply a skew transformation.'
@@ -610,11 +621,7 @@ class SimpleObject(SVGOutputMixin):
         tr.add_skewx(angles[0])
         tr.add_skewy(angles[1])
         tr.add_translate(-around)
-        if first:
-            self._transform = self._transform * tr
-        else:
-            self._transform = tr * self._transform
-        self._apply_transform()
+        self._multiply_transform(tr, first)
 
     @property
     def transform(self):
@@ -675,10 +682,6 @@ class SimpleObject(SVGOutputMixin):
             # All other attribute values are applied directly to the
             # underlying inkex object.
             obj.set(attr, _python_to_svg_str(val))
-
-    def _apply_transform(self):
-        "Apply the SimpleObject's transform to the underlying SVG object."
-        self._inkscape_obj.set('transform', self._transform)
 
     @staticmethod
     def _diff_transforms(objs):
