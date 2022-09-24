@@ -2093,7 +2093,8 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
             code += '\n'
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
-        #remove unnecessary import
+        # Remove unnecessary import that may be introduced when running
+        # from Visual Studio Code.
         code.replace("from simpinkscr import *", "")
         try:
             exec(code, sis_globals)
