@@ -1789,8 +1789,8 @@ def clone(obj, transform=None, conn_avoid=False, clip_path=None, mask=None,
     i_obj = obj._inkscape_obj
     c.href = i_obj.get_id()
     old_style = dict(i_obj.style.items())
-    return SimpleObject(c, transform, conn_avoid, clip_path, mask,
-                        old_style, style)
+    return obj.__class__(c, transform, conn_avoid, clip_path, mask,
+                         old_style, style)
 
 
 def duplicate(obj, transform=None, conn_avoid=False, clip_path=None, mask=None,
@@ -1798,8 +1798,8 @@ def duplicate(obj, transform=None, conn_avoid=False, clip_path=None, mask=None,
     'Return a duplicate of the object.'
     cpy = obj._inkscape_obj.copy()
     old_style = dict(cpy.style.items())
-    return SimpleObject(cpy, transform, conn_avoid, clip_path, mask,
-                        old_style, style)
+    return obj.__class__(cpy, transform, conn_avoid, clip_path, mask,
+                         old_style, style)
 
 
 def group(objs=None, transform=None, conn_avoid=False, clip_path=None,
@@ -2105,8 +2105,10 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
             pass
         _simple_top.replace_all_guides(sis_globals['guides'])
 
+
 def main():
     SimpleInkscapeScripting().run()
+
 
 if __name__ == '__main__':
     main()

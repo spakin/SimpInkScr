@@ -1119,5 +1119,6 @@ class SvgToPythonScript(inkex.OutputExtension):
 def main():
     SvgToPythonScript().run()
 
+
 if __name__ == '__main__':
     main()
