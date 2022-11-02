@@ -417,7 +417,12 @@ class SimpleObject(SVGOutputMixin):
             pass  # Not within a group
         global _simple_top
         if self in _simple_top:
+            # Object created by Simple Inkscape Scripting
             _simple_top.remove_obj(self)
+        else:
+            # Existing object wrapped by Simple Inkscape Scripting (e.g.,
+            # returned by all_shapes)
+            self._inkscape_obj.delete()
 
     def to_def(self):
         '''Convert the object to a definition, removing it from the list of
