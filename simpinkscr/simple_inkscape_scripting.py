@@ -1413,7 +1413,7 @@ class SimplePathEffect(SVGOutputMixin):
     'Represent an Inkscape live path effect.'
 
     def __init__(self, effect, **kwargs):
-        smart_args = {k: _python_to_svg_str(v)
+        smart_args = {k.replace('_', '-'): _python_to_svg_str(v)
                       for k, v in kwargs.items()
                       if k != 'id'}
         pe = inkex.PathEffect(effect=effect, **smart_args)
