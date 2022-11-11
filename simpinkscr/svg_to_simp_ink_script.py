@@ -956,6 +956,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             # Skip "special" keys.
             if k in ['effect', 'id']:
                 continue
+            k = k.replace('-', '_')
             args.append('%s=%s' % (k, self._svg_str_to_python(v)))
 
         # Generate code and wrap it in a statement.
