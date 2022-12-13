@@ -1627,16 +1627,22 @@ def regular_polygon(sides, center, radius, angle=-math.pi/2, round=0.0,
                     random=0.0, transform=None, conn_avoid=False,
                     clip_path=None, mask=None, **style):
     'Draw a regular polygon.'
-    # Create a star object, which is also used for regular polygons.
     if sides < 3:
         _abend(_('A regular polygon must contain at least three points.'))
-    obj = inkex.PathElement.star(center, (radius, radius/2), sides, round)
 
-    # Set all the regular polygon's parameters.
-    obj.set('sodipodi:arg1', angle)
-    obj.set('sodipodi:arg2', angle + math.pi/sides)
-    obj.set('inkscape:flatsided', 'true')   # Regular polygon, not star
-    obj.set('inkscape:rounded', round)
+    # Create a star object, which is also used for regular polygons.
+    angles = [angle, angle + math.pi/sides]
+    radii = [radius, radius/2]
+    try:
+        # Inkscape 1.2+
+        obj = inkex.PathElement.star(center, radii, sides, round,
+                                     angles, True, False)
+    except TypeError:
+        obj = inkex.PathElement.star(center, radii, sides, round)
+        obj.set('sodipodi:arg1', angles[0])
+        obj.set('sodipodi:arg2', angles[1])
+        obj.set('inkscape:flatsided', 'true')   # Regular polygon, not star
+        obj.set('inkscape:rounded', round)
     obj.set('inkscape:randomized', random)
     return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
@@ -1645,10 +1651,8 @@ def regular_polygon(sides, center, radius, angle=-math.pi/2, round=0.0,
 def star(sides, center, radii, angles=None, round=0.0, random=0.0,
          transform=None, conn_avoid=False, clip_path=None, mask=None, **style):
     'Draw a star.'
-    # Create a star object.
     if sides < 3:
         _abend(_('A star must contain at least three points.'))
-    obj = inkex.PathElement.star(center, radii, sides, round)
 
     # If no angles were specified, point the star upwards.
     if angles is not None:
@@ -1658,11 +1662,17 @@ def star(sides, center, radii, angles=None, round=0.0, random=0.0,
     else:
         angles = (math.pi/2, math.pi/sides + math.pi/2)
 
-    # Set all the star's parameters.
-    obj.set('sodipodi:arg1', angles[0])
-    obj.set('sodipodi:arg2', angles[1])
-    obj.set('inkscape:flatsided', 'false')   # Star, not regular polygon
-    obj.set('inkscape:rounded', round)
+    # Create a star object.
+    try:
+        # Inkscape 1.2+
+        obj = inkex.PathElement.star(center, radii, sides, round,
+                                     angles, False, False)
+    except TypeError:
+        obj = inkex.PathElement.star(center, radii, sides, round)
+        obj.set('sodipodi:arg1', angles[0])
+        obj.set('sodipodi:arg2', angles[1])
+        obj.set('inkscape:flatsided', 'false')   # Star, not regular polygon
+        obj.set('inkscape:rounded', round)
     obj.set('inkscape:randomized', random)
     return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         _common_shape_style, style)
