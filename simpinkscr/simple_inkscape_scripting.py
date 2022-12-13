@@ -1221,8 +1221,8 @@ class SimpleHyperlink(SimpleGroup):
 class SimpleFilter(SVGOutputMixin):
     'Represent an SVG filter effect.'
 
-    def __init__(self, name=None, pt1=None, pt2=None,
-                 filter_units=None, primitive_units=None, **style):
+    def __init__(self, name=None, pt1=None, pt2=None, filter_units=None,
+                 primitive_units=None, auto_region=None, **style):
         self.filt = inkex.Filter()
         global _simple_top
         _simple_top.append_def(self.filt)
@@ -1241,6 +1241,10 @@ class SimpleFilter(SVGOutputMixin):
             self.filt.set('filterUnits', filter_units)
         if primitive_units is not None:
             self.filt.set('primitiveUnits', primitive_units)
+        if auto_region is True:
+            self.filt.set('inkscape:auto-region', 'true')
+        elif auto_region is False:
+            self.filt.set('inkscape:auto-region', 'false')
         style_str = str(inkex.Style(**style))
         if style_str != '':
             self.filt.set('style', style_str)
@@ -1905,11 +1909,11 @@ def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
                         base_style, style)
 
 
-def filter_effect(name=None, pt1=None, pt2=None,
-                  filter_units=None, primitive_units=None, **style):
+def filter_effect(name=None, pt1=None, pt2=None, filter_units=None,
+                  primitive_units=None, auto_region=None, **style):
     'Return an object representing an empty filter effect.'
-    return SimpleFilter(name, pt1, pt2,
-                        filter_units, primitive_units, **style)
+    return SimpleFilter(name, pt1, pt2, filter_units, primitive_units,
+                        auto_region, **style)
 
 
 def linear_gradient(pt1=None, pt2=None, repeat=None, gradient_units=None,

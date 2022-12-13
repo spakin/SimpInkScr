@@ -601,6 +601,9 @@ class SvgToPythonScript(inkex.OutputExtension):
             filt_args.append('filter_units=%s' % repr(f_units))
         if p_units is not None:
             filt_args.append('primitive_units=%s' % repr(p_units))
+        auto_reg = node.get('inkscape:auto-region')
+        if auto_reg is not None:
+            filt_args.append('auto_region=%s' % auto_reg.capitalize())
         extra, extra_deps = self.extra_args(node, {}, {})
         if extra != '':
             filt_args.append(extra[2:])  # Drop the leading ", ".
