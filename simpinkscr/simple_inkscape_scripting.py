@@ -255,6 +255,19 @@ class SimpleTopLevel():
         for obj in guides:
             nv.add(obj.get_inkex_object())
 
+    @staticmethod
+    def is_top_level(iobj):
+        """Return True if an inkex object's parent is one of None, a layer,
+        or <svg>."""
+        p = iobj.getparent()
+        if p is None:
+            return True
+        if p.TAG == 'svg':
+            return True
+        if isinstance(p, inkex.Layer):
+            return True
+        return False
+
 
 class SVGOutputMixin():
     '''Provide an svg method for converting an underlying inkex object to
@@ -1130,16 +1143,18 @@ class SimpleGroup(SimpleObject):
                          'objects can be added to a group.'))
             if isinstance(obj, SimpleLayer):
                 _abend(_('Layers cannot be added to groups.'))
-            if obj not in _simple_top:
+            iobj = obj._inkscape_obj
+            if obj not in _simple_top and not _simple_top.is_top_level(iobj):
                 _abend(_('Only objects not already in a group '
                          'or layer can be added to a group.'))
 
             # Remove the object from the top-level set of objects.
             obj.remove()
 
-            # Add the object to both the SimpleGroup and the SVG group.
+            # Add the object to both the SimpleGroup and the corresponding
+            # SVG group.
             self._children.append(obj)
-            self._inkscape_obj.add(obj._inkscape_obj)
+            self._inkscape_obj.add(iobj)
             obj.parent = self
 
     def ungroup(self, objs=None):
