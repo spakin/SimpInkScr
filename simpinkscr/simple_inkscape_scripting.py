@@ -117,6 +117,25 @@ def _svg_str_to_python(s):
     return s
 
 
+def _read_image_as_base64(fname):
+    "Return image data in base-64 encoding and the image's MIME type."
+    try:
+        # See if the image is SVG.
+        with open(fname, mode='rb') as r:
+            data = r.read()
+        tree = lxml.etree.fromstring(data)
+        mime = 'image/svg+xml'
+        b64 = base64.b64encode(data).decode('utf-8')
+    except lxml.etree.XMLSyntaxError:
+        # The image is not SVG.  Use PIL to interpret it as a bitmap image.
+        img = PIL.Image.open(fname)
+        data = io.BytesIO()
+        img.save(data, img.format)
+        mime = PIL.Image.MIME[img.format]
+        b64 = base64.b64encode(data.getvalue()).decode('utf-8')
+    return b64, mime
+
+
 def _abend(msg):
     'Abnormally end execution with an error message.'
     raise inkex.AbortExtension(msg)
@@ -1804,11 +1823,7 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False,
     obj.set('y', ul[1])
     if embed:
         # Read and embed the named file.
-        img = PIL.Image.open(fname)
-        data = io.BytesIO()
-        img.save(data, img.format)
-        mime = PIL.Image.MIME[img.format]
-        b64 = base64.b64encode(data.getvalue()).decode('utf-8')
+        b64, mime = _read_image_as_base64(fname)
         uri = 'data:%s;base64,%s' % (mime, b64)
     else:
         # Point to an external file.
