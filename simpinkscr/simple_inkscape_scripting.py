@@ -1902,40 +1902,40 @@ def hyperlink(objs, href, title=None, target=None, mime_type=None,
     return anc_obj
 
 
-def inkex_object(obj, transform=None, conn_avoid=False, clip_path=None,
+def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
                  mask=None, **style):
     'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
     try:
         # Inkscape 1.2+
-        merged_xform = inkex.Transform(transform) @ obj.transform
+        merged_xform = inkex.Transform(transform) @ iobj.transform
     except TypeError:
         # Inkscape 1.0 and 1.1
-        merged_xform = inkex.Transform(transform) * obj.transform
-    base_style = obj.style
-    if isinstance(obj, inkex.PathElement):
-        return SimplePathObject(obj, merged_xform, conn_avoid, clip_path, mask,
-                                base_style, style)
-    if isinstance(obj, inkex.Layer):
+        merged_xform = inkex.Transform(transform) * iobj.transform
+    base_style = iobj.style
+    if isinstance(iobj, inkex.PathElement):
+        return SimplePathObject(iobj, merged_xform, conn_avoid, clip_path,
+                                mask, base_style, style)
+    if isinstance(iobj, inkex.Layer):
         # Convert the layer and recursively convert and add all its children.
-        lay = SimpleLayer(obj, merged_xform, conn_avoid, clip_path, mask,
+        lay = SimpleLayer(iobj, merged_xform, conn_avoid, clip_path, mask,
                           base_style, style)
-        for o in [e for e in obj.iter() if e is not obj]:
+        for o in [e for e in iobj.iter() if e is not iobj]:
             o.getparent().remove(o)
             io = inkex_object(o)
             lay.add(io)
         return lay
-    if isinstance(obj, inkex.Group):
+    if isinstance(iobj, inkex.Group):
         # Convert the group and recursively convert and add all its children.
-        gr = SimpleGroup(obj, merged_xform, conn_avoid, clip_path, mask,
+        gr = SimpleGroup(iobj, merged_xform, conn_avoid, clip_path, mask,
                          base_style, style)
-        for o in [e for e in obj if e is not obj]:
+        for o in [e for e in iobj if e is not iobj]:
             o.getparent().remove(o)
             io = inkex_object(o)
             gr.add(io)
         return gr
-    if isinstance(obj, inkex.Marker):
-        return SimpleMarker(obj, **style)
-    return SimpleObject(obj, merged_xform, conn_avoid, clip_path, mask,
+    if isinstance(iobj, inkex.Marker):
+        return SimpleMarker(iobj, **style)
+    return SimpleObject(iobj, merged_xform, conn_avoid, clip_path, mask,
                         base_style, style)
 
 
