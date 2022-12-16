@@ -1919,7 +1919,7 @@ def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
         # Convert the layer and recursively convert and add all its children.
         lay = SimpleLayer(iobj, merged_xform, conn_avoid, clip_path, mask,
                           base_style, style)
-        for o in [e for e in iobj.iter() if e is not iobj]:
+        for o in [e for e in iobj if e is not iobj]:
             o.getparent().remove(o)
             io = inkex_object(o)
             lay.add(io)
@@ -2061,6 +2061,42 @@ def all_shapes():
 def guide(pos, angle, color=None):
     'Create a new guide without adding it to the document.'
     return Guide(pos, angle, color)
+
+
+def objects_from_svg_file(file, keep_layers=False):
+    '''Return a list of Simple Inkscape Scripting objects read from a
+    file, either named or already opened.'''
+    global _simple_top
+
+    # Read the file's entire contents.
+    if isinstance(file, str):
+        # String
+        with open(file, mode='rb') as r:
+            tree = inkex.load_svg(r)
+    else:
+        # Open file (assumed)
+        tree = inkex.load_svg(file)
+
+    # Store all shape objects read in a set.  The keep_layers argument
+    # determines if layers are included in this set.
+    iobj_set = {iobj
+                for iobj in tree.iter()
+                if isinstance(iobj, inkex.ShapeElement) and
+                (keep_layers or not isinstance(iobj, inkex.Layer))}
+
+    # Construct a list of all shapes in the set whose parent is not also in
+    # the set.  In the process of doing so, convert each shape from an
+    # inkex shape to a Simple Inkscape Scripting shape.  Also, if layers
+    # are excluded from the set, attach the shape to the top-level layer.
+    objs = []
+    for iobj in iobj_set:
+        if iobj.getparent() in iobj_set:
+            continue
+        obj = inkex_object(iobj)
+        if not keep_layers:
+            _simple_top.append_obj(obj)
+        objs.append(obj)
+    return objs
 
 
 # ----------------------------------------------------------------------
