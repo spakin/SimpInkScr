@@ -1131,7 +1131,7 @@ class SimpleMarker(SimpleObject):
                          obj_style=style, track=True)
 
 
-class SimpleGroup(SimpleObject):
+class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
     'Represent a group of objects.'
 
     def __init__(self, obj, transform, conn_avoid, clip_path_obj, mask_obj,
@@ -1139,6 +1139,7 @@ class SimpleGroup(SimpleObject):
         super().__init__(obj, transform, conn_avoid, clip_path_obj, mask_obj,
                          base_style, obj_style, track)
         self._children = []
+        self._self_type = 'group'
 
     def __len__(self):
         return len(self._children)
@@ -1146,8 +1147,41 @@ class SimpleGroup(SimpleObject):
     def __getitem__(self, idx):
         return self._children[idx]
 
-    def __iter__(self):
-        yield from self._children
+    def __delitem__(self, idx):
+        self._children[idx].remove()
+        del self._children[idx]
+
+    def __setitem__(self, idx, obj):
+        self._prepare_object(obj)
+        old_obj = self._children[idx]
+        self._children[idx] = obj
+        self._inkscape_obj[idx] = obj._inkscape_obj
+        old_obj.remove()
+
+    def insert(self, idx, obj):
+        self._prepare_object(obj)
+        self._children.insert(idx, obj)
+        self._inkscape_obj.insert(idx, obj._inkscape_obj)
+
+    def _prepare_object(self, obj):
+        'Prepare to add an object to the group.'
+        # Check for various error conditions.
+        what = self._self_type
+        if not isinstance(obj, SimpleObject):
+            _abend(_('only Simple Inkscape Scripting '
+                     f'objects can be added to a {what}.'))
+        if what == "group" and isinstance(obj, SimpleLayer):
+            _abend(_(f'layers cannot be added to {what}s.'))
+        iobj = obj._inkscape_obj
+        if obj not in _simple_top and not _simple_top.is_top_level(iobj):
+            _abend(_('only objects not already in a group '
+                     f'or layer can be added to a {what}.'))
+
+        # Remove the object from the top-level set of objects.
+        obj.remove()
+
+        # Mark the object as belonging to the group.
+        obj.parent = self
 
     def add(self, objs):
         'Add one or more SimpleObjects to the group.'
@@ -1213,7 +1247,7 @@ class SimpleLayer(SimpleGroup):
                  base_style, obj_style):
         super().__init__(obj, transform, conn_avoid, clip_path_obj, mask_obj,
                          base_style, obj_style, track=False)
-        self._children = []
+        self._self_type = 'layer'
         global _simple_top
         _simple_top.append_obj(self, to_root=True)
 
@@ -1225,7 +1259,7 @@ class SimpleClippingPath(SimpleGroup):
         super().__init__(obj, transform=None, conn_avoid=False,
                          clip_path_obj=None, mask_obj=None, base_style={},
                          obj_style={}, track=False)
-        self._children = []
+        self._self_type = 'clipping path'
         if clip_units is not None:
             self._inkscape_obj.set('clipPathUnits', clip_units)
         global _simple_top
@@ -1239,7 +1273,7 @@ class SimpleMask(SimpleGroup):
         super().__init__(obj, transform=None, conn_avoid=False,
                          clip_path_obj=None, mask_obj=None, base_style={},
                          obj_style={}, track=False)
-        self._children = []
+        self._self_type = 'mask'
         if mask_units is not None:
             self._inkscape_obj.set('maskUnits', mask_units)
         global _simple_top
@@ -1253,6 +1287,7 @@ class SimpleHyperlink(SimpleGroup):
                  base_style, obj_style):
         super().__init__(obj, transform, conn_avoid, clip_path_obj, mask_obj,
                          base_style, obj_style, track=True)
+        self._self_type = 'hyperlink'
 
 
 class SimpleFilter(SVGOutputMixin):
@@ -1861,9 +1896,10 @@ def group(objs=None, transform=None, conn_avoid=False, clip_path=None,
     objs = objs or []
     g = inkex.Group()
     g_obj = SimpleGroup(g, transform, conn_avoid, clip_path, mask, {}, style)
-    g_obj.add(objs)
-    for o in objs:
-        o.parent = g_obj
+    if isinstance(objs, collections.abc.Iterable):
+        g_obj.extend(objs)
+    else:
+        g_obj.append(objs)
     return g_obj
 
 
@@ -1874,9 +1910,10 @@ def layer(name, objs=None, transform=None, conn_avoid=False, clip_path=None,
     layer = inkex.Layer.new(name)
     l_obj = SimpleLayer(layer, transform, conn_avoid, clip_path, mask,
                         {}, style)
-    l_obj.add(objs)
-    for o in objs:
-        o.parent = l_obj
+    if isinstance(objs, collections.abc.Iterable):
+        l_obj.extend(objs)
+    else:
+        l_obj.append(objs)
     return l_obj
 
 
@@ -1925,7 +1962,7 @@ def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
         for o in [e for e in iobj if e is not iobj]:
             o.getparent().remove(o)
             io = inkex_object(o)
-            lay.add(io)
+            lay.append(io)
         return lay
     if isinstance(iobj, inkex.Group):
         # Convert the group and recursively convert and add all its children.
@@ -1934,7 +1971,7 @@ def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
         for o in [e for e in iobj if e is not iobj]:
             o.getparent().remove(o)
             io = inkex_object(o)
-            gr.add(io)
+            gr.append(io)
         return gr
     if isinstance(iobj, inkex.Marker):
         return SimpleMarker(iobj, **style)
