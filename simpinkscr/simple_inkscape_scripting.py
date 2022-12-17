@@ -1191,33 +1191,6 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
         else:
             self.append(objs)
 
-    def add(self, objs):
-        'Add one or more SimpleObjects to the group.'
-        # Ensure the addition is legitimate.
-        global _simple_top
-        if not isinstance(objs, list):
-            objs = [objs]   # Convert scalar to list
-        for obj in objs:
-            # Check for various error conditions.
-            if not isinstance(obj, SimpleObject):
-                _abend(_('Only Simple Inkscape Scripting '
-                         'objects can be added to a group.'))
-            if isinstance(obj, SimpleLayer):
-                _abend(_('Layers cannot be added to groups.'))
-            iobj = obj._inkscape_obj
-            if obj not in _simple_top and not _simple_top.is_top_level(iobj):
-                _abend(_('Only objects not already in a group '
-                         'or layer can be added to a group.'))
-
-            # Remove the object from the top-level set of objects.
-            obj.remove()
-
-            # Add the object to both the SimpleGroup and the corresponding
-            # SVG group.
-            self._children.append(obj)
-            self._inkscape_obj.add(iobj)
-            obj.parent = self
-
     def ungroup(self, objs=None):
         '''Remove one or more objects from the group and add it to the
         top level.  Return the list of objects that were ungrouped.'''

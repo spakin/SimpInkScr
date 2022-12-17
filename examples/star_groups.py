@@ -13,4 +13,4 @@ for j in range(10):
     for i in range(10 + j):
         x = i*(width - 2*rad)/(10 + j - 1) + rad
         s = star(6, (x, y), (rad, rad*0.575))
-        g.add(s)
+        g.append(s)
