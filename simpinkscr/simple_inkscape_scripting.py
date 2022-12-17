@@ -1178,7 +1178,7 @@ class SimpleGroup(SimpleObject):
 
     def ungroup(self, objs=None):
         '''Remove one or more objects from the group and add it to the
-        top level.'''
+        top level.  Return the list of objects that were ungrouped.'''
         # Add each object to the top level.
         if objs is None:
             objs = self._children
@@ -1195,12 +1195,15 @@ class SimpleGroup(SimpleObject):
         # Remove each object from the SimpleGroup.  It has already been
         # removed from the SVG group as a side effect of the call to
         # append_obj above.
-        objs = set(objs)
-        self._children = [ch for ch in self._children if ch not in objs]
+        obj_set = set(objs)
+        self._children = [ch for ch in self._children if ch not in obj_set]
 
         # If the group is empty, remove it entirely.
         if self._children == []:
             self.remove()
+
+        # Return the set of objects that were ungrouped.
+        return objs
 
 
 class SimpleLayer(SimpleGroup):
