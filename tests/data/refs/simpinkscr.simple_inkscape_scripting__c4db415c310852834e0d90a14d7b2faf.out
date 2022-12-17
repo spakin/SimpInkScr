@@ -9,5 +9,5 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"><a xlink:href="https://www.pakin.org/" href="https://www.pakin.org/" xlink:title="My home page"><title>My home page</title><rect x="32" y="64" width="64" height="48" style="stroke:black;fill:#ff0000;stroke-width:2"/><polygon points="16,64 64,16 112,64" style="stroke:black;fill:#008000;stroke-width:2"/></a></g>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"><a xlink:href="https://www.pakin.org/" href="https://www.pakin.org/" xlink:title="My home page"><rect x="32" y="64" width="64" height="48" style="stroke:black;fill:#ff0000;stroke-width:2"/><polygon points="16,64 64,16 112,64" style="stroke:black;fill:#008000;stroke-width:2"/><title>My home page</title></a></g>
 </svg>

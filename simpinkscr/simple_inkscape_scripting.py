@@ -1183,6 +1183,14 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
         # Mark the object as belonging to the group.
         obj.parent = self
 
+    def _append_or_extend(self, objs):
+        '''Invoke append if given a single object or extend if given
+        multiple objects.'''
+        if isinstance(objs, collections.abc.Iterable):
+            self.extend(objs)
+        else:
+            self.append(objs)
+
     def add(self, objs):
         'Add one or more SimpleObjects to the group.'
         # Ensure the addition is legitimate.
@@ -1896,10 +1904,7 @@ def group(objs=None, transform=None, conn_avoid=False, clip_path=None,
     objs = objs or []
     g = inkex.Group()
     g_obj = SimpleGroup(g, transform, conn_avoid, clip_path, mask, {}, style)
-    if isinstance(objs, collections.abc.Iterable):
-        g_obj.extend(objs)
-    else:
-        g_obj.append(objs)
+    g_obj._append_or_extend(objs)
     return g_obj
 
 
@@ -1910,10 +1915,7 @@ def layer(name, objs=None, transform=None, conn_avoid=False, clip_path=None,
     layer = inkex.Layer.new(name)
     l_obj = SimpleLayer(layer, transform, conn_avoid, clip_path, mask,
                         {}, style)
-    if isinstance(objs, collections.abc.Iterable):
-        l_obj.extend(objs)
-    else:
-        l_obj.append(objs)
+    l_obj._append_or_extend(objs)
     return l_obj
 
 
@@ -1938,7 +1940,7 @@ def hyperlink(objs, href, title=None, target=None, mime_type=None,
         anc.set('type', mime_type)
     anc_obj = SimpleHyperlink(anc, transform, conn_avoid, clip_path, mask,
                               {}, style)
-    anc_obj.add(objs)
+    anc_obj._append_or_extend(objs)
     return anc_obj
 
 
@@ -2004,18 +2006,28 @@ def radial_gradient(center=None, radius=None, focus=None, fr=None,
 
 
 def clip_path(obj, clip_units=None):
-    'Convert an object to a clipping path.'
+    'Convert an object or collection of objects to a clipping path.'
     clip = SimpleClippingPath(inkex.ClipPath(), clip_units)
-    obj._apply_transform()
-    clip.add(obj)
+    if isinstance(obj, collections.abc.Iterable):
+        objs = obj
+    else:
+        objs = [obj]
+    for o in objs:
+        o._apply_transform()
+    clip.extend(objs)
     return clip
 
 
 def mask(obj, mask_units=None):
-    'Convert an object to a mask.'
+    'Convert an object or collection of objects to a mask.'
     m = SimpleMask(inkex.Mask(), mask_units)  # Requires Inkscape 1.2+.
-    obj._apply_transform()
-    m.add(obj)
+    if isinstance(obj, collections.abc.Iterable):
+        objs = obj
+    else:
+        objs = [obj]
+    for o in objs:
+        o._apply_transform()
+    m.extend(objs)
     return m
 
 
