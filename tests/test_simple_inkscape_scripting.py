@@ -2,6 +2,9 @@ from simpinkscr.simple_inkscape_scripting import SimpleInkscapeScripting
 from simpinkscr.svg_to_simp_ink_script import SvgToPythonScript
 from inkex.tester import ComparisonMixin, InkscapeExtensionTestMixin, TestCase
 from inkex.tester.filters import CompareOrderIndependentStyle
+from unittest.mock import patch
+from io import StringIO
+
 
 class SimpInkScrBasicTest(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
     # Indicate how testing should be performed.
@@ -222,3 +225,23 @@ class SimpInkScrOutputBasicTest(ComparisonMixin, TestCase):
     effect_class = SvgToPythonScript
     compare_file = 'svg/shapes.svg'
     comparisons = [()]
+
+
+class SimpInkScrCmdlineArgsTest(TestCase):
+    effect_class = SimpleInkscapeScripting
+
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_without_rest_args(self, _stderr):
+        args = ["--program", "print(rest_args)", self.empty_svg]
+        effect = self.effect_class()
+        effect.run(args)
+        output = _stderr.getvalue().rstrip()
+        assert "[]" == output
+
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_with_rest_args(self, _stderr):
+        args = ["--program", "print(rest_args)", self.empty_svg, "--", "-a", "1", "--b", "2", "3"]
+        effect = self.effect_class()
+        effect.run(args)
+        output = _stderr.getvalue().rstrip()
+        assert "['-a', '1', '--b', '2', '3']" == output
