@@ -2145,6 +2145,7 @@ def apply_path_operation(op, paths):
             _abend(_('apply_path_operation was passed a non-path object'))
 
     # Store the set of all object IDs that appear in the original image.
+    global _simple_top
     svg_root = _simple_top._svg_root
     ids_before = set([iobj.get_id() for iobj in svg_root.iter()])
 
@@ -2189,7 +2190,7 @@ def apply_path_operation(op, paths):
         ext = _simple_top._extension
         ext.document = inkex.load_svg(svg_file)
         ext.svg = ext.document.getroot()
-        _simple_top._svg_root = ext.svg
+        _simple_top = SimpleTopLevel(ext.svg, ext)
 
     # Construct a list of all objects that were created by the operation.
     svg_root = _simple_top._svg_root
