@@ -23,6 +23,7 @@ List of examples
 | :------ | :---------- |
 | [Animation](animation.py) | Demonstrate how to create an SVG SMIL animation. |
 | [Binary tree](binary_tree.py) | Draw a binary tree.  The canvas should be about as wide as A4 or U.S. Letter paper to avoid node overlap in the deepest level of the tree. |
+| [Boolean ops](boolean_ops.py) | Apply Boolean path operations to various objects. |
 | [Brick pyramid](brick_pyramid.py) | Draw a brick pyramid. |
 | [Chalkboard](chalkboard.py) | Draw a chalkboard with a repeated message written on it. |
 | [Clipping path](clipping_path.py) | Demonstrate how to apply a clipping path to a number of objects. |
