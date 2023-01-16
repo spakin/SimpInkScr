@@ -26,6 +26,7 @@ import math
 import os
 import random
 import re
+import string
 try:
     import numpy
 except ModuleNotFoundError:
@@ -33,13 +34,14 @@ except ModuleNotFoundError:
 import PIL.Image
 import lxml
 import inkex
+import inkex.command
 from inkex.localization import inkex_gettext as _
 from tempfile import TemporaryDirectory
 
 # ----------------------------------------------------------------------
 
-# The following definitions are utilized by the user convenience
-# functions.
+# The following variable, class, and function definitions are utilized by
+# the user convenience functions.
 
 # Define a prefix for all IDs we assign.  This contains randomness so
 # running the same script repeatedly will be unlikely to produce
@@ -149,8 +151,9 @@ class Mpath(inkex.Use):
 class SimpleTopLevel():
     "Keep track of top-level objects, both ours and inkex's."
 
-    def __init__(self, svg_root):
+    def __init__(self, svg_root, ext_obj):
         self._svg_root = svg_root
+        self._extension = ext_obj
         self._svg_attach = self.find_attach_point()
         self._simple_objs = []
 
@@ -400,7 +403,7 @@ class SimpleObject(SVGOutputMixin):
         just text, which is a limitation at the time of this writing."""
         iobj = self.get_inkex_object()
         iobj_id = iobj.get_id()  # Force ID creation.
-        with TemporaryDirectory(prefix='inkscape-command') as tmpdir:
+        with TemporaryDirectory(prefix='inkscape-command-') as tmpdir:
             svg_file = inkex.command.write_svg(iobj.root, tmpdir, 'input.svg')
             out = inkex.command.inkscape(svg_file,
                                          '-X', '-Y', '-W', '-H',
@@ -1051,7 +1054,8 @@ class SimpleObject(SVGOutputMixin):
 
 
 class SimplePathObject(SimpleObject):
-    'A SimplePathObject is a SimpleObject to which LPEs can be applied.'
+    '''A SimplePathObject is a SimpleObject to which LPEs and other path
+    effects can be applied.'''
 
     def apply_path_effect(self, lpe):
         'Apply one or more path effects to the path.'
@@ -2124,6 +2128,101 @@ def objects_from_svg_file(file, keep_layers=False):
     return objs
 
 
+def apply_path_operation(op, paths):
+    '''Apply a named path operation (technically, an action named without
+    the initial "path-") to one or more objects.  This call launches a
+    separate Inkscape process so it may be slow.  No checking is performed
+    on the action to ensure it is acceptable to Inkscape.'''
+    # Verify that all of the given paths are SimplePathObjects.
+    try:
+        paths = list(paths)
+    except TypeError:
+        paths = [paths]
+    if len(paths) == 0:
+        return   # No work to do
+    for p in paths:
+        if not isinstance(p, SimplePathObject):
+            _abend(_('apply_path_operation was passed a non-path object'))
+
+    # Store the set of all object IDs that appear in the original image.
+    global _simple_top
+    svg_root = _simple_top._svg_root
+    ids_before = set([iobj.get_id() for iobj in svg_root.iter()])
+
+    # Construct an Inkscape action string.  As a special case, if the first
+    # character of the operation is uppercase, assume we're using an older
+    # (pre-1.2) version of Inkscape.  In this case we prepend "Selection"
+    # instead of "path-" and use different actions to save the file.
+    id_list = [obj._inkscape_obj.get_id() for obj in paths]
+    action_str = ';'.join(['select-by-id:' + obj_id for obj_id in id_list])
+    old_inkscape = op[0].isupper()
+    if old_inkscape:
+        # Inkscape 1.0 or 1.1
+        action_str += f';Selection{op};FileSave;FileQuit'
+    else:
+        # Inkscape 1.2+
+        action_str += f';path-{op};export-filename:input.svg;' + \
+            'export-overwrite;export-do;quit-immediate'
+
+    # Work within a temporary directory.
+    with TemporaryDirectory(prefix='inkscape-command-') as tmpdir:
+        # Write the current image to input.svg.
+        svg_file = inkex.command.write_svg(svg_root, tmpdir, 'input.svg')
+
+        # Change to svg_file's directory to support the hard-wired action,
+        # "export-filename:input.svg".
+        cwd = os.getcwd()
+        os.chdir(os.path.dirname(svg_file))
+
+        # Invoke another copy of Inkscape to perform the actions.
+        args = ['--batch-process']
+        if not old_inkscape:
+            instance_tag = ''.join(random.choices(string.ascii_letters, k=10))
+            args.append(f'--app-id-tag={instance_tag}')
+        inkex.command.inkscape(svg_file,
+                               *args,
+                               actions=action_str)
+
+        # Restore the previous directory.
+        os.chdir(cwd)
+
+        # Replace the current document with the modified one.
+        ext = _simple_top._extension
+        ext.document = inkex.load_svg(svg_file)
+        ext.svg = ext.document.getroot()
+        _simple_top = SimpleTopLevel(ext.svg, ext)
+
+    # Construct a list of all objects that were created by the operation.
+    svg_root = _simple_top._svg_root
+    ids_after = set([iobj.get_id() for iobj in svg_root.iter()])
+    new_ids = ids_after.difference(ids_before)
+    new_iobjs = [svg_root.getElementById(iobj_id)
+                 for iobj_id in new_ids]
+    new_iobjs = [iobj
+                 for iobj in new_iobjs
+                 if isinstance(iobj, inkex.PathElement)]
+    new_objs = [inkex_object(iobj) for iobj in new_iobjs]
+
+    # Construct a list of all objects that were passed into
+    # apply_path_operation and that still exist.  The corresponding Simple
+    # Inkscape Scripting object needs to be recreated because it likely
+    # changed as a result of the path operation.
+    old_ids = [obj._inkscape_obj.get_id() for obj in paths]
+    old_iobjs = [svg_root.getElementById(obj_id) for obj_id in old_ids]
+    old_objs = [inkex_object(iobj)
+                for iobj in old_iobjs
+                if iobj is not None]
+
+    # Set to None all old objects' underlying inkex object.  This will
+    # help catch errors if an old object is used inadvertently.
+    for obj in paths:
+        obj._inkscape_obj = None
+
+    # Return a list of old (but modified) objects and newly created
+    # objects.
+    return old_objs + new_objs
+
+
 # ----------------------------------------------------------------------
 
 class SimpleInkscapeScripting(inkex.EffectExtension):
@@ -2197,7 +2296,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         'Generate objects from user-provided Python code.'
         # Prepare global values we use internally.
         global _simple_top
-        _simple_top = SimpleTopLevel(self.svg)
+        _simple_top = SimpleTopLevel(self.svg, self)
 
         # Prepare global values we want to export.
         sis_globals = globals().copy()
