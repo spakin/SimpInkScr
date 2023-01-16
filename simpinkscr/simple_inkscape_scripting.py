@@ -2129,8 +2129,33 @@ def objects_from_svg_file(file, keep_layers=False):
 class SimpleInkscapeScripting(inkex.EffectExtension):
     'Help the user create Inkscape objects with a simple API.'
 
+    def filename_arg(self, name):
+        """Existing file to read or option used in script arguments"""
+        if name == "-":
+            return None  # filename is set to None to read stdin
+        return inkex.utils.filename_arg(name)
+
+    def reconfigure_input_file_argument(self, pars):
+        target_action = None
+        for action in pars._actions:
+            if 'input_file' == action.dest:
+                target_action = action
+                break
+
+        target_action.container._remove_action(target_action)
+        pars.add_argument(
+            "input_file",
+            nargs="?",
+            metavar="INPUT_FILE",
+            type=self.filename_arg,
+            help="Filename of the input file (default is stdin). Filename can be `-` for stdin",
+            default=None,
+        )
+
     def add_arguments(self, pars):
         'Process program parameters passed in from the UI.'
+
+        self.reconfigure_input_file_argument(pars)
         pars.add_argument('--tab', dest='tab',
                           help='The selected UI tab when OK was pressed')
         pars.add_argument('--program', type=str,
