@@ -170,13 +170,15 @@ class SimpleTopLevel():
             cur_layer_name = namedview.get('inkscape:current-layer')
             cur_layer = svg.xpath('//*[@id="%s"]' % cur_layer_name)[0]
             return cur_layer
-        except AttributeError:
+        except (AttributeError, IndexError):
             pass
 
-        # If an extension is run from the command line, the input SVG file may
-        # lack a <sodipodi:namedview> element.  (This is the case for
+        # If an extension is run from the command line, the input SVG file
+        # may lack a <sodipodi:namedview> element.  (This is the case for
         # /usr/share/inkscape/templates/default.svg in my installation, for
-        # example.)  In this case, we return the topmost layer.
+        # example.)  Or, it may contain a <sodipodi:namedview> element that
+        # lacks an inkscape:current-layer attribute.  In either of these
+        # cases we return the topmost layer, assuming one exists.
         try:
             return svg.xpath('//svg:g[@inkscape:groupmode="layer"]')[-1]
         except IndexError:
