@@ -2257,8 +2257,9 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
                           help='Python code to execute')
         pars.add_argument('--py-source', type=str,
                           help='Python source file to execute')
-        pars.add_argument('rest_args', nargs='*',
-                          help='Rest Arguments for passing Python code')
+        pars.add_argument('user_args', nargs='*', metavar='USER_ARGS',
+                          help='Additional arguments to pass to Python code'
+                               ' via the user_args global variable')
 
     def find_attach_point(self):
         '''Return a suitable point in the SVG XML tree at which to attach
@@ -2301,7 +2302,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         sis_globals['height'] = _simple_top.height
         sis_globals['guides'] = _simple_top.get_existing_guides()
         sis_globals['print'] = _debug_print
-        sis_globals['rest_args'] = self.options.rest_args
+        sis_globals['user_args'] = self.options.user_args
         try:
             # Inkscape 1.2+
             convert_unit = self.svg.viewport_to_unit
