@@ -2,6 +2,9 @@ from simpinkscr.simple_inkscape_scripting import SimpleInkscapeScripting
 from simpinkscr.svg_to_simp_ink_script import SvgToPythonScript
 from inkex.tester import ComparisonMixin, InkscapeExtensionTestMixin, TestCase
 from inkex.tester.filters import CompareOrderIndependentStyle
+from unittest.mock import patch
+from io import StringIO
+
 
 class SimpInkScrBasicTest(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
     # Indicate how testing should be performed.
@@ -222,3 +225,72 @@ class SimpInkScrOutputBasicTest(ComparisonMixin, TestCase):
     effect_class = SvgToPythonScript
     compare_file = 'svg/shapes.svg'
     comparisons = [()]
+
+
+class SimpInkScrCmdlineArgsTest(TestCase):
+    effect_class = SimpleInkscapeScripting
+
+    def test_argparse_input_file_with_svg_and_rest_args(self):
+        args = ["--program", "pass", self.empty_svg, "--", "-a", "1", "--b", "2", "3"]
+        effect = self.effect_class()
+        effect.parse_arguments(args)
+        assert effect.options.input_file == self.empty_svg
+        assert ['-a', '1', '--b', '2', '3'] == effect.options.rest_args
+
+    def test_argparse_input_file_with_dash_and_rest_args(self):
+        args = ["--program", "pass", "-", "--", "-a", "1", "--b", "2", "3"]
+        effect = self.effect_class()
+        effect.parse_arguments(args)
+        assert effect.options.input_file is None  # input_file is set to None to read stdin
+        assert ['-a', '1', '--b', '2', '3'] == effect.options.rest_args
+
+
+class SimpInkScrRestArgsTest(TestCase):
+    effect_class = SimpleInkscapeScripting
+
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_rest_args_with_inputfile_and_no_rest_args(self, _stderr):
+        args = ["--program", "print(rest_args)", self.empty_svg]
+        effect = self.effect_class()
+        effect.run(args)
+        output = _stderr.getvalue().rstrip()
+        assert "[]" == output
+
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_rest_args_without_inputfile_and_rest_args(self, _stderr):
+        args = ["--program", "print(rest_args)"]
+        effect = self.effect_class()
+
+        with patch('sys.stdin', StringIO("<svg />")):
+            effect.run(args)
+            output = _stderr.getvalue().rstrip()
+        assert "[]" == output
+
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_rest_args_with_dash_and_no_rest_args(self, _stderr):
+        args = ["--program", "print(rest_args)", "-"]
+        effect = self.effect_class()
+
+        with patch('sys.stdin', StringIO("<svg />")):
+            effect.run(args)
+            output = _stderr.getvalue().rstrip()
+        assert "[]" == output
+
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_rest_args_with_inputfile_and_rest_args(self, _stderr):
+        args = ["--program", "print(rest_args)", self.empty_svg, "--", "-a", "1", "--b", "2", "3"]
+        effect = self.effect_class()
+        effect.run(args)
+        output = _stderr.getvalue().rstrip()
+        assert "['-a', '1', '--b', '2', '3']" == output
+
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_rest_args_with_dash_and_rest_args(self, _stderr):
+        args = ["--program", "print(rest_args)", "-", "--", "-a", "1", "--b", "2", "3"]
+        effect = self.effect_class()
+
+        with patch('sys.stdin', StringIO("<svg />")):
+            effect.run(args)
+            output = _stderr.getvalue().rstrip()
+
+        assert "['-a', '1', '--b', '2', '3']" == output
