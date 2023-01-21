@@ -2232,8 +2232,8 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
 
     def filename_arg(self, name):
         """Existing file to read or option used in script arguments"""
-        if name == "-":
-            return None  # filename is set to None to read stdin
+        if name == '-':
+            return None  # Read from standard input.
         return inkex.utils.filename_arg(name)
 
     def reconfigure_input_file_argument(self, pars):
@@ -2242,20 +2242,14 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
             if 'input_file' == action.dest:
                 target_action = action
                 break
-
         target_action.container._remove_action(target_action)
-        pars.add_argument(
-            "input_file",
-            nargs="?",
-            metavar="INPUT_FILE",
-            type=self.filename_arg,
-            help="Filename of the input file (default is stdin). Filename can be `-` for stdin",
-            default=None,
-        )
+        pars.add_argument('input_file', nargs='?', metavar='INPUT_FILE',
+                          type=self.filename_arg,
+                          help='Filename of the input file or "-" for stdin '
+                               ' (default is stdin)')
 
     def add_arguments(self, pars):
         'Process program parameters passed in from the UI.'
-
         self.reconfigure_input_file_argument(pars)
         pars.add_argument('--tab', dest='tab',
                           help='The selected UI tab when OK was pressed')
@@ -2263,7 +2257,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
                           help='Python code to execute')
         pars.add_argument('--py-source', type=str,
                           help='Python source file to execute')
-        pars.add_argument('rest_args', nargs="*",
+        pars.add_argument('rest_args', nargs='*',
                           help='Rest Arguments for passing Python code')
 
     def find_attach_point(self):
