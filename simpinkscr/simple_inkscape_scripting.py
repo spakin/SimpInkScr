@@ -2303,6 +2303,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         sis_globals['guides'] = _simple_top.get_existing_guides()
         sis_globals['print'] = _debug_print
         sis_globals['user_args'] = self.options.user_args
+        sis_globals['extension'] = self
         try:
             # Inkscape 1.2+
             convert_unit = self.svg.viewport_to_unit
