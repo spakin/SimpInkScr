@@ -6,7 +6,7 @@
     <page name="Code" gui-text="Code">
       <param type="path" name="py-source" mode="file"
              gui-text="Python file"
-             gui-description="See the help tab for more information" />
+             gui-description="Filename of a Python script to execute" />
       <hbox>
         <spacer size="expand" />
         <label>– and/or –</label>
@@ -14,7 +14,15 @@
       </hbox>
       <param name="program" type="string" appearance="multiline"
              gui-text="Python code"
-             gui-description="See the help tab for more information" />
+             gui-description="Text of a Python script to execute" />
+      <param name="encoding" type="optiongroup" appearance="combo"
+             gui-text="Input encoding"
+             gui-description="Character encoding for the input text">
+        <option value="">Default</option>
+        <option value="utf-8">UTF-8</option>
+        <option value="utf-16">UTF-16</option>
+        <option value="cp1252">Windows-1252</option>
+      </param>
     </page>
 
     <page name="About" gui-text="About">

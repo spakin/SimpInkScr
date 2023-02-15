@@ -2346,6 +2346,8 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
                           help='Python code to execute')
         pars.add_argument('--py-source', type=str,
                           help='Python source file to execute')
+        pars.add_argument('--encoding', type=str,
+                          help='Character encoding for input code')
         pars.add_argument('user_args', nargs='*', metavar='USER_ARGS',
                           help='Additional arguments to pass to Python code'
                                ' via the user_args global variable')
@@ -2404,7 +2406,9 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         sis_globals['inch'] = \
             convert_unit('1in')  # "in" is a keyword.
 
-        # Launch the user's script.
+        # Construct a string of code to execute by combining code read
+        # from a file (--py-source) and entered literally (--program).
+        enc = self.options.encoding or None
         code = '''
 # The following imports are provided for user convenience.
 from math import *
@@ -2416,14 +2420,17 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
         if py_source is not None and not os.path.isdir(py_source):
             # The preceding test for isdir is explained in
             # https://gitlab.com/inkscape/inkscape/-/issues/2822
-            with open(self.options.py_source) as fd:
+            with open(self.options.py_source, encoding=enc) as fd:
                 code += fd.read()
             code += '\n'
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
-        # Remove unnecessary import that may be introduced when running
-        # from Visual Studio Code.
+
+        # Remove an unnecessary import that may be introduced when
+        # running from Visual Studio Code.
         code.replace("from simpinkscr import *", "")
+
+        # Launch the user's script.
         try:
             exec(code, sis_globals)
         except SystemExit:
