@@ -33,6 +33,39 @@ for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
     boxes.append(rect(ul, ul + (100, 60), fill=c, opacity=0.9))
     ul += (10, 10)
 '''
+    s_path = '''
+S = path([Move(57, 13),
+          Vert(28),
+          Quadratic(52, 25, 46, 24),
+          Quadratic(41, 23, 36, 23),
+          Quadratic(29, 23, 26, 25),
+          Quadratic(23, 26, 23, 30),
+          Quadratic(23, 33, 25, 35),
+          Quadratic(27, 36, 33, 37),
+          Line(40, 39),
+          Quadratic(52, 41, 57, 46),
+          Quadratic(62, 51, 62, 60),
+          Quadratic(62, 71, 55, 77),
+          Quadratic(48, 82, 34, 82),
+          Quadratic(27, 82, 21, 81),
+          Quadratic(14, 80, 7, 77),
+          Vert(62),
+          Quadratic(14, 66, 20, 68),
+          Quadratic(26, 69, 32, 69),
+          Quadratic(38, 69, 41, 67),
+          Quadratic(44, 65, 44, 62),
+          Quadratic(44, 58, 42, 57),
+          Quadratic(40, 55, 34, 53),
+          Line(27, 52),
+          Quadratic(16, 50, 11, 45),
+          Quadratic(7, 40, 7, 31),
+          Quadratic(7, 21, 13, 15),
+          Quadratic(20, 10, 33, 10),
+          Quadratic(39, 10, 45, 11),
+          Quadratic(51, 12, 57, 13),
+          ZoneClose()],
+         fill='#decd87', stroke_width=5)
+'''
 
     # Define all of the tests to run.  Simple Inkscape Scripting is a
     # large, featureful extension so many tests are needed to achieve even
@@ -175,6 +208,10 @@ r1.animate(r4, duration='3s')
         ("--program=%s\nred.scale(1.5, 'ur')" % blue_red,),
         ('--program=%s\nred.skew((10, 0))' % blue_red,),
         ("--program=%s\nred.skew((0, 10), 'lr')" % blue_red,),
+        ("--program=%s\nS.translate_path((100, 100))" % s_path,),
+        ("--program=%s\nS.rotate_path(-25)" % s_path,),
+        ("--program=%s\nS.scale_path((0.75, 1.5), 'ul')" % s_path,),
+        ("--program=%s\nS.skew_path((0, 30), 'ul')" % s_path,),
 
         # The following tests come from the Other Features wiki page.
         ('''--program=
