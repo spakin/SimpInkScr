@@ -1110,6 +1110,42 @@ class SimplePathObject(SimpleObject):
             p.remove()
         return self
 
+    def translate_path(self, dist):
+        "Translate a path's control points."
+        iobj = self._inkscape_obj
+        iobj.set('d', iobj.path.translate(dist[0], dist[1]))
+        return self
+
+    def rotate_path(self, angle, around='center'):
+        "Rotate a path's control points, optionally around a given point."
+        around = self._find_transform_point(around)
+        iobj = self._inkscape_obj
+        iobj.set('d', iobj.path.rotate(angle, around))
+        return self
+
+    def scale_path(self, factor, around='center'):
+        "Scale a path's control points, optionally around a given point."
+        try:
+            sx, sy = factor
+        except (TypeError, ValueError):
+            sx, sy = factor, factor
+        around = inkex.Vector2d(self._find_transform_point(around))
+        iobj = self._inkscape_obj
+        iobj.set('d', iobj.path.scale(sx, sy, around))
+        return self
+
+    def skew_path(self, angles, around='center'):
+        "Skew a path's control points, optionally around a given point."
+        around = inkex.Vector2d(self._find_transform_point(around))
+        tr = inkex.Transform()
+        tr.add_translate(around)
+        tr.add_skewx(angles[0])
+        tr.add_skewy(angles[1])
+        tr.add_translate(-around)
+        iobj = self._inkscape_obj
+        iobj.set('d', iobj.path.transform(tr))
+        return self
+
 
 class SimpleTextObject(SimpleObject):
     '''A SimpleTextObject is a SimpleObject to which additional text can
