@@ -360,10 +360,10 @@ class SimpleObject(SVGOutputMixin):
         # Store the modified Inkscape object.  If the object is new (as
         # opposed to having been wrapped with inkex_object), attach it to
         # the top-level connection point.
+        self._track = track
         self._inkscape_obj = obj
-        if obj.getparent() is None:
-            if track:
-                _simple_top.append_obj(self)
+        if obj.getparent() is None and self._track:
+            _simple_top.append_obj(self)
         self.parent = None
 
     def __str__(self):
@@ -461,6 +461,18 @@ class SimpleObject(SVGOutputMixin):
             # Existing object wrapped by Simple Inkscape Scripting (e.g.,
             # returned by all_shapes)
             self._inkscape_obj.delete()
+
+    def unremove(self):
+        'Replace a removed object, placing it at the top level.'
+        global _simple_top
+        iobj = self.get_inkex_object()
+        if iobj.getparent() is not None:
+            raise ValueError('Only removed objects can be unremoved')
+        if hasattr(self, '_self_type') and self._self_type == 'layer':
+            _simple_top.append_obj(self, to_root=True)
+        elif self._track:
+            _simple_top.append_obj(self)
+        self.parent = None
 
     def to_def(self):
         '''Convert the object to a definition, removing it from the list of
@@ -1212,7 +1224,7 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
         if not isinstance(obj, SimpleObject):
             _abend(_('only Simple Inkscape Scripting '
                      f'objects can be added to a {what}.'))
-        if what == "group" and isinstance(obj, SimpleLayer):
+        if what == 'group' and isinstance(obj, SimpleLayer):
             _abend(_(f'layers cannot be added to {what}s.'))
         iobj = obj._inkscape_obj
         if obj not in _simple_top and not _simple_top.is_top_level(iobj):
