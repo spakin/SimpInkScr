@@ -2273,6 +2273,29 @@ def apply_path_operation(op, paths):
     return old_objs + new_objs
 
 
+def save_file(file=None):
+    'Save the current image to a file.'
+    # Determine the filename if one was not provided.
+    global _simple_top
+    if file is None:
+        ext = _simple_top._extension
+        file = ext.document_path()
+        if file == "":
+            raise RuntimeError('No filename is associated with the'
+                               ' current document')
+
+    # Save the file.
+    svg = _simple_top.svg_root
+    if isinstance(file, str):
+        # We were given a file name as a string.
+        with open(file, 'w') as w:
+            w.write(svg.tostring().decode('utf-8'))
+    else:
+        # We were given something other than a string.  Assume it's an
+        # open file object.
+        file.write(svg.tostring().decode('utf-8'))
+
+
 # ----------------------------------------------------------------------
 
 class SimpleInkscapeScripting(inkex.EffectExtension):
