@@ -212,6 +212,12 @@ r1.animate(r4, duration='3s')
         ("--program=%s\nS.rotate_path(-25)" % s_path,),
         ("--program=%s\nS.scale_path((0.75, 1.5), 'ul')" % s_path,),
         ("--program=%s\nS.skew_path((0, 30), 'ul')" % s_path,),
+        ('''--program=
+c = circle((75, 75), 38, fill='darkturquoise', stroke_width=2)
+rect((0, 0), (75, 75), fill='aquamarine', stroke_width=2)
+c.remove()
+c.unremove()
+''',),
 
         # The following tests come from the Other Features wiki page.
         ('''--program=
