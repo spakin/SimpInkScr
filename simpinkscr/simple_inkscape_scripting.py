@@ -372,6 +372,24 @@ class SimpleObject(SVGOutputMixin):
         arguments such as shape_inside.'''
         return 'url(#%s)' % self._inkscape_obj.get_id()
 
+    def __eq__(self, other):
+        '''Two SimpleObjects are equal if they encapsulate the same
+        inkex object.'''
+        if type(self) != type(other):
+            return NotImplemented
+        return self.get_inkex_object() == other.get_inkex_object()
+
+    def __ne__(self, other):
+        '''Two SimpleObjects are unequal if they do not encapsulate the
+        same inkex object.'''
+        if type(self) != type(other):
+            return NotImplemented
+        return self.get_inkex_object() != other.get_inkex_object()
+
+    def __hash__(self):
+        'Map the SimpleObject to an integer.'
+        return hash(self.get_inkex_object())
+
     @staticmethod
     def _construct_style(base_style, new_style):
         '''Combine a shape default style, a global default style, and an
