@@ -1652,6 +1652,62 @@ class SimpleGuide(SVGOutputMixin):
         return SimpleGuide(pos, angle)
 
 
+class SimpleCanvas:
+    'Get and set the canvas size and viewbox.'
+
+    def __init__(self, svg_root):
+        self._svg = svg_root
+
+    @property
+    def width(self):
+        '''Return the width of the viewport coordinate system in user
+        units (px)'''
+        try:
+            # Inkscape 1.2+
+            return self._svg.viewport_width
+        except AttributeError:
+            # Inkscape 1.1
+            return self._svg.width
+
+    @width.setter
+    def width(self, wd):
+        'Set the width of the viewport coordinate system.'
+        self._svg.set('width', str(wd))
+
+    @property
+    def height(self):
+        '''Return the height of the viewport coordinate system in user
+        units (px)'''
+        try:
+            # Inkscape 1.2+
+            return self._svg.viewport_height
+        except AttributeError:
+            # Inkscape 1.1
+            return self._svg.height
+
+    @height.setter
+    def height(self, wd):
+        'Set the height of the viewport coordinate system.'
+        self._svg.set('height', str(wd))
+
+    @property
+    def viewbox(self):
+        'Return the viewbox as a list of four floats.'
+        return self._svg.get_viewbox()
+
+    @viewbox.setter
+    def viewbox(self, vbox):
+        'Set the viewbox from a string or a list of four floats.'
+        if isinstance(vbox, str):
+            vbox_str = vbox
+        elif len(vbox) == 4:
+            vbox_str = ' '.join([str(f) for f in vbox])
+        else:
+            raise ValueError('viewbox must be set to either a string or'
+                             ' a list of four floats')
+        self._svg.set('viewBox', vbox_str)
+
+
 # ----------------------------------------------------------------------
 
 # The following functions represent the Simple Inkscape Scripting API
@@ -2405,6 +2461,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         sis_globals['print'] = _debug_print
         sis_globals['user_args'] = self.options.user_args
         sis_globals['extension'] = self
+        sis_globals['canvas'] = SimpleCanvas(self.svg)
         try:
             # Inkscape 1.2+
             convert_unit = self.svg.viewport_to_unit
