@@ -1,6 +1,10 @@
 # This Python script is intended to be run from Inkscape's Simple
 # Inkscape Scripting extension.
 
+#canvas.width = 1000
+#canvas.height = 1000
+#canvas.viewbox = [0.0, 0.0, 1000.0, 1000.0]
+
 path859 = path(['M', 8.7185878, 4.0337352, 'L', -2.2072895, 0.016013256, 'L', 8.7185884, -4.0017078, 'C', 6.9730900, -1.6296469, 6.9831476, 1.6157441, 8.7185878, 4.0337352, 'z'], transform='matrix(1.1 0 0 1.1 1.1 0)', fill='#000000', fill_rule='evenodd', stroke_width=0.625, stroke_linejoin='round', stroke_opacity=1, fill_opacity=1)
 Arrow2Lstart = marker(path859, ref=(0.0, 0.0), orient='auto', overflow='visible')
 rect((651.3089, 353.92661), (900.00002, 555.42472), stroke='none', fill='#ff0000', opacity=0.5, stroke_width=1.11927199)

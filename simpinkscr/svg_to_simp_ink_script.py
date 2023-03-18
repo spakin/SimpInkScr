@@ -1105,11 +1105,27 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def save(self, stream):
         'Write Python code that regenerates the SVG to an output stream.'
+        # Write some stock header code.
+        try:
+            # Inkscape 1.2+
+            svg_width = self.svg.viewport_width
+            svg_height = self.svg.viewport_height
+        except AttributeError:
+            # Inkscape 1.1
+            svg_width = self.svg.width
+            svg_height = self.svg.height
+        svg_viewbox = self.svg.get_viewbox()
         stream.write(b'''\
 # This Python script is intended to be run from Inkscape's Simple
 # Inkscape Scripting extension.
 
-''')
+#canvas.width = %.10g
+#canvas.height = %.10g
+#canvas.viewbox = %s
+
+''' % (svg_width, svg_height, repr(svg_viewbox).encode('utf-8')))
+
+        # Convert shapes and other objects to Python.
         code = self.convert_all_shapes()
         self.find_dependencies(code)
         code = self.sort_statement_forest(code)
