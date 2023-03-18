@@ -265,10 +265,10 @@ class SimpleTopLevel():
 
     def get_existing_guides(self):
         '''Return a list of existing Inkscape guides as Simple Inkscape
-        Scripting Guide objects.'''
+        Scripting SimpleGuide objects.'''
         guides = []
         for iobj in self._svg_root.namedview.xpath('//sodipodi:guide'):
-            guides.append(Guide._from_inkex_object(iobj))
+            guides.append(SimpleGuide._from_inkex_object(iobj))
         return guides
 
     def replace_all_guides(self, guides):
@@ -1561,7 +1561,7 @@ class SimplePathEffect(SVGOutputMixin):
         return self._inkscape_obj
 
 
-class Guide(SVGOutputMixin):
+class SimpleGuide(SVGOutputMixin):
     'Represent an Inkscape guide.'
 
     def __init__(self, pos, angle, color=None):
@@ -1623,7 +1623,8 @@ class Guide(SVGOutputMixin):
 
     @classmethod
     def _from_inkex_object(self, iobj):
-        'Create a Simple Inkscape Scripting Guide from an inkex guide object.'
+        '''Create a Simple Inkscape Scripting SimpleGuide from an inkex
+        Guide object.'''
         # Convert the point from the pre-Inkscape 1.0 coordinate system.
         pt = iobj.point
         pos = (pt.x, _simple_top.height - pt.y)
@@ -1638,8 +1639,8 @@ class Guide(SVGOutputMixin):
             angle = 180 - math.degrees(math.atan2(orient[0], orient[1]))
         angle = -angle
 
-        # Return a Simple Inkscape Scripting Guide.
-        return Guide(pos, angle)
+        # Return a Simple Inkscape Scripting SimpleGuide.
+        return SimpleGuide(pos, angle)
 
 
 # ----------------------------------------------------------------------
@@ -2157,7 +2158,7 @@ def all_shapes():
 
 def guide(pos, angle, color=None):
     'Create a new guide without adding it to the document.'
-    return Guide(pos, angle, color)
+    return SimpleGuide(pos, angle, color)
 
 
 def objects_from_svg_file(file, keep_layers=False):
