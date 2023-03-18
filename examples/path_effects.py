@@ -5,7 +5,7 @@
 
 # Define some program parameters.
 steps = 7  # Must be odd.
-delta = width/steps
+delta = canvas.width/steps
 
 # Establish a left-to-right zigzag.
 pts = []

@@ -19,8 +19,8 @@ def make_rect(center, fill, edge=100):
                 fill=fill)
 
 r1 = make_rect((50, 50), '#aade87')
-r2 = make_rect((width/2, height/2), '#9955ff')
-r3 = make_rect((width - 50, height - 50), '#d35f5f')
+r2 = make_rect((canvas.width/2, canvas.height/2), '#9955ff')
+r3 = make_rect((canvas.width - 50, canvas.height - 50), '#d35f5f')
 '''
     blue_red = '''
 blue = rect((90, 0), (170, 50), fill='#55ddff')
@@ -72,15 +72,15 @@ S = path([Move(57, 13),
     # modest coverage of all the code paths.
     comparisons = [
         # The following tests come from the Shape Construction wiki page.
-        ('--program=circle((width/2, height/2), 50)',),
-        ('--program=ellipse((width/2, height/2), (75, 50))',),
-        ('--program=rect((width/2 - 50, height/2 - 30), (width/2 + 50, height/2 + 30))',),
-        ('--program=line((width, 0), (0, height))',),
+        ('--program=circle((canvas.width/2, canvas.height/2), 50)',),
+        ('--program=ellipse((canvas.width/2, canvas.height/2), (75, 50))',),
+        ('--program=rect((canvas.width/2 - 50, canvas.height/2 - 30), (canvas.width/2 + 50, canvas.height/2 + 30))',),
+        ('--program=line((canvas.width, 0), (0, canvas.height))',),
         ('--program=polyline([(0, 300), (150, 0), (300, 300), (150, 200)])',),
         ('--program=polygon([(0, 300), (150, 0), (300, 300), (150, 200)])',),
         ('--program=regular_polygon(5, (100, 100), 80)',),
         ('--program=star(5, (100, 100), (80, 30))',),
-        ("--program=arc((width/2, height/2), 100, (pi/5, 9*pi/5), 'slice', fill='yellow', stroke_width=2)",),
+        ("--program=arc((canvas.width/2, canvas.height/2), 100, (pi/5, 9*pi/5), 'slice', fill='yellow', stroke_width=2)",),
         ("--program=path(['M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z'])",),
         ('''--program=
 path([Move(226, 34),
@@ -94,9 +94,9 @@ r = rect((50, 50), (100, 100))
 c = circle((200, 200), 25)
 connector(r, c, ctype='orthogonal', curve=15)
 ''',),
-        ("--program=text('Simple Inkscape Scripting', (0, height), font_size='36pt')",),
+        ("--program=text('Simple Inkscape Scripting', (0, canvas.height), font_size='36pt')",),
         ('''--program=
-t = text('Hello, ', (width/2, height/2), font_size='24pt', text_anchor='middle')
+t = text('Hello, ', (canvas.width/2, canvas.height/2), font_size='24pt', text_anchor='middle')
 t.add_text('Inkscape', font_weight='bold', fill='#800000')
 t.add_text('!!!')
 ''',),
@@ -119,8 +119,8 @@ box.append([hole1.reverse(), hole2.reverse()])
         ('''--program=
 tr = inkex.Transform()
 tr.add_translate(30*pt, -12*pt)
-tr.add_rotate(-15, width/2, height/2)
-text('Transform', (width/2, height/2),
+tr.add_rotate(-15, canvas.width/2, canvas.height/2)
+text('Transform', (canvas.width/2, canvas.height/2),
      transform=tr,
      font_family='"URW Bookman", serif',
      font_weight='bold',
@@ -170,7 +170,7 @@ line((120, 40), (20, 40), stroke='blue', stroke_width=4, stroke_linecap='round',
         ('''--program=
 blur = filter_effect('Make Blurry')
 blur.add('GaussianBlur', stdDeviation=10, edgeMode='duplicate')
-circle((width/2, height/2), 100, fill='yellow', stroke='black',
+circle((canvas.width/2, canvas.height/2), 100, fill='yellow', stroke='black',
        stroke_width=5, filter=blur)
 ''',),
         ('''--program=
@@ -193,7 +193,7 @@ def make_rect(center, fill, edge=100):
 
 r1 = make_rect((50, 50), '#aade87')
 r4 = make_rect((0, 0), '#5599ff')
-r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % (width/2, height/2)
+r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % (canvas.width/2, canvas.height/2)
 r1.animate(r4, duration='3s')
 ''',),
 
@@ -227,7 +227,7 @@ hyperlink([house, roof], 'https://www.pakin.org/', title='My home page')
 ''',),
         ('''--program=
 g1 = guide((0, 0), 10)
-g2 = guide((width, height), 10, color='#00ff00')
+g2 = guide((canvas.width, canvas.height), 10, color='#00ff00')
 guides.extend([g1, g2])
 ''',),
         ("--program=%s\nboxes[0].z_order('top')" % z_order,),

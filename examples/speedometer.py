@@ -3,12 +3,12 @@
 ####################################################################
 
 # Define some drawing parameters.
-r1 = width/4
+r1 = canvas.width/4
 r2 = r1*0.90
 r3 = r1*0.80
 r4 = r1*0.75
 r5 = r1*0.15
-cx, cy = width/2, height/2
+cx, cy = canvas.width/2, canvas.height/2
 
 # Draw the background.
 circle((cx, cy), r1, fill='black')

@@ -6,7 +6,8 @@
 sun = path(['M', 0, 150,
             'C', 0, 68, 68, 0, 150, 0,
             232, 0, 300, 68, 300, 150],
-           transform='translate(%.5g, %.5g)' % (width/2 - 150, height/2 - 75),
+           transform='translate(%.5g, %.5g)' %
+           (canvas.width/2 - 150, canvas.height/2 - 75),
            fill='#380000', stroke='none')
 t = text('The sun sets early, ', (0, 0),
          font_family='"Zapf Chancery", "TeX Gyre Chorus", cursive',

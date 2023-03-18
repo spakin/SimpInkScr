@@ -9,5 +9,5 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"><path sodipodi:cx="396.8503937" sodipodi:cy="561.2598425" sodipodi:rx="100" sodipodi:ry="100" sodipodi:type="arc" sodipodi:start="0.6283185307179586" sodipodi:end="5.654866776461628" sodipodi:arc-type="slice" d="M 477.752 620.038 A 100 100 0 0 1 365.949 656.365 A 100 100 0 0 1 296.85 561.26 A 100 100 0 0 1 365.949 466.154 A 100 100 0 0 1 477.752 502.481 L 396.85 561.26 Z" style="stroke:black;fill:yellow;stroke-width:2"/></g>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"><path sodipodi:cx="396.8503937" sodipodi:cy="561.2598425" sodipodi:rx="100" sodipodi:ry="100" sodipodi:type="arc" sodipodi:start="0.6283185307179586" sodipodi:end="5.654866776461628" d="M 477.752 620.038 A 100 100 0 0 1 365.949 656.365 A 100 100 0 0 1 296.85 561.26 A 100 100 0 0 1 365.949 466.154 A 100 100 0 0 1 477.752 502.481 L 396.85 561.26 Z" sodipodi:arc-type="slice" style="stroke:black;fill:yellow;stroke-width:2"/></g>
 </svg>

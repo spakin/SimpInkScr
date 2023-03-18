@@ -33,8 +33,8 @@ def draw_arrow(begin, end, color, **style):
 
 # Draw a large number of arrows.
 for i in range(100):
-    x0, y0 = uniform(0, width - 1), uniform(0, height - 1)
-    x1, y1 = uniform(0, width - 1), uniform(0, height - 1)
+    x0, y0 = uniform(0, canvas.width - 1), uniform(0, canvas.height - 1)
+    x1, y1 = uniform(0, canvas.width - 1), uniform(0, canvas.height - 1)
     color = '#%02x%02x%02x' % \
         (randint(0, 255), randint(0, 255), randint(0, 255))
     thick = uniform(2, 6)

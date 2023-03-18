@@ -20,7 +20,7 @@ def square_subpath(ul, lr):
 
 
 # Create a single path of multiple nested squares.
-edge = min(width, height)
+edge = min(canvas.width, canvas.height)
 squares = square_subpath((0, 0), (edge, edge))
 for s in [8, 5, 4, 3]:
     squares.extend(square_subpath((edge/s, edge/s),

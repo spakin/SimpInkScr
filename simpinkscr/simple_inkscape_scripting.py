@@ -2455,8 +2455,6 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         # Prepare global values we want to export.
         sis_globals = globals().copy()
         sis_globals['svg_root'] = self.svg
-        sis_globals['width'] = _simple_top.width
-        sis_globals['height'] = _simple_top.height
         sis_globals['guides'] = _simple_top.get_existing_guides()
         sis_globals['print'] = _debug_print
         sis_globals['user_args'] = self.options.user_args

@@ -14,5 +14,5 @@ comp2 = shadow.add('Composite', src1='SourceGraphic', src2=ofs,
                    operator='over')
 
 # Draw a bright-green circle and add a drop shadow to it.
-circle((width/2, height/2), 100, fill='#99ff55', stroke='black',
+circle((canvas.width/2, canvas.height/2), 100, fill='#99ff55', stroke='black',
        stroke_width=2, filter=shadow)
