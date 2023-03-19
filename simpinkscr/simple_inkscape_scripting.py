@@ -1742,7 +1742,22 @@ class SimpleCanvas:
             self._named_sizes[f'A{iso_a}'] = ('%dmm' % wd, '%dmm' % ht)
             wd, ht = round(ht/2), wd
 
-    def set_size_by_name(self, name, landscape=False):
+    def get_size_by_name(self, name, landscape=False):
+        'Map a named size to a width and height in user units (pixels).'
+        named_sizes_lc = {k.lower(): v for k, v in self._named_sizes.items()}
+        try:
+            twd, tht = named_sizes_lc[name.lower()]
+            if landscape:
+                twd, tht = tht, twd
+            return (inkex.units.convert_unit(twd, 'px'),
+                    inkex.units.convert_unit(tht, 'px'))
+        except KeyError:
+            pass
+        raise ValueError('Unknown page format "%s"; must be one of {%s}' %
+                         (name,
+                          ', '.join(['"%s"' % k for k in self._named_sizes])))
+
+    def resize_by_name(self, name, landscape=False):
         'Set true_width, true_height, and viewbox to a named page type.'
         named_sizes_lc = {k.lower(): v for k, v in self._named_sizes.items()}
         try:
