@@ -1837,7 +1837,7 @@ class SimpleCanvas:
 class SimplePage(SVGOutputMixin):
     'Represent an Inkscape page.'
 
-    def __init__(self, name=None, pos=None, size=None):
+    def __init__(self, number, name=None, pos=None, size=None):
         # Acquire the SVG's viewbox and named view.
         global _simple_top
         vbox = _simple_top.canvas.viewbox
@@ -1872,6 +1872,7 @@ class SimplePage(SVGOutputMixin):
 
         # Initialize the Simple Inkscape Scripting object.
         self._inkscape_obj = page_obj
+        self.number = number
         self.name = str(name)
         self.pos = pos
         self.size = size
@@ -2422,7 +2423,7 @@ def guide(pos, angle, color=None):
 
 def page(name=None, pos=None, size=None):
     global _simple_top
-    page = SimplePage(name, pos, size)
+    page = SimplePage(len(_simple_top.simple_pages) + 1, name, pos, size)
     _simple_top.simple_pages.append(page)
     return page
 
@@ -2661,7 +2662,8 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         _simple_top = SimpleTopLevel(self.svg, self)
 
         # The following must be executed after _simple_top has been
-        # initialized.
+        # initialized because SimplePage explicitly accesses
+        # _simple_top.canvas.viewbox.
         _simple_top.simple_pages = _simple_top.get_existing_pages()
 
         # Prepare global values we want to export.
