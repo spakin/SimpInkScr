@@ -164,6 +164,7 @@ class SimpleTopLevel():
         self.svg_root = svg_root
         self.extension = ext_obj
         self.svg_attach = self.find_attach_point()
+        self.canvas = SimpleCanvas(svg_root)
         self.simple_objs = []
 
     def find_attach_point(self):
@@ -246,26 +247,6 @@ class SimpleTopLevel():
         '''Return True if a given Simple Inkscape Scripting object appears at
         the document's top level.'''
         return obj in self.simple_objs
-
-    @property
-    def width(self):
-        'Return the width of the SVG document.'
-        try:
-            # Inkscape 1.2+
-            return self.svg_root.viewbox_width
-        except AttributeError:
-            # Inkscape 1.0 and 1.1
-            return self.svg_root.width
-
-    @property
-    def height(self):
-        'Return the height of the SVG document.'
-        try:
-            # Inkscape 1.2+
-            return self.svg_root.viewbox_height
-        except AttributeError:
-            # Inkscape 1.0 and 1.1
-            return self.svg_root.height
 
     def get_existing_guides(self):
         '''Return a list of existing Inkscape guides as Simple Inkscape
@@ -1587,7 +1568,7 @@ class SimpleGuide(SVGOutputMixin):
         global _simple_top
         self._pos = pos
         self._angle = angle
-        pos = (pos[0], _simple_top.height - pos[1])
+        pos = (pos[0], _simple_top.canvas.height - pos[1])
         angle = -angle
         self._inkscape_obj.move_to(pos[0], pos[1], angle)
 
@@ -1631,7 +1612,7 @@ class SimpleGuide(SVGOutputMixin):
         Guide object.'''
         # Convert the point from the pre-Inkscape 1.0 coordinate system.
         pt = iobj.point
-        pos = (pt.x, _simple_top.height - pt.y)
+        pos = (pt.x, _simple_top.canvas.height - pt.y)
 
         # Compute the angle at which the guide is oriented.
         try:
@@ -2493,7 +2474,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         sis_globals['print'] = _debug_print
         sis_globals['user_args'] = self.options.user_args
         sis_globals['extension'] = self
-        sis_globals['canvas'] = SimpleCanvas(self.svg)
+        sis_globals['canvas'] = _simple_top.canvas
         try:
             # Inkscape 1.2+
             convert_unit = self.svg.viewport_to_unit
