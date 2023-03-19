@@ -264,6 +264,21 @@ class SimpleTopLevel():
         for obj in guides:
             nv.add(obj.get_inkex_object())
 
+    def get_existing_pages(self):
+        '''Return a list of existing Inkscape pages as Simple Inkscape
+        Scripting SimplePage objects.'''
+        pages = []
+        for pg in [node
+                   for node in self.svg_root.xpath('//inkscape:page')
+                   if isinstance(node, inkex.Page)]:
+            name = pg.get('inkscape:label', '')
+            pos = (float(pg.get('x', '0')),
+                   float(pg.get('y', '0')))
+            size = (float(pg.get('width', '0')),
+                    float(pg.get('height', '0')))
+            pages.append(SimplePage(name, pos, size))
+        return pages
+
     @staticmethod
     def is_top_level(iobj):
         """Return True if an inkex object's parent is one of None, a layer,
@@ -2406,7 +2421,17 @@ def guide(pos, angle, color=None):
 
 
 def page(name=None, pos=None, size=None):
-    return SimplePage(name, pos, size)
+    global _simple_top
+    page = SimplePage(name, pos, size)
+    _simple_top.simple_pages.append(page)
+    return page
+
+
+def all_pages():
+    '''Return a list of all pages in the image as Simple Inkscape
+    Scripting page objects.'''
+    global _simple_top
+    return _simple_top.simple_pages
 
 
 def objects_from_svg_file(file, keep_layers=False):
@@ -2632,8 +2657,12 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
     def effect(self):
         'Generate objects from user-provided Python code.'
         # Prepare global values we use internally.
-        global _simple_top
+        global _simple_top, _simple_pages
         _simple_top = SimpleTopLevel(self.svg, self)
+
+        # The following must be executed after _simple_top has been
+        # initialized.
+        _simple_top.simple_pages = _simple_top.get_existing_pages()
 
         # Prepare global values we want to export.
         sis_globals = globals().copy()
