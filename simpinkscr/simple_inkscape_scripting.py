@@ -844,8 +844,8 @@ class SimpleObject(SVGOutputMixin):
                 anim.set('begin', _python_to_svg_str(begin_time))
             if key_times is not None:
                 if len(key_times) != len(objs):
-                    _abend('Expected %d key times but saw %d' %
-                           (len(objs), len(key_times)))
+                    _abend(_('Expected %d key times but saw %d' %
+                             (len(objs), len(key_times))))
                 anim.set('keyTimes',
                          '; '.join([_python_to_svg_str(kt)
                                     for kt in key_times]))
@@ -1846,9 +1846,14 @@ class SimplePage(SVGOutputMixin):
             size = (vbox[2], vbox[3])
 
         # Create a new page and add it to the document.
-        page_obj = nv.new_page(str(pos[0]), str(pos[1]),
-                               str(size[0]), str(size[1]),
-                               str(name))
+        try:
+            # Inkscape 1.2+
+            page_obj = nv.new_page(str(pos[0]), str(pos[1]),
+                                   str(size[0]), str(size[1]),
+                                   str(name))
+        except AttributeError:
+            # Inkscape 1.1
+            _abend(_('Page creation requires Inkscape 1.2 or later'))
 
         # Initialize the Simple Inkscape Scripting object.
         self._inkscape_obj = page_obj
