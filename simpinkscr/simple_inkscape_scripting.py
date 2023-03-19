@@ -1633,6 +1633,7 @@ class SimpleCanvas:
 
     def __init__(self, svg_root):
         self._svg = svg_root
+        self._name_sizes()
 
     @property
     def true_width(self):
@@ -1721,6 +1722,42 @@ class SimpleCanvas:
         vbox = self.viewbox
         return inkex.BoundingBox((vbox[0], vbox[0] + vbox[2]),
                                  (vbox[1], vbox[1] + vbox[3]))
+
+    def _name_sizes(self):
+        'Construct a list of named page sizes.'
+        # Start with various special cases.
+        self._named_sizes = {
+            'US Letter': ('8.5in', '11in'),
+            'US Legal': ('8.5in', '14in'),
+            'Ledger/Tabloid': ('11in', '17in'),
+            'Video HD 720p': ('720px', '1280px'),
+            'Video HD 1080p': ('1080px', '1920px'),
+            'Video UHD 4k': ('2160px', '3840px'),
+            'Video UHD 8k': ('4320px', '7680px')
+        }
+
+        # Programmatically define A0 through A9.
+        wd, ht = 841, 1189
+        for iso_a in range(10):
+            self._named_sizes[f'A{iso_a}'] = ('%dmm' % wd, '%dmm' % ht)
+            wd, ht = round(ht/2), wd
+
+    def set_size_by_name(self, name, landscape=False):
+        'Set true_width, true_height, and viewbox to a named page type.'
+        named_sizes_lc = {k.lower(): v for k, v in self._named_sizes.items()}
+        try:
+            twd, tht = named_sizes_lc[name.lower()]
+            if landscape:
+                twd, tht = tht, twd
+            self.true_width = twd
+            self.true_height = tht
+            self.viewbox = [0, 0, self.true_width, self.true_height]
+            return
+        except KeyError:
+            pass
+        raise ValueError('Unknown page format "%s"; must be one of {%s}' %
+                         (name,
+                          ', '.join(['"%s"' % k for k in self._named_sizes])))
 
 
 # ----------------------------------------------------------------------
