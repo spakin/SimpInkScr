@@ -1105,7 +1105,7 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def save(self, stream):
         'Write Python code that regenerates the SVG to an output stream.'
-        # Write some stock header code.
+        # Gather some document information.
         try:
             # Inkscape 1.2+
             svg_width = self.svg.viewport_width
@@ -1115,15 +1115,33 @@ class SvgToPythonScript(inkex.OutputExtension):
             svg_width = self.svg.width
             svg_height = self.svg.height
         svg_viewbox = self.svg.get_viewbox()
-        stream.write(b'''\
+        pages = [node
+                 for node in self.svg.xpath('//inkscape:page')
+                 if isinstance(node, inkex.Page)]
+
+        # Write some stock header code.
+        header = '''\
 # This Python script is intended to be run from Inkscape's Simple
 # Inkscape Scripting extension.
 
-#canvas.width = %.10g
-#canvas.height = %.10g
-#canvas.viewbox = %s
-
-''' % (svg_width, svg_height, repr(svg_viewbox).encode('utf-8')))
+'''
+        canvas_cmt = '#'     # Normally comment out canvas modifications.
+        if len(pages) >= 1:
+            canvas_cmt = ''  # Set the canvas if we're also creating pages.
+        header += '''\
+%scanvas.true_width = %.10g
+%scanvas.true_height = %.10g
+%scanvas.viewbox = %s
+''' % \
+                  (canvas_cmt, svg_width,
+                   canvas_cmt, svg_height,
+                   canvas_cmt, repr(svg_viewbox))
+        for pg in pages:
+            header += 'page(%s, (%.10g, %.10g), (%.10g, %.10g))\n' % \
+                (repr(pg.get('inkscape:label', '')),
+                 pg.x, pg.y, pg.width, pg.height)
+        header += '\n'
+        stream.write(header.encode('utf-8'))
 
         # Convert shapes and other objects to Python.
         code = self.convert_all_shapes()
