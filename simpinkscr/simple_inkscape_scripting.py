@@ -431,7 +431,7 @@ class SimpleObject(SVGOutputMixin):
         return False
 
     def bounding_box(self):
-        "Return the object's bounding box as an inkex.transforms.BoundingBox."
+        "Return the object's bounding box as an inkex.BoundingBox."
         # Ask inkex to compute a bounding box.
         iobj = self._inkscape_obj
         bbox = iobj.bounding_box()
@@ -1721,7 +1721,7 @@ class SimpleCanvas:
                              ' a list of four floats')
         self._svg.set('viewBox', vbox_str)
 
-    def viewbox_bbox(self):
+    def bounding_box(self):
         'Return the viewbox as an inkex.transforms.BoundingBox'
         vbox = self.viewbox
         return inkex.transforms.BoundingBox((vbox[0], vbox[0] + vbox[2]),
@@ -1817,6 +1817,69 @@ class SimpleCanvas:
         tht *= bbox.height/prev_vbox[3]
         self.true_width = '%.10g%s' % (twd, uwd)
         self.true_height = '%.10g%s' % (tht, uht)
+
+
+class SimplePage(SVGOutputMixin):
+    'Represent an Inkscape page.'
+
+    def __init__(self, name=None, pos=None, size=None):
+        # Acquire the SVG's viewbox and named view.
+        global _simple_top
+        vbox = _simple_top.canvas.viewbox
+        nv = _simple_top.svg_root.namedview
+
+        # Set the default position to the immediate right of the previous
+        # page's position.
+        if pos is None:
+            try:
+                # Not the first page: Set pos to align the new page to the
+                # immediate right of the previous page.
+                last_page = nv.get_pages()[-1]
+                pos = (last_page.x + last_page.width, last_page.y)
+            except IndexError:
+                # First page: Set pos to align with the upper left of
+                # the canvas's viewbox.
+                pos = (vbox[0], vbox[1])
+
+        # Extract the default size from the viewbox.
+        if size is None:
+            size = (vbox[2], vbox[3])
+
+        # Create a new page and add it to the document.
+        page_obj = nv.new_page(str(pos[0]), str(pos[1]),
+                               str(size[0]), str(size[1]),
+                               str(name))
+
+        # Initialize the Simple Inkscape Scripting object.
+        self._inkscape_obj = page_obj
+        self.name = str(name)
+        self.pos = pos
+        self.size = size
+
+    def get_inkex_object(self):
+        "Return the SimplePage's underlying inkex object."
+        return self._inkscape_obj
+
+    @property
+    def viewbox(self):
+        'Return a viewbox representing the current page.'
+        return self.pos + self.size
+
+    @property
+    def width(self):
+        "Return the page's width."
+        return self.size[0]
+
+    @property
+    def height(self):
+        "Return the page's height."
+        return self.size[1]
+
+    def bounding_box(self):
+        "Return the page's bounding box as an inkex.BoundingBox."
+        x, y = self.pos
+        wd, ht = self.size
+        return inkex.BoundingBox((x, x + wd), (y, y + ht))
 
 
 # ----------------------------------------------------------------------
@@ -2335,6 +2398,10 @@ def all_shapes():
 def guide(pos, angle, color=None):
     'Create a new guide without adding it to the document.'
     return SimpleGuide(pos, angle, color)
+
+
+def page(name=None, pos=None, size=None):
+    return SimplePage(name, pos, size)
 
 
 def objects_from_svg_file(file, keep_layers=False):
