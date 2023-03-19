@@ -161,10 +161,10 @@ class SimpleTopLevel():
     "Keep track of top-level objects, both ours and inkex's."
 
     def __init__(self, svg_root, ext_obj):
-        self._svg_root = svg_root
-        self._extension = ext_obj
-        self._svg_attach = self.find_attach_point()
-        self._simple_objs = []
+        self.svg_root = svg_root
+        self.extension = ext_obj
+        self.svg_attach = self.find_attach_point()
+        self.simple_objs = []
 
     def find_attach_point(self):
         '''Return a suitable point in the SVG XML tree at which to attach
@@ -173,7 +173,7 @@ class SimpleTopLevel():
         # with an inkscape:current-layer attribute, and this will name either
         # an actual layer or the <svg> element itself.  In this case, we return
         # the layer pointed to by inkscape:current-layer.
-        svg = self._svg_root
+        svg = self.svg_root
         try:
             namedview = svg.findone('sodipodi:namedview')
             cur_layer_name = namedview.get('inkscape:current-layer')
@@ -203,7 +203,7 @@ class SimpleTopLevel():
         if not isinstance(obj, SimpleObject):
             raise ValueError('Only Simple Inkscape Scripting objects '
                              'can be appended')
-        if obj in self._simple_objs:
+        if obj in self.simple_objs:
             raise ValueError('Object has already been appended')
 
         # Attach the underlying inkex object to the SVG attachment point if
@@ -211,10 +211,10 @@ class SimpleTopLevel():
         # the Simple Inkscape Scripting object to the list of simple
         # objects.
         if to_root:
-            self._svg_root.append(obj._inkscape_obj)
+            self.svg_root.append(obj._inkscape_obj)
         else:
-            self._svg_attach.append(obj._inkscape_obj)
-        self._simple_objs.append(obj)
+            self.svg_attach.append(obj._inkscape_obj)
+        self.simple_objs.append(obj)
 
     def remove_obj(self, obj):
         'Remove a Simple Inkscape Scripting object from the document.'
@@ -222,69 +222,64 @@ class SimpleTopLevel():
         if not isinstance(obj, SimpleObject):
             raise ValueError('Only Simple Inkscape Scripting objects '
                              'can be removed')
-        if obj not in self._simple_objs:
+        if obj not in self.simple_objs:
             raise ValueError('Object does not appear at the top level')
 
         # Elide the Simple Inkscape Scripting object and dissociate the
         # underlying inkex object from its parent.
-        self._simple_objs = [o for o in self._simple_objs if o is not obj]
+        self.simple_objs = [o for o in self.simple_objs if o is not obj]
         obj._inkscape_obj.delete()
 
     def last_obj(self):
         'Return the last Simple Inkscape Scripting object added by append_obj.'
-        return self._simple_objs[-1]
+        return self.simple_objs[-1]
 
     def append_def(self, obj):
         '''Append either an inkex object or a Simple Inkscape Scripting object
         to the document's <defs> section.'''
         try:
-            self._svg_root.defs.append(obj._inkscape_obj)
+            self.svg_root.defs.append(obj._inkscape_obj)
         except AttributeError:
-            self._svg_root.defs.append(obj)
-
-    @property
-    def svg_root(self):
-        'Return the root of the SVG tree.'
-        return self._svg_root
+            self.svg_root.defs.append(obj)
 
     def __contains__(self, obj):
         '''Return True if a given Simple Inkscape Scripting object appears at
         the document's top level.'''
-        return obj in self._simple_objs
+        return obj in self.simple_objs
 
     @property
     def width(self):
         'Return the width of the SVG document.'
         try:
             # Inkscape 1.2+
-            return self._svg_root.viewbox_width
+            return self.svg_root.viewbox_width
         except AttributeError:
             # Inkscape 1.0 and 1.1
-            return self._svg_root.width
+            return self.svg_root.width
 
     @property
     def height(self):
         'Return the height of the SVG document.'
         try:
             # Inkscape 1.2+
-            return self._svg_root.viewbox_height
+            return self.svg_root.viewbox_height
         except AttributeError:
             # Inkscape 1.0 and 1.1
-            return self._svg_root.height
+            return self.svg_root.height
 
     def get_existing_guides(self):
         '''Return a list of existing Inkscape guides as Simple Inkscape
         Scripting SimpleGuide objects.'''
         guides = []
-        for iobj in self._svg_root.namedview.xpath('//sodipodi:guide'):
+        for iobj in self.svg_root.namedview.xpath('//sodipodi:guide'):
             guides.append(SimpleGuide._from_inkex_object(iobj))
         return guides
 
     def replace_all_guides(self, guides):
         'Replace all guides in the document with those in the given list.'
-        for iobj in self._svg_root.namedview.xpath('//sodipodi:guide'):
+        for iobj in self.svg_root.namedview.xpath('//sodipodi:guide'):
             iobj.getparent().remove(iobj)
-        nv = self._svg_root.namedview
+        nv = self.svg_root.namedview
         for obj in guides:
             nv.add(obj.get_inkex_object())
 
@@ -2319,7 +2314,7 @@ def apply_path_operation(op, paths):
 
     # Store the set of all object IDs that appear in the original image.
     global _simple_top
-    svg_root = _simple_top._svg_root
+    svg_root = _simple_top.svg_root
     ids_before = set([iobj.get_id() for iobj in svg_root.iter()])
 
     # Construct an Inkscape action string.  As a special case, if the first
@@ -2360,13 +2355,13 @@ def apply_path_operation(op, paths):
         os.chdir(cwd)
 
         # Replace the current document with the modified one.
-        ext = _simple_top._extension
+        ext = _simple_top.extension
         ext.document = inkex.load_svg(svg_file)
         ext.svg = ext.document.getroot()
         _simple_top = SimpleTopLevel(ext.svg, ext)
 
     # Construct a list of all objects that were created by the operation.
-    svg_root = _simple_top._svg_root
+    svg_root = _simple_top.svg_root
     ids_after = set([iobj.get_id() for iobj in svg_root.iter()])
     new_ids = ids_after.difference(ids_before)
     new_iobjs = [svg_root.getElementById(iobj_id)
@@ -2401,7 +2396,7 @@ def save_file(file=None):
     # Determine the filename if one was not provided.
     global _simple_top
     if file is None:
-        ext = _simple_top._extension
+        ext = _simple_top.extension
         file = ext.document_path()
         if file == "":
             raise RuntimeError('No filename is associated with the'
