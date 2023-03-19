@@ -8,12 +8,12 @@ Recommended document parameters
 
 The examples in this directory generally assume a "user unit" is about the size of a pixel (roughly 1/100" or 1/4 mm) and that the page size is at least 600×600 user units.  See [Units](https://inkscape.gitlab.io/extensions/documentation/units.html) for a detailed explanation of how units and viewboxes work in SVG and Inkscape.
 
-If some of the output from the examples appears with abnormally thick lines or crowded shapes or comes out much larger than the page size, use Inkscape's Document Properties dialog box to alter the page size and scale/viewbox.  Alternatively, the following Simple Inkscape Scripting code automatically sets the page size to 1024×768 (nominal) pixels and imposes a 1:1 ratio of user units to pixels:
+If some of the output from the examples appears with abnormally thick lines or crowded shapes or comes out much larger than the page size, use Inkscape's Document Properties dialog box to alter the page size and scale/viewbox, e.g. to a page of 1024×768px and a viewbox of 1024×768.  The following Simple Inkscape Scripting code automates that task:
 
 ```Python
-svg_root.set('width', 1024)
-svg_root.set('height', 768)
-svg_root.set('viewBox', '0 0 1024 768')
+canvas.true_width = 1024
+canvas.true_height = 768
+canvas.viewbox = [0, 0, 1024, 768]
 ```
 
 List of examples
@@ -44,6 +44,7 @@ List of examples
 | [Overlapping circles](overlapping_circles.py) | Draw an array of hundreds of overlapping circles. |
 | [Path effects](path_effects.py) | Demonstrate the application of live path effects to a curve. |
 | [Poly by angle](poly_by_angle.py) | Draw (possibly self-intersecting) polygons. |
+| [Screen vs print](screen_vs_print.py) | Create a printable page that is differently sized and disjoint from the main canvas. |
 | [Sierpinski triangle](sierpinski_triangle.py) | Draw a colorful Sierpinski triangle. |
 | [Speedometer](speedometer.py) | Draw an unnumbered speedometer. |
 | [Star groups](star_groups.py) | Draw rows of stars with the stars in each row grouped together. |

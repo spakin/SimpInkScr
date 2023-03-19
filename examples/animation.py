@@ -4,8 +4,8 @@
 #####################################################################
 
 # Force the image to a known size.
-canvas.width = 1024
-canvas.height = 768
+canvas.true_width = 1024
+canvas.true_height = 768
 canvas.viewbox = [0, 0, 1024, 768]
 
 # Define the final configuration of the graphics.
