@@ -268,15 +268,16 @@ class SimpleTopLevel():
         '''Return a list of existing Inkscape pages as Simple Inkscape
         Scripting SimplePage objects.'''
         pages = []
-        for pg in [node
-                   for node in self.svg_root.xpath('//inkscape:page')
-                   if isinstance(node, inkex.Page)]:
+        page_iobjs = [node
+                      for node in self.svg_root.xpath('//inkscape:page')
+                      if isinstance(node, inkex.Page)]
+        for num, pg in enumerate(page_iobjs):
             name = pg.get('inkscape:label', '')
             pos = (float(pg.get('x', '0')),
                    float(pg.get('y', '0')))
             size = (float(pg.get('width', '0')),
                     float(pg.get('height', '0')))
-            pages.append(SimplePage(name, pos, size))
+            pages.append(SimplePage(num, name, pos, size, pg))
         return pages
 
     @staticmethod
@@ -1837,7 +1838,7 @@ class SimpleCanvas:
 class SimplePage(SVGOutputMixin):
     'Represent an Inkscape page.'
 
-    def __init__(self, number, name=None, pos=None, size=None):
+    def __init__(self, number, name=None, pos=None, size=None, iobj=None):
         # Acquire the SVG's viewbox and named view.
         global _simple_top
         vbox = _simple_top.canvas.viewbox
@@ -1860,15 +1861,21 @@ class SimplePage(SVGOutputMixin):
         if size is None:
             size = (vbox[2], vbox[3])
 
-        # Create a new page and add it to the document.
-        try:
-            # Inkscape 1.2+
-            page_obj = nv.new_page(str(pos[0]), str(pos[1]),
-                                   str(size[0]), str(size[1]),
-                                   str(name))
-        except AttributeError:
-            # Inkscape 1.1
-            _abend(_('Page creation requires Inkscape 1.2 or later'))
+        # If an inkex object was provided, use that instead of creating a
+        # new inkex Page.
+        if iobj is None:
+            # Create a new page and add it to the document.
+            try:
+                # Inkscape 1.2+
+                page_obj = nv.new_page(str(pos[0]), str(pos[1]),
+                                       str(size[0]), str(size[1]),
+                                       str(name))
+            except AttributeError:
+                # Inkscape 1.1
+                _abend(_('Page creation requires Inkscape 1.2 or later'))
+        else:
+            # Use the existing object.
+            page_obj = iobj
 
         # Initialize the Simple Inkscape Scripting object.
         self._inkscape_obj = page_obj
