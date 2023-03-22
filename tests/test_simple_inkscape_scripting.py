@@ -236,6 +236,14 @@ guides.extend([g1, g2])
         ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
         ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,),
 
+        # The following tests come from the Document Layout wiki page.
+        ('''--program=
+r1 = rect((100, 100), (200, 200), fill='firebrick', stroke_width='6pt')
+r2 = rect((300, 150), (400, 250), fill='gold', stroke_width='6pt')
+r3 = rect((200, 300), (300, 400), fill='royalblue', stroke_width='6pt')
+canvas.resize_to_content([r1, r2, r3])
+''',),
+
         # The following are additional tests intended to increase coverage.
         ('''--program=
 p = path(['M', 150, 50,
