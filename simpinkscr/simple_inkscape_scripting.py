@@ -416,7 +416,7 @@ class SimpleObject(SVGOutputMixin):
             out = list(map(iobj.root.viewport_to_unit, out.splitlines()))
             if len(out) != 4:
                 raise ValueError('Bounding box computation failed')
-            return inkex.BoundingBox.new_xywh(*out)
+            return inkex.transforms.BoundingBox.new_xywh(*out)
 
     def _need_inkscape_bbox(self, iobj):
         'Return True if we need Inkscape to compute a bounding box.'
@@ -1707,9 +1707,13 @@ class SimpleCanvas:
 
     @viewbox.setter
     def viewbox(self, vbox):
-        'Set the viewbox from a string or a list of four floats.'
+        '''Set the viewbox from a string, an inkex.transforms.BoundingBox,
+        or a list of four floats.'''
         if isinstance(vbox, str):
             vbox_str = vbox
+        elif isinstance(vbox, inkex.transforms.BoundingBox):
+            vbox_str = '%.10g %.10g %.10g %.10g' % \
+                (vbox.left, vbox.top, vbox.width, vbox.height)
         elif len(vbox) == 4:
             vbox_str = ' '.join([str(float(f)) for f in vbox])
         else:
@@ -1718,10 +1722,10 @@ class SimpleCanvas:
         self._svg.set('viewBox', vbox_str)
 
     def viewbox_bbox(self):
-        'Return the viewbox as an inkex.BoundingBox'
+        'Return the viewbox as an inkex.transforms.BoundingBox'
         vbox = self.viewbox
-        return inkex.BoundingBox((vbox[0], vbox[0] + vbox[2]),
-                                 (vbox[1], vbox[1] + vbox[3]))
+        return inkex.transforms.BoundingBox((vbox[0], vbox[0] + vbox[2]),
+                                            (vbox[1], vbox[1] + vbox[3]))
 
     def _name_sizes(self):
         'Construct a list of named page sizes.'
