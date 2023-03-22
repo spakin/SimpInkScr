@@ -1778,6 +1778,46 @@ class SimpleCanvas:
                          (name,
                           ', '.join(['"%s"' % k for k in self._named_sizes])))
 
+    def resize_to_content(self, objs=None):
+        '''Adjust true_width, true_height, and viewbox to fit the bounding
+        boxes of a list of objects.'''
+        # Handle a single object, a list of objects, or None.
+        if objs is None:
+            objs = all_shapes()
+        elif not isinstance(objs, collections.abc.Iterable):
+            objs = [objs]
+        if len(objs) == 0:
+            return
+
+        # Compute the bounding box of all SimpleObjects provided.
+        bbox = objs[0].bounding_box()
+        left, top = bbox.left, bbox.top
+        right, bottom = bbox.right, bbox.bottom
+        for o in objs[1:]:
+            bbox = o.bounding_box()
+            left = min(left, bbox.left)
+            top = min(top, bbox.top)
+            right = max(right, bbox.right)
+            bottom = max(bottom, bbox.bottom)
+        bbox = inkex.BoundingBox((left, right), (top, bottom))
+
+        # Resize the viewbox to the computed bounding box.
+        prev_vbox = self.viewbox
+        self.viewbox = bbox
+
+        # Scale the viewport, retaining the original units.
+        twd, tht = self._svg.get('width'), self._svg.get('height')
+        twd, uwd = inkex.units.parse_unit(twd,
+                                          default_unit='',
+                                          default_value=prev_vbox[2])
+        tht, uht = inkex.units.parse_unit(tht,
+                                          default_unit='',
+                                          default_value=prev_vbox[3])
+        twd *= bbox.width/prev_vbox[2]
+        tht *= bbox.height/prev_vbox[3]
+        self.true_width = '%.10g%s' % (twd, uwd)
+        self.true_height = '%.10g%s' % (tht, uht)
+
 
 # ----------------------------------------------------------------------
 
