@@ -243,6 +243,19 @@ r2 = rect((300, 150), (400, 250), fill='gold', stroke_width='6pt')
 r3 = rect((200, 300), (300, 400), fill='royalblue', stroke_width='6pt')
 canvas.resize_to_content([r1, r2, r3])
 ''',),
+        ('''--program=
+import string
+push_defaults()
+canvas.resize_by_name('A6')
+style(font_family='"DejaVu Serif", serif', font_weight='bold', font_size='200pt', text_anchor='middle', fill='#330080')
+for y in range(2):
+    for x in range(2):
+        i = y*2 + x
+        pg = page(i + 1, (x*canvas.width, y*canvas.height))
+        bbox = pg.bounding_box()
+        text(string.ascii_uppercase[i], (bbox.center_x, bbox.center_y + 72*pt))
+pop_defaults()
+''',),
 
         # The following are additional tests intended to increase coverage.
         ('''--program=
