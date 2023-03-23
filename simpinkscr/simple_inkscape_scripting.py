@@ -83,7 +83,7 @@ def _split_two_or_one(val):
 def _python_to_svg_str(val):
     'Convert a Python value to a string suitable for use in an SVG attribute.'
     if isinstance(val, str):
-        # Strings are used unmodified
+        # Strings are used unmodified.
         return val
     if isinstance(val, bool):
         # Booleans are converted to lowercase strings.
@@ -91,12 +91,21 @@ def _python_to_svg_str(val):
     if isinstance(val, float):
         # Floats are converted using a fair number of significant digits.
         return '%.10g' % val
-    try:
-        # Each element of a sequence (other than strings, which were
-        # handled above) is converted recursively.
-        return ' '.join([_python_to_svg_str(v) for v in val])
-    except TypeError:
-        pass  # Not a sequence
+    if isinstance(val, collections.abc.Iterable):
+        # Iterables are converted recursively but with one special case:
+        # iterables of strings are concatenated with commas and quoted if
+        # they contain spaces.  This special case covers passing a list of
+        # strings to the font_family attribute.
+        if all([isinstance(e, str) for e in val]):
+            # Special case
+            str_list = [s.replace(',', '&#44').replace(';', '&#59')
+                        for s in val]
+            str_list = ['"' + s + '"' if ' ' in s else s
+                        for s in str_list]
+            return ', '.join(str_list)
+        else:
+            # Common case
+            return ' '.join([_python_to_svg_str(v) for v in val])
     return str(val)  # Everything else is converted to a string as usual.
 
 
