@@ -15,13 +15,13 @@ In the [Inkscape](https://inkscape.org/) vector-drawing program, how would you g
 Neither option is particularly enticing.  This is why I created the Simple Inkscape Scripting extension for Inkscape.  Simple Inkscape Scripting lets you create shapes in the current Inkscape canvas with a Python script plus a set of simple functions such as `circle` for drawing a circle and `rect` for drawing a rectangle.  The picture shown above was created using just the following five lines of code:
 ```Python
 for i in range(100):
-    x, y = uniform(0, width), uniform(0, height)
+    x, y = uniform(0, canvas.width), uniform(0, canvas.height)
     rect((-5, -5), (5, 5),
          transform='translate(%g, %g) scale(0.75, 1) rotate(45)' % (x, y),
          fill='#%02x%02x%02x' % (randrange(256), randrange(256), randrange(256)))
 ```
 
-The first line is an ordinary Python `for` loop.  The second line selects a position for the rectangle.  Note that Simple Inkscape Scripting predefines `width` as the canvas width and `height` as the canvas height.  The `random` package is imported into the current namespace so `uniform` can be invoked directly.  The third line draws a 10×10 pixel rectangle centered on the origin.  The fourth line rotates the rectangle by 45°, squeezes it horizontally into a lozenge, and moves it to the target position.  The fifth line specifies a random fill color.
+The first line is an ordinary Python `for` loop.  The second line selects a position for the rectangle.  Note that Simple Inkscape Scripting predefines `canvas.width` as the canvas width and `canvas.height` as the canvas height.  The `random` package is imported into the current namespace so `uniform` can be invoked directly.  The third line draws a 10×10 pixel rectangle centered on the origin.  The fourth line rotates the rectangle by 45°, squeezes it horizontally into a lozenge, and moves it to the target position.  The fifth line specifies a random fill color.
 
 The diamonds drawn on the canvas are all ordinary Inkscape objects and can be further manipulated using any of the usual Inkscape tools.
 
