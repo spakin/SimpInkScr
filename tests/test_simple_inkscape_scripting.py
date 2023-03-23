@@ -122,7 +122,7 @@ tr.add_translate(30*pt, -12*pt)
 tr.add_rotate(-15, width/2, height/2)
 text('Transform', (width/2, height/2),
      transform=tr,
-     font_family='URW Bookman, serif',
+     font_family='"URW Bookman", serif',
      font_weight='bold',
      font_size=24*pt,
      text_align='center',
