@@ -91,6 +91,9 @@ def _python_to_svg_str(val):
     if isinstance(val, float):
         # Floats are converted using a fair number of significant digits.
         return '%.10g' % val
+    if isinstance(val, inkex.Color):
+        # Colors are converted to strings even though they're iterables.
+        return str(val)
     if isinstance(val, collections.abc.Iterable):
         # Iterables are converted recursively but with one special case:
         # iterables of strings are concatenated with commas and quoted if
