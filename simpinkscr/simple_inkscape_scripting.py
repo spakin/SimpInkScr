@@ -2599,6 +2599,31 @@ def save_file(file=None):
         file.write(svg.tostring().decode('utf-8'))
 
 
+def randcolor(range1=None, range2=None, range3=None, space='rgb'):
+    'Generate a color at random from a specified color space.'
+    if space == 'rgb':
+        # RGB
+        if range1 is None:
+            range1 = range(256)
+        if range2 is None:
+            range2 = range1
+        if range3 is None:
+            range3 = range2
+        color = [random.choice(range1),
+                 random.choice(range2),
+                 random.choice(range3)]
+    elif space == 'named':
+        # Named color
+        if range1 is None:
+            # Drop the final "none".
+            range1 = list(inkex.colors.SVG_COLOR)[:-1]
+        color = random.choice(range1)
+    else:
+        # Other
+        raise ValueError('Unknown color space "%s"' % space)
+    return inkex.colors.Color(color, space)
+
+
 # ----------------------------------------------------------------------
 
 class SimpleInkscapeScripting(inkex.EffectExtension):
