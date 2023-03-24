@@ -325,7 +325,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         elif rx is not None:
             extra = ', round=%s%s' % (rx, extra)
         elif ry is not None:
-            extra = ', round%s%s' % (ry, extra)
+            extra = ', round=%s%s' % (ry, extra)
 
         # Return a complete call to rect.
         code = ['rect((%.10g, %.10g), (%.10g, %.10g)%s)' %
