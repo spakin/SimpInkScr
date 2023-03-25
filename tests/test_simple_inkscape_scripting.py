@@ -1,3 +1,8 @@
+#############################################################
+# Define a set of unit tests for Simple Inkscape Scripting. #
+# Author: Scott Pakin <scott-ink@pakin.org>                 #
+#############################################################
+
 from simpinkscr.simple_inkscape_scripting import SimpleInkscapeScripting
 from simpinkscr.svg_to_simp_ink_script import SvgToPythonScript
 from inkex.tester import ComparisonMixin, InkscapeExtensionTestMixin, TestCase
@@ -6,7 +11,9 @@ from unittest.mock import patch
 from io import StringIO
 
 
-class SimpInkScrTestShapeConst(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestShapeConst(ComparisonMixin,
+                               InkscapeExtensionTestMixin,
+                               TestCase):
     'Test examples from the Shape Construction wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -16,14 +23,17 @@ class SimpInkScrTestShapeConst(ComparisonMixin, InkscapeExtensionTestMixin, Test
     comparisons = [
         ('--program=circle((canvas.width/2, canvas.height/2), 50)',),
         ('--program=ellipse((canvas.width/2, canvas.height/2), (75, 50))',),
-        ('--program=rect((canvas.width/2 - 50, canvas.height/2 - 30), (canvas.width/2 + 50, canvas.height/2 + 30))',),
+        ('--program=rect((canvas.width/2 - 50, canvas.height/2 - 30),'
+         ' (canvas.width/2 + 50, canvas.height/2 + 30))',),
         ('--program=line((canvas.width, 0), (0, canvas.height))',),
         ('--program=polyline([(0, 300), (150, 0), (300, 300), (150, 200)])',),
         ('--program=polygon([(0, 300), (150, 0), (300, 300), (150, 200)])',),
         ('--program=regular_polygon(5, (100, 100), 80)',),
         ('--program=star(5, (100, 100), (80, 30))',),
-        ("--program=arc((canvas.width/2, canvas.height/2), 100, (pi/5, 9*pi/5), 'slice', fill='yellow', stroke_width=2)",),
-        ("--program=path(['M', 226, 34, 'V', 237, 'L', 32, 185, 'C', 32, 185, 45, -9, 226, 34, 'Z'])",),
+        ("--program=arc((canvas.width/2, canvas.height/2), 100,"
+         " (pi/5, 9*pi/5), 'slice', fill='yellow', stroke_width=2)",),
+        ("--program=path(['M', 226, 34, 'V', 237, 'L', 32, 185,"
+         " 'C', 32, 185, 45, -9, 226, 34, 'Z'])",),
         ('''--program=
 path([Move(226, 34),
       Vert(237),
@@ -36,18 +46,24 @@ r = rect((50, 50), (100, 100))
 c = circle((200, 200), 25)
 connector(r, c, ctype='orthogonal', curve=15)
 ''',),
-        ("--program=text('Simple Inkscape Scripting', (0, canvas.height), font_size='36pt')",),
+        ("--program=text('Simple Inkscape Scripting', (0, canvas.height),"
+         " font_size='36pt')",),
         ('''--program=
-t = text('Hello, ', (canvas.width/2, canvas.height/2), font_size='24pt', text_anchor='middle')
+t = text('Hello, ', (canvas.width/2, canvas.height/2), font_size='24pt',
+         text_anchor='middle')
 t.add_text('Inkscape', font_weight='bold', fill='#800000')
 t.add_text('!!!')
 ''',),
-        ("--program=image('https://media.inkscape.org/static/images/inkscape-logo.png', (0, 0), embed=False)",)
+        ("--program="
+         "image('https://media.inkscape.org/static/images/inkscape-logo.png',"
+         " (0, 0), embed=False)",)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestPathOps(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestPathOps(ComparisonMixin,
+                            InkscapeExtensionTestMixin,
+                            TestCase):
     'Test examples from the Path Operations wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -70,7 +86,9 @@ box.append([hole1.reverse(), hole2.reverse()])
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestCommonArgs(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestCommonArgs(ComparisonMixin,
+                               InkscapeExtensionTestMixin,
+                               TestCase):
     'Test examples from the Common Arguments wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -109,7 +127,9 @@ polyline([(64,128), (320,64), (384,128), (640, 64)],
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestEffects(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestEffects(ComparisonMixin,
+                            InkscapeExtensionTestMixin,
+                            TestCase):
     'Test examples from the Effects wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -134,10 +154,12 @@ arrowhead = path([Move(0, 0),
                  fill=None, stroke=None)
 
 orange_arrowhead = marker(arrowhead, (1, 2), fill='orange')
-line((20, 20), (120, 20), stroke='orange', stroke_width=4, stroke_linecap='round', marker_end=orange_arrowhead)
+line((20, 20), (120, 20), stroke='orange', stroke_width=4,
+     stroke_linecap='round', marker_end=orange_arrowhead)
 
 blue_arrowhead = marker(arrowhead, (1, 2), fill='blue')
-line((120, 40), (20, 40), stroke='blue', stroke_width=4, stroke_linecap='round', marker_end=blue_arrowhead)
+line((120, 40), (20, 40), stroke='blue', stroke_width=4,
+     stroke_linecap='round', marker_end=blue_arrowhead)
 ''',),
         ('''--program=
 blur = filter_effect('Make Blurry')
@@ -158,7 +180,9 @@ p.apply_path_effect(roughen)
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestAnimation(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestAnimation(ComparisonMixin,
+                              InkscapeExtensionTestMixin,
+                              TestCase):
     'Test examples from the Animation wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -178,7 +202,8 @@ r3 = make_rect((canvas.width - 50, canvas.height - 50), '#d35f5f')
 
     # Define a sequence of tests.
     comparisons = [
-        ("--program=%s\nr1.animate([r2, r3], duration='3s', key_times=[0, 0.75, 1])" % animation_base,),
+        ("--program=%s\nr1.animate([r2, r3], duration='3s',"
+         " key_times=[0, 0.75, 1])" % animation_base,),
         ('''--program=
 def make_rect(center, fill, edge=100):
     return rect(inkex.Vector2d(-edge/2, -edge/2) + center,
@@ -187,14 +212,17 @@ def make_rect(center, fill, edge=100):
 
 r1 = make_rect((50, 50), '#aade87')
 r4 = make_rect((0, 0), '#5599ff')
-r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % (canvas.width/2, canvas.height/2)
+r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % \
+               (canvas.width/2, canvas.height/2)
 r1.animate(r4, duration='3s')
 ''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestModExObjs(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestModExObjs(ComparisonMixin,
+                              InkscapeExtensionTestMixin,
+                              TestCase):
     'Test examples from the Modifying Existing Objects wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -264,7 +292,9 @@ c.unremove()
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestOtherFeatures(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestOtherFeatures(ComparisonMixin,
+                                  InkscapeExtensionTestMixin,
+                                  TestCase):
     'Test examples from the Other Features wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -300,7 +330,9 @@ guides.extend([g1, g2])
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestDocLayout(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestDocLayout(ComparisonMixin,
+                              InkscapeExtensionTestMixin,
+                              TestCase):
     'Test examples from the Document Layout wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -318,7 +350,8 @@ canvas.resize_to_content([r1, r2, r3])
 import string
 push_defaults()
 canvas.resize_by_name('A6')
-style(font_family='"DejaVu Serif", serif', font_weight='bold', font_size='200pt', text_anchor='middle', fill='#330080')
+style(font_family='"DejaVu Serif", serif', font_weight='bold',
+      font_size='200pt', text_anchor='middle', fill='#330080')
 for y in range(2):
     for x in range(2):
         i = y*2 + x
@@ -331,7 +364,9 @@ pop_defaults()
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestAdditional(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestAdditional(ComparisonMixin,
+                               InkscapeExtensionTestMixin,
+                               TestCase):
     'Test additional snippets of code to increase coverage.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
@@ -354,7 +389,9 @@ p.to_path(all_curves=True)
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrModifyTest(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrModifyTest(ComparisonMixin,
+                           InkscapeExtensionTestMixin,
+                           TestCase):
     effect_class = SimpleInkscapeScripting
     compare_filters = [CompareOrderIndependentStyle()]
     compare_file = 'svg/shapes.svg'
@@ -376,7 +413,8 @@ class SimpInkScrCmdlineArgsTest(TestCase):
     effect_class = SimpleInkscapeScripting
 
     def test_argparse_input_file_with_svg_and_user_args(self):
-        args = ["--program", "pass", self.empty_svg, "--", "-a", "1", "--b", "2", "3"]
+        args = ["--program", "pass", self.empty_svg,
+                "--", "-a", "1", "--b", "2", "3"]
         effect = self.effect_class()
         effect.parse_arguments(args)
         assert effect.options.input_file == self.empty_svg
@@ -386,7 +424,8 @@ class SimpInkScrCmdlineArgsTest(TestCase):
         args = ["--program", "pass", "-", "--", "-a", "1", "--b", "2", "3"]
         effect = self.effect_class()
         effect.parse_arguments(args)
-        assert effect.options.input_file is None  # input_file is set to None to read stdin
+        # input_file is set to None to read stdin.
+        assert effect.options.input_file is None
         assert ['-a', '1', '--b', '2', '3'] == effect.options.user_args
 
 
@@ -423,7 +462,8 @@ class SimpInkScrRestArgsTest(TestCase):
 
     @patch('sys.stderr', new_callable=StringIO)
     def test_user_args_with_inputfile_and_user_args(self, _stderr):
-        args = ["--program", "print(user_args)", self.empty_svg, "--", "-a", "1", "--b", "2", "3"]
+        args = ["--program", "print(user_args)", self.empty_svg,
+                "--", "-a", "1", "--b", "2", "3"]
         effect = self.effect_class()
         effect.run(args)
         output = _stderr.getvalue().rstrip()
@@ -431,7 +471,8 @@ class SimpInkScrRestArgsTest(TestCase):
 
     @patch('sys.stderr', new_callable=StringIO)
     def test_user_args_with_dash_and_user_args(self, _stderr):
-        args = ["--program", "print(user_args)", "-", "--", "-a", "1", "--b", "2", "3"]
+        args = ["--program", "print(user_args)", "-",
+                "--", "-a", "1", "--b", "2", "3"]
         effect = self.effect_class()
 
         with patch('sys.stdin', StringIO("<svg />")):
