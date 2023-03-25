@@ -2601,6 +2601,14 @@ def save_file(file=None):
 
 def randcolor(range1=None, range2=None, range3=None, space='rgb'):
     'Generate a color at random from a specified color space.'
+    # Define a helper function that converts a scalar to a singleton list.
+    def to_list(e):
+        if isinstance(e, collections.abc.Iterable) and not isinstance(e, str):
+            return e
+        else:
+            return [e]
+
+    # Consider each color space in sequence.
     if space == 'rgb':
         # RGB
         if range1 is None:
@@ -2609,15 +2617,15 @@ def randcolor(range1=None, range2=None, range3=None, space='rgb'):
             range2 = range1
         if range3 is None:
             range3 = range2
-        color = [random.choice(range1),
-                 random.choice(range2),
-                 random.choice(range3)]
+        color = [random.choice(to_list(range1)),
+                 random.choice(to_list(range2)),
+                 random.choice(to_list(range3))]
     elif space == 'named':
         # Named color
         if range1 is None:
             # Drop the final "none".
             range1 = list(inkex.colors.SVG_COLOR)[:-1]
-        color = random.choice(range1)
+        color = random.choice(to_list(range1))
     else:
         # Other
         raise ValueError('Unknown color space "%s"' % space)
