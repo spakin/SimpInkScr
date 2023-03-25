@@ -6,72 +6,14 @@ from unittest.mock import patch
 from io import StringIO
 
 
-class SimpInkScrBasicTest(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+class SimpInkScrTestShapeConst(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Shape Construction wiki page.'
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
     compare_filters = [CompareOrderIndependentStyle()]
 
-    # Define a few helper strings.
-    animation_base = '''\
-def make_rect(center, fill, edge=100):
-    return rect(inkex.Vector2d(-edge/2, -edge/2) + center,
-                inkex.Vector2d(edge/2, edge/2) + center,
-                fill=fill)
-
-r1 = make_rect((50, 50), '#aade87')
-r2 = make_rect((canvas.width/2, canvas.height/2), '#9955ff')
-r3 = make_rect((canvas.width - 50, canvas.height - 50), '#d35f5f')
-'''
-    blue_red = '''
-blue = rect((90, 0), (170, 50), fill='#55ddff')
-red = rect((0, 0), (80, 50), fill='#ff5555')
-'''
-    z_order = '''
-boxes = []
-ul = inkex.Vector2d()
-for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
-    boxes.append(rect(ul, ul + (100, 60), fill=c, opacity=0.9))
-    ul += (10, 10)
-'''
-    s_path = '''
-S = path([Move(57, 13),
-          Vert(28),
-          Quadratic(52, 25, 46, 24),
-          Quadratic(41, 23, 36, 23),
-          Quadratic(29, 23, 26, 25),
-          Quadratic(23, 26, 23, 30),
-          Quadratic(23, 33, 25, 35),
-          Quadratic(27, 36, 33, 37),
-          Line(40, 39),
-          Quadratic(52, 41, 57, 46),
-          Quadratic(62, 51, 62, 60),
-          Quadratic(62, 71, 55, 77),
-          Quadratic(48, 82, 34, 82),
-          Quadratic(27, 82, 21, 81),
-          Quadratic(14, 80, 7, 77),
-          Vert(62),
-          Quadratic(14, 66, 20, 68),
-          Quadratic(26, 69, 32, 69),
-          Quadratic(38, 69, 41, 67),
-          Quadratic(44, 65, 44, 62),
-          Quadratic(44, 58, 42, 57),
-          Quadratic(40, 55, 34, 53),
-          Line(27, 52),
-          Quadratic(16, 50, 11, 45),
-          Quadratic(7, 40, 7, 31),
-          Quadratic(7, 21, 13, 15),
-          Quadratic(20, 10, 33, 10),
-          Quadratic(39, 10, 45, 11),
-          Quadratic(51, 12, 57, 13),
-          ZoneClose()],
-         fill='#decd87', stroke_width=5)
-'''
-
-    # Define all of the tests to run.  Simple Inkscape Scripting is a
-    # large, featureful extension so many tests are needed to achieve even
-    # modest coverage of all the code paths.
+    # Define a sequence of tests.
     comparisons = [
-        # The following tests come from the Shape Construction wiki page.
         ('--program=circle((canvas.width/2, canvas.height/2), 50)',),
         ('--program=ellipse((canvas.width/2, canvas.height/2), (75, 50))',),
         ('--program=rect((canvas.width/2 - 50, canvas.height/2 - 30), (canvas.width/2 + 50, canvas.height/2 + 30))',),
@@ -100,9 +42,19 @@ t = text('Hello, ', (canvas.width/2, canvas.height/2), font_size='24pt', text_an
 t.add_text('Inkscape', font_weight='bold', fill='#800000')
 t.add_text('!!!')
 ''',),
-        ("--program=image('https://media.inkscape.org/static/images/inkscape-logo.png', (0, 0), embed=False)",),
+        ("--program=image('https://media.inkscape.org/static/images/inkscape-logo.png', (0, 0), embed=False)",)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following tests come from the Path Operations wiki page.
+
+class SimpInkScrTestPathOps(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Path Operations wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
         ('''--program=
 c1 = circle((50, 50), 50, fill='#005500', fill_rule='evenodd').to_path()
 c2 = circle((100, 50), 50).to_path()
@@ -113,9 +65,19 @@ box = rect((0, 0), (200, 100), fill='#d4aa00').to_path()
 hole1 = rect((25, 25), (75, 75)).to_path()
 hole2 = rect((125, 25), (175, 75)).to_path()
 box.append([hole1.reverse(), hole2.reverse()])
-''',),
+''',)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following tests come from the Common Arguments wiki page.
+
+class SimpInkScrTestCommonArgs(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Common Arguments wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
         ('''--program=
 tr = inkex.Transform()
 tr.add_translate(30*pt, -12*pt)
@@ -142,9 +104,19 @@ polyline([(64,128), (320,64), (384,128), (640, 64)],
          stroke_linecap='round',
          stroke_linejoin='round',
          stroke_dasharray=[32, 32, 64, 32])
-''',),
+''',)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following tests come from the Effects wiki page.
+
+class SimpInkScrTestEffects(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Effects wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
         ('''--program=
 grad = linear_gradient((0, 0), (0, 1))
 for i in range(5):
@@ -181,9 +153,31 @@ roughen = path_effect('rough_hatches',
 e = ellipse((150, 100), (150, 100), stroke='#7f2aff', stroke_width=2)
 p = e.to_path()
 p.apply_path_effect(roughen)
-''',),
+''',)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following tests come from the Animation wiki page.
+
+class SimpInkScrTestAnimation(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Animation wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a helper string.
+    animation_base = '''\
+def make_rect(center, fill, edge=100):
+    return rect(inkex.Vector2d(-edge/2, -edge/2) + center,
+                inkex.Vector2d(edge/2, edge/2) + center,
+                fill=fill)
+
+r1 = make_rect((50, 50), '#aade87')
+r2 = make_rect((canvas.width/2, canvas.height/2), '#9955ff')
+r3 = make_rect((canvas.width - 50, canvas.height - 50), '#d35f5f')
+'''
+
+    # Define a sequence of tests.
+    comparisons = [
         ("--program=%s\nr1.animate([r2, r3], duration='3s', key_times=[0, 0.75, 1])" % animation_base,),
         ('''--program=
 def make_rect(center, fill, edge=100):
@@ -195,10 +189,58 @@ r1 = make_rect((50, 50), '#aade87')
 r4 = make_rect((0, 0), '#5599ff')
 r4.transform = 'translate(%.5f, %.5f) rotate(200) scale(2)' % (canvas.width/2, canvas.height/2)
 r1.animate(r4, duration='3s')
-''',),
+''',)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following tests come from the Modifying Existing Objects wiki
-        # page.
+
+class SimpInkScrTestModExObjs(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Modifying Existing Objects wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a few helper strings.
+    blue_red = '''
+blue = rect((90, 0), (170, 50), fill='#55ddff')
+red = rect((0, 0), (80, 50), fill='#ff5555')
+'''
+    s_path = '''
+S = path([Move(57, 13),
+          Vert(28),
+          Quadratic(52, 25, 46, 24),
+          Quadratic(41, 23, 36, 23),
+          Quadratic(29, 23, 26, 25),
+          Quadratic(23, 26, 23, 30),
+          Quadratic(23, 33, 25, 35),
+          Quadratic(27, 36, 33, 37),
+          Line(40, 39),
+          Quadratic(52, 41, 57, 46),
+          Quadratic(62, 51, 62, 60),
+          Quadratic(62, 71, 55, 77),
+          Quadratic(48, 82, 34, 82),
+          Quadratic(27, 82, 21, 81),
+          Quadratic(14, 80, 7, 77),
+          Vert(62),
+          Quadratic(14, 66, 20, 68),
+          Quadratic(26, 69, 32, 69),
+          Quadratic(38, 69, 41, 67),
+          Quadratic(44, 65, 44, 62),
+          Quadratic(44, 58, 42, 57),
+          Quadratic(40, 55, 34, 53),
+          Line(27, 52),
+          Quadratic(16, 50, 11, 45),
+          Quadratic(7, 40, 7, 31),
+          Quadratic(7, 21, 13, 15),
+          Quadratic(20, 10, 33, 10),
+          Quadratic(39, 10, 45, 11),
+          Quadratic(51, 12, 57, 13),
+          ZoneClose()],
+         fill='#decd87', stroke_width=5)
+'''
+
+    # Define a sequence of tests.
+    comparisons = [
         ('--program=%s\nred.translate((50, 30))' % blue_red,),
         ('--program=%s\nred.rotate(30)' % blue_red,),
         ('--program=%s\nred.rotate(30, (85, 25))' % blue_red,),
@@ -217,9 +259,28 @@ c = circle((75, 75), 38, fill='darkturquoise', stroke_width=2)
 rect((0, 0), (75, 75), fill='aquamarine', stroke_width=2)
 c.remove()
 c.unremove()
-''',),
+''',)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following tests come from the Other Features wiki page.
+
+class SimpInkScrTestOtherFeatures(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Other Features wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a helper string.
+    z_order = '''
+boxes = []
+ul = inkex.Vector2d()
+for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
+    boxes.append(rect(ul, ul + (100, 60), fill=c, opacity=0.9))
+    ul += (10, 10)
+'''
+
+    # Define a sequence of tests.
+    comparisons = [
         ('''--program=
 house = rect((32, 64), (96, 112), fill='#ff0000', stroke_width=2)
 roof = polygon([(16, 64), (64, 16), (112, 64)], fill='#008000', stroke_width=2)
@@ -234,9 +295,19 @@ guides.extend([g1, g2])
         ("--program=%s\nboxes[-1].z_order('bottom')" % z_order,),
         ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
         ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
-        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,),
+        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following tests come from the Document Layout wiki page.
+
+class SimpInkScrTestDocLayout(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test examples from the Document Layout wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
         ('''--program=
 r1 = rect((100, 100), (200, 200), fill='firebrick', stroke_width='6pt')
 r2 = rect((300, 150), (400, 250), fill='gold', stroke_width='6pt')
@@ -255,9 +326,19 @@ for y in range(2):
         bbox = pg.bounding_box()
         text(string.ascii_uppercase[i], (bbox.center_x, bbox.center_y + 72*pt))
 pop_defaults()
-''',),
+''',)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
 
-        # The following are additional tests intended to increase coverage.
+
+class SimpInkScrTestAdditional(ComparisonMixin, InkscapeExtensionTestMixin, TestCase):
+    'Test additional snippets of code to increase coverage.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
         ('''--program=
 p = path(['M', 150, 50,
           'C', 100, 50, 50, 100, 50, 192,
