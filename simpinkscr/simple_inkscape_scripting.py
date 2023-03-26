@@ -1913,6 +1913,12 @@ class SimplePage(SVGOutputMixin):
         return inkex.BoundingBox((x, x + wd), (y, y + ht))
 
 
+class RectangularForeignObject(inkex.ForeignObject,
+                               inkex.Rectangle):
+    'Define a foreign object that honors bounding boxes.'
+    pass
+
+
 # ----------------------------------------------------------------------
 
 # The following functions represent the Simple Inkscape Scripting API
@@ -2208,10 +2214,10 @@ def foreign(pt1, pt2, xml='', transform=None, conn_avoid=False,
 
     # Create the foreign object, wrap it in a SimpleObject, and return the
     # SimpleObject.
-    obj = inkex.ForeignObject(x=_python_to_svg_str(x0),
-                              y=_python_to_svg_str(y0),
-                              width=_python_to_svg_str(wd),
-                              height=_python_to_svg_str(ht))
+    obj = RectangularForeignObject(x=_python_to_svg_str(x0),
+                                   y=_python_to_svg_str(y0),
+                                   width=_python_to_svg_str(wd),
+                                   height=_python_to_svg_str(ht))
     if xml.strip() != '':
         obj.append(lxml.etree.fromstring(xml))
     return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
