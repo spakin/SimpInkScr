@@ -2212,7 +2212,8 @@ def foreign(pt1, pt2, xml='', transform=None, conn_avoid=False,
                               y=_python_to_svg_str(y0),
                               width=_python_to_svg_str(wd),
                               height=_python_to_svg_str(ht))
-    obj.append(lxml.etree.fromstring(xml))
+    if xml.strip() != '':
+        obj.append(lxml.etree.fromstring(xml))
     return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         {}, style)
 

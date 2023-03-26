@@ -570,11 +570,16 @@ class SvgToPythonScript(inkex.OutputExtension):
         y = self.number_to_pixels(node.get('y'), pct_of='ht', default=0)
         wd = self.number_to_pixels(node.get('width'), pct_of='wd', default=0)
         ht = self.number_to_pixels(node.get('height'), pct_of='ht', default=0)
-        extra, extra_deps = self.extra_args(node)
+        extra, extra_deps = self.extra_args(node, def_svg_style={})
 
         # foreign will almost always include a child.
-        xml = repr(node[0].tostring().decode('utf-8'))
-        extra = ', ' + xml + extra
+        try:
+            # Common case
+            xml = repr(node[0].tostring().decode('utf-8'))
+            extra = ', ' + xml + extra
+        except IndexError:
+            # Empty contents
+            pass
 
         # Return a complete call to foreign.
         code = ['foreign((%.10g, %.10g), (%.10g, %.10g)%s)' %
