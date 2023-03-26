@@ -33,6 +33,7 @@ List of examples
 | [Gradient template](gradient_template.py) | Show how to reuse a gradient pattern. |
 | [Guides](guides.py) | Place guides in the document |
 | [Holes](holes.py) | Draw a few shapes with holes in them. |
+| [Html](html.py) | Embed HTML code within an SVG image. |
 | [Hyperlinks](hyperlinks.py) | Create a set of graphical hyperlinks. |
 | [Image spiral](image_spiral.py) | Draw a spiral out of Inkscape logos downloaded from the Web. |
 | [Inkex paths](inkex_paths.py) | Show how to draw a path using the functions provided by the inkex.paths module (https://tinyurl.com/2p9dna4f) as an alternative to path commands expressed as alternating strings and floats. |
