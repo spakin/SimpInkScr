@@ -364,6 +364,36 @@ pop_defaults()
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
+class SimpInkScrTestAdvanced(ComparisonMixin,
+                             InkscapeExtensionTestMixin,
+                             TestCase):
+    'Test examples from the Advanced Usage wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
+        ("""--program=
+rect((10, 10), (390, 210), round=25, fill='#e7e8e3', stroke_width='2px')
+foreign((20, 20), (380, 200), '''\
+<div xmlns="http://www.w3.org/1999/xhtml">
+  <h1>Test of foreign XML</h1>
+
+  <table border="1px">
+    <tbody>
+      <tr><td>Did</td> <td>this</td> <td>work?</td></tr>
+      <tr><td>Yes,</td> <td>it</td> <td>did!</td></tr>
+      <tr><td>Hurrah!</td> <td>Hurrah!</td> <td>Hooray!</td></tr>
+    </tbody>
+  </table>
+</div>
+''')
+""",)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
+
+
 class SimpInkScrTestAdditional(ComparisonMixin,
                                InkscapeExtensionTestMixin,
                                TestCase):
