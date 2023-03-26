@@ -563,6 +563,24 @@ class SvgToPythonScript(inkex.OutputExtension):
                     (repr(href), x, y, extra)]
         return self.Statement(code, node.get_id(), extra_deps)
 
+    def convert_foreign(self, node):
+        'Return Python code for including XML from a foreign namespace.'
+        # Acquire a foreign's required parameters.
+        x = self.number_to_pixels(node.get('x'), pct_of='wd', default=0)
+        y = self.number_to_pixels(node.get('y'), pct_of='ht', default=0)
+        wd = self.number_to_pixels(node.get('width'), pct_of='wd', default=0)
+        ht = self.number_to_pixels(node.get('height'), pct_of='ht', default=0)
+        extra, extra_deps = self.extra_args(node)
+
+        # foreign will almost always include a child.
+        xml = repr(node[0].tostring().decode('utf-8'))
+        extra = ', ' + xml + extra
+
+        # Return a complete call to foreign.
+        code = ['foreign((%.10g, %.10g), (%.10g, %.10g)%s)' %
+                (x, y, x + wd, y + ht, extra)]
+        return self.Statement(code, node.get_id(), extra_deps)
+
     def convert_clone(self, node):
         'Return Python code for cloning an object.'
         href = node.get('xlink:href')[1:]
@@ -1015,6 +1033,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                       '//svg:path | '
                       '//svg:text | '
                       '//svg:image | '
+                      '//svg:foreignObject | '
                       '//svg:use | '
                       '//svg:g | '
                       '//svg:filter | '
@@ -1046,6 +1065,8 @@ class SvgToPythonScript(inkex.OutputExtension):
                 stmts.append(self.convert_text(node))
             elif isinstance(node, inkex.Image):
                 stmts.append(self.convert_image(node))
+            elif isinstance(node, inkex.ForeignObject):
+                stmts.append(self.convert_foreign(node))
             elif isinstance(node, inkex.Use):
                 stmts.append(self.convert_clone(node))
             elif isinstance(node, inkex.Group):
