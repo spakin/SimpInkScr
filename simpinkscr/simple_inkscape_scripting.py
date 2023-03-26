@@ -1960,8 +1960,8 @@ def ellipse(center, radii, transform=None, conn_avoid=False, clip_path=None,
 def rect(pt1, pt2, round=None, transform=None, conn_avoid=False,
          clip_path=None, mask=None, **style):
     'Draw a rectangle.'
-    # Convert pt1 and pt2 to an upper-left starting point and
-    # rectangle dimensions.
+    # Convert pt1 and pt2 to an upper-left starting point plus a width and
+    # height.
     x0 = min(pt1[0], pt2[0])
     y0 = min(pt1[1], pt2[1])
     x1 = max(pt1[0], pt2[0])
@@ -2192,6 +2192,29 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False,
         uri = fname
     obj.set('xlink:href', uri)
     return SimpleObject(obj, transform, conn_avoid, clip_path, mask, {}, style)
+
+
+def foreign(pt1, pt2, xml='', transform=None, conn_avoid=False,
+            clip_path=None, mask=None, **style):
+    'Insert a foreign XML object into the SVG file.'
+    # Convert pt1 and pt2 to an upper-left starting point plus a width and
+    # height.
+    x0 = min(pt1[0], pt2[0])
+    y0 = min(pt1[1], pt2[1])
+    x1 = max(pt1[0], pt2[0])
+    y1 = max(pt1[1], pt2[1])
+    wd = x1 - x0
+    ht = y1 - y0
+
+    # Create the foreign object, wrap it in a SimpleObject, and return the
+    # SimpleObject.
+    obj = inkex.ForeignObject(x=_python_to_svg_str(x0),
+                              y=_python_to_svg_str(y0),
+                              width=_python_to_svg_str(wd),
+                              height=_python_to_svg_str(ht))
+    obj.append(lxml.etree.fromstring(xml))
+    return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
+                        {}, style)
 
 
 def clone(obj, transform=None, conn_avoid=False, clip_path=None, mask=None,
