@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
 import base64
 import collections.abc
+import datetime
 import io
 import math
 import os
@@ -1919,6 +1920,346 @@ class RectangularForeignObject(inkex.ForeignObject,
     pass
 
 
+class SimpleMetadata:
+    'Provide a simple interface to document metadata.'
+
+    # Define the namespaces used by Inkscape metadata.
+    rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+    cc = 'http://creativecommons.org/ns#'
+    dc = 'http://purl.org/dc/elements/1.1/'
+
+    def _search_hierarchy(self, *args):
+        '''Search an XML hierarchy given tuples of (namespace, tag).
+        <rdf:RDF> is the implicit first element of the hierarchy.  This
+        method returns the final node.'''
+        global _simple_top
+        elt = _simple_top.svg_root.metadata
+        for ns_tag in [(self.rdf, 'RDF')] + list(args):
+            child = elt.find('./{%s}%s' % ns_tag)
+            if child is None:
+                return None
+            elt = child
+        return elt
+
+    def _create_hierarchy(self, *args):
+        '''Create an XML hierarchy given tuples of (namespace, tag).
+        <rdf:RDF> is the implicit first element of the hierarchy.  This
+        method returns the final node.'''
+        global _simple_top
+        elt = _simple_top.svg_root.metadata
+        for ns_tag in [(self.rdf, 'RDF')] + list(args):
+            child = elt.find('./{%s}%s' % ns_tag)
+            if child is None:
+                child = lxml.etree.SubElement(elt, '{%s}%s' % ns_tag)
+            elt = child
+        elt.clear()
+        return elt
+
+    def _agent_title(self, tag):
+        'Provide a shortcut for <cc:Work><dc:TAG><cc:Agent><dc:title>.'
+        return ((self.cc, 'Work'),
+                (self.dc, tag),
+                (self.cc, 'Agent'),
+                (self.dc, 'title'))
+
+    @property
+    def title(self):
+        "Return the document's title."
+        global _simple_top
+
+        # Read <dc:title> from the document's metadata.
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'title')).text
+        except AttributeError:
+            pass
+
+        # Read <title> from the document's top level.
+        return _simple_top.svg_root.get('title')
+
+    @title.setter
+    def title(self, title_str):
+        '''Set the document's title both in the metadata and at the
+        document's top level.'''
+        global _simple_top
+        svg_root = _simple_top.svg_root
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'title'))
+        if title_str is None:
+            elt.getparent().remove(elt)
+            try:
+                svg_root.remove(svg_root.title)
+            except TypeError:
+                pass   # No top-level <title> element
+            return
+        elt.text = title_str
+        svg_root.title = title_str
+
+    @property
+    def raw_date(self):
+        "Return the document's date as a string or None if not present."
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'date')).text
+        except AttributeError:
+            return None
+
+    @raw_date.setter
+    def raw_date(self, date_str):
+        "Set the document's date to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'date'))
+        if date_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = date_str
+
+    @property
+    def date(self):
+        '''Return the document's date as a datetime.date or None if a date
+        is either not present or not formatted in the recommended ISO 8601
+        format.'''
+        try:
+            return datetime.date.fromisoformat(self.raw_date)
+        except ValueError:
+            return None
+
+    @date.setter
+    def date(self, date_obj):
+        "Set the document's date to a given datetime.datetime."
+        if date_obj is None:
+            self.raw_date = None
+        else:
+            self.raw_date = date_obj.isoformat()
+
+    @property
+    def creator(self):
+        "Return the document's creator as a string or None if not present."
+        # The document's creator is a <dc:title>, but specifying the full
+        # path distinguishes it from the document's <dc:title> title.
+        try:
+            return self._search_hierarchy(*self._agent_title('creator')).text
+        except AttributeError:
+            return None
+
+    @creator.setter
+    def creator(self, creator_str):
+        "Set the document's creator to a given string."
+        elt = self._create_hierarchy(*self._agent_title('creator'))
+        if creator_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = creator_str
+
+    @property
+    def rights(self):
+        """Return the document's rights statement as a string or None if
+        not present."""
+        # The document's rights statement is a <dc:title>, but specifying
+        # the full path distinguishes it from the document's <dc:title>
+        # title.
+        try:
+            return self._search_hierarchy(*self._agent_title('rights')).text
+        except AttributeError:
+            return None
+
+    @rights.setter
+    def rights(self, rights_str):
+        "Set the document's rights statement to a given string."
+        elt = self._create_hierarchy(*self._agent_title('rights'))
+        if rights_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = rights_str
+
+    @property
+    def publisher(self):
+        """Return the document's publisher as a string or None if not
+        present."""
+        # The document's publisher is a <dc:title>, but specifying the full
+        # path distinguishes it from the document's <dc:title> title.
+        try:
+            return self._search_hierarchy(*self._agent_title('publisher')).text
+        except AttributeError:
+            return None
+
+    @publisher.setter
+    def publisher(self, publisher_str):
+        "Set the document's publisher to a given string."
+        elt = self._create_hierarchy(*self._agent_title('publisher'))
+        if publisher_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = publisher_str
+
+    @property
+    def identifier(self):
+        """Return the document's identifier as a string or None if not
+        present."""
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'identifier')).text
+        except AttributeError:
+            return None
+
+    @identifier.setter
+    def identifier(self, identifier_str):
+        "Set the document's identifier to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'identifier'))
+        if identifier_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = identifier_str
+
+    @property
+    def source(self):
+        """Return the document's source as a string or None if not
+        present."""
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'source')).text
+        except AttributeError:
+            return None
+
+    @source.setter
+    def source(self, source_str):
+        "Set the document's source to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'source'))
+        if source_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = source_str
+
+    @property
+    def relation(self):
+        """Return the document's relation as a string or None if not
+        present."""
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'relation')).text
+        except AttributeError:
+            return None
+
+    @relation.setter
+    def relation(self, relation_str):
+        "Set the document's relation to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'relation'))
+        if relation_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = relation_str
+
+    @property
+    def language(self):
+        """Return the document's language as a string or None if not
+        present."""
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'language')).text
+        except AttributeError:
+            return None
+
+    @language.setter
+    def language(self, language_str):
+        "Set the document's language to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'language'))
+        if language_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = language_str
+
+    @property
+    def keywords(self):
+        """Return the document's keywords as a list of strings or None if
+        not present."""
+        bag = self._search_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'subject'),
+                                     (self.rdf, 'Bag'))
+        if bag is None:
+            return None
+        return [elt.text.strip()
+                for elt in bag.findall('./{%s}li' % self.rdf)]
+
+    @keywords.setter
+    def keywords(self, kw_list):
+        "Set the document's keywords from a list of strings."
+        bag = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'subject'),
+                                     (self.rdf, 'Bag'))
+        if kw_list is None:
+            elt = self._search_hierarchy((self.cc, 'Work'),
+                                         (self.dc, 'subject'))
+            elt.getparent().remove(elt)
+            return
+        for kw in kw_list:
+            li = lxml.etree.SubElement(bag, '{%s}li' % self.rdf)
+            li.text = kw.strip()
+
+    @property
+    def coverage(self):
+        """Return the document's coverage as a string or None if not
+        present."""
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'coverage')).text
+        except AttributeError:
+            return None
+
+    @coverage.setter
+    def coverage(self, coverage_str):
+        "Set the document's coverage to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'coverage'))
+        if coverage_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = coverage_str
+
+    @property
+    def description(self):
+        """Return the document's description as a string or None if not
+        present."""
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'description')).text
+        except AttributeError:
+            return None
+
+    @description.setter
+    def description(self, description_str):
+        "Set the document's description to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'description'))
+        if description_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = description_str
+
+    @property
+    def contributors(self):
+        """Return the document's contributors as a string or None if not
+        present."""
+        try:
+            return self._search_hierarchy((self.cc, 'Work'),
+                                          (self.dc, 'contributor')).text
+        except AttributeError:
+            return None
+
+    @contributors.setter
+    def contributors(self, contributors_str):
+        "Set the document's contributors to a given string."
+        elt = self._create_hierarchy((self.cc, 'Work'),
+                                     (self.dc, 'contributor'))
+        if contributors_str is None:
+            elt.getparent().remove(elt)
+            return
+        elt.text = contributors_str
+
+
 # ----------------------------------------------------------------------
 
 # The following functions represent the Simple Inkscape Scripting API
@@ -2747,6 +3088,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         sis_globals['user_args'] = self.options.user_args
         sis_globals['extension'] = self
         sis_globals['canvas'] = _simple_top.canvas
+        sis_globals['metadata'] = SimpleMetadata()
         try:
             # Inkscape 1.2+
             convert_unit = self.svg.viewport_to_unit
