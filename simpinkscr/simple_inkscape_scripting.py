@@ -2259,6 +2259,83 @@ class SimpleMetadata:
             return
         elt.text = contributors_str
 
+    @property
+    def license(self):
+        "Return the document's license as a dict."
+        info = {}
+
+        # Try to acquire a url value.
+        elt = self._search_hierarchy((self.cc, 'Work'),
+                                     (self.cc, 'license'))
+        if elt is not None:
+            info['url'] = elt.get('{%s}resource' % self.rdf)
+
+        # Try to acquire permits, requires, and prohibits values.
+        elt = self._search_hierarchy((self.cc, 'License'))
+        known_tags = ['permits', 'requires', 'prohibits']
+        if elt is not None:
+            for child in elt:
+                qname = lxml.etree.QName(child)
+                tag = qname.localname
+                if qname.namespace != self.cc or tag not in known_tags:
+                    continue
+                res = child.get('{%s}resource' % self.rdf)
+                if res is None:
+                    continue
+                try:
+                    info[tag].append(res)
+                except KeyError:
+                    info[tag] = [res]
+
+        # Remove keys with None values and return the rest.
+        return {k: v for k, v in info.items() if v is not None}
+
+    def _remove_old_license(self):
+        "Remove the document's existing license."
+        elt = self._search_hierarchy((self.cc, 'Work'),
+                                     (self.cc, 'license'))
+        if elt is not None:
+            elt.getparent().remove(elt)
+        elt = self._search_hierarchy((self.cc, 'License'))
+        if elt is not None:
+            elt.getparent().remove(elt)
+
+    @license.setter
+    def license(self, info):
+        "Set the document's license from information in a dict."
+        # Start from a clean slate.
+        self._remove_old_license()
+
+        # Do nothing if passed None, leaving the document with no license.
+        if info is None:
+            return
+
+        # Process the permits, requires, and prohibits keys.
+        elt = None
+        for key in ['permits', 'requires', 'prohibits']:
+            try:
+                values = info[key]
+                if elt is None:
+                    elt = self._create_hierarchy((self.cc, 'License'))
+                for v in values:
+                    child = lxml.etree.SubElement(elt,
+                                                  '{%s}%s' % (self.cc, key))
+                    child.set('{%s}resource' % self.rdf, v)
+            except KeyError:
+                pass
+
+        # Process the url key.
+        try:
+            url = info['url']
+            elt = self._create_hierarchy((self.cc, 'Work'),
+                                         (self.cc, 'license'))
+            elt.set('{%s}resource' % self.rdf, url)
+            elt = self._search_hierarchy((self.cc, 'License'))
+            if elt is not None:
+                elt.set('{%s}about' % self.rdf, url)
+        except KeyError:
+            pass
+
 
 # ----------------------------------------------------------------------
 
