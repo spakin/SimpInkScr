@@ -1928,6 +1928,162 @@ class SimpleMetadata:
     cc = 'http://creativecommons.org/ns#'
     dc = 'http://purl.org/dc/elements/1.1/'
 
+    def __init__(self):
+        # Construct a database of Creative Commons licenses that matches
+        # Inkscape's Licenses dialog.
+        #
+        # CC Attribution
+        cc_str = 'http://creativecommons.org/ns#'
+        self._licenses = {}
+        self._licenses['by'] = {
+            'url': 'http://creativecommons.org/licenses/by/4.0/',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution',
+                cc_str + 'DerivativeWorks'
+            ],
+            'requires': [
+                cc_str + 'Notice',
+                cc_str + 'Attribution'
+            ]
+        }
+        self._licenses['CC Attribution'] = self._licenses['by']
+
+        # CC Attribution-ShareAlike
+        self._licenses['by-sa'] = {
+            'url': 'http://creativecommons.org/licenses/by-sa/4.0/',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution',
+                cc_str + 'DerivativeWorks'
+            ],
+            'requires': [
+                cc_str + 'Notice',
+                cc_str + 'Attribution',
+                cc_str + 'ShareAlike'
+            ]
+        }
+        self._licenses['CC Attribution-ShareAlike'] = self._licenses['by-sa']
+
+        # CC Attribution-NoDerivs
+        self._licenses['by-nd'] = {
+            'url': 'http://creativecommons.org/licenses/by-nd/4.0/',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution'
+            ],
+            'requires': [
+                cc_str + 'Notice',
+                cc_str + 'Attribution'
+            ]
+        }
+        self._licenses['CC Attribution-NoDerivs'] = self._licenses['by-nd']
+
+        # CC Attribution-NonCommercial
+        self._licenses['by-nc'] = {
+            'url': 'http://creativecommons.org/licenses/by-nc/4.0/',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution',
+                cc_str + 'DerivativeWorks'
+            ],
+            'requires': [
+                cc_str + 'Notice',
+                cc_str + 'Attribution'
+            ],
+            'prohibits': [
+                cc_str + 'CommercialUse'
+            ]
+        }
+        self._licenses['CC Attribution-NonCommercial'] = \
+            self._licenses['by-nc']
+
+        # CC Attribution-NonCommercial-ShareAlike
+        self._licenses['by-nc-sa'] = {
+            'url': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution',
+                cc_str + 'DerivativeWorks'
+            ],
+            'requires': [
+                cc_str + 'Notice',
+                cc_str + 'Attribution',
+                cc_str + 'ShareAlike'
+            ],
+            'prohibits': [
+                cc_str + 'CommercialUse'
+            ]
+        }
+        self._licenses['CC Attribution-NonCommercial-ShareAlike'] = \
+            self._licenses['by-nc-sa']
+
+        # CC Attribution-NonCommercial-NoDerivs
+        self._licenses['by-nc-nd'] = {
+            'url': 'http://creativecommons.org/licenses/by-nc-nd/4.0/',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution'
+            ],
+            'requires': [
+                cc_str + 'Notice',
+                cc_str + 'Attribution',
+            ],
+            'prohibits': [
+                cc_str + 'CommercialUse'
+            ]
+        }
+        self._licenses['CC Attribution-NonCommercial-NoDerivs'] = \
+            self._licenses['by-nc-nd']
+
+        # CC0 Public Domain Dedication
+        self._licenses['zero'] = {
+            'url':
+            'http://creativecommons.org/publicdomain/zero/1.0/',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution',
+                cc_str + 'DerivativeWorks'
+            ]
+        }
+        self._licenses['CC0 Public Domain Dedication'] = self._licenses['zero']
+
+        # FreeArt
+        self._licenses['lal'] = {
+            'url': 'http://artlibre.org/licence/lal',
+            'permits': [
+                cc_str + 'Reproduction',
+                cc_str + 'Distribution',
+                cc_str + 'DerivativeWorks'
+            ],
+            'requires': [
+                cc_str + 'Notice',
+                cc_str + 'Attribution',
+                cc_str + 'ShareAlike'
+            ]
+        }
+        self._licenses['FreeArt'] = self._licenses['lal']
+
+        # Open Font License
+        ofl_str = 'http://scripts.sil.org/pub/OFL/'
+        self._licenses['OFL'] = {
+            'url': 'http://scripts.sil.org/OFL',
+            'permits': [
+                ofl_str + 'Reproduction',
+                ofl_str + 'Distribution',
+                ofl_str + 'DerivativeWorks',
+                ofl_str + 'Embedding'
+            ],
+            'requires': [
+                ofl_str + 'Notice',
+                ofl_str + 'Attribution',
+                ofl_str + 'ShareAlike',
+                ofl_str + 'DerivativeRenaming',
+                ofl_str + 'BundlingWhenSelling'
+            ]
+        }
+        self._licenses['Open Font License'] = self._licenses['OFL']
+
     def _search_hierarchy(self, *args):
         '''Search an XML hierarchy given tuples of (namespace, tag).
         <rdf:RDF> is the implicit first element of the hierarchy.  This
@@ -2309,6 +2465,10 @@ class SimpleMetadata:
         # Do nothing if passed None, leaving the document with no license.
         if info is None:
             return
+
+        # If given a string, treat it as the name of a known license.
+        if isinstance(info, str):
+            info = self._licenses[info]
 
         # Process the permits, requires, and prohibits keys.
         elt = None
