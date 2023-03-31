@@ -1169,6 +1169,66 @@ class SvgToPythonScript(inkex.OutputExtension):
             prefix = '      '
         stream.write("\n".encode('utf-8'))
 
+    def _write_metadata(self, stream):
+        '''Write various metadata to the stream.  This is a helper
+        method for write_header.'''
+        rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        cc = 'http://creativecommons.org/ns#'
+        dc = 'http://purl.org/dc/elements/1.1/'
+        meta = self.svg.metadata
+        work = meta.find('./{%s}RDF/{%s}Work' % (rdf, cc))
+        if work is None:
+            return
+        metadata = {}
+
+        # Handle simple text strings.
+        for key in [
+                'title',
+                'date',
+                'identifier',
+                'source',
+                'relation',
+                'language',
+                'coverage',
+                'description',
+                'contributors']:
+            try:
+                metadata[key] = work.find('./{%s}%s' % (dc, key)).text
+            except AttributeError:
+                pass
+
+        # Handle text strings nested within <cc:Agent><dc:title>.
+        for key in [
+                'creator',
+                'rights',
+                'publisher']:
+            try:
+                metadata[key] = work.find('./{%s}%s/{%s}Agent/{%s}title' %
+                                          (dc, key, cc, dc)).text
+            except AttributeError:
+                pass
+
+        # Handle keywords specially.
+        bag = work.find('./{%s}subject/{%s}Bag' % (dc, rdf))
+        if bag is not None:
+            metadata['keywords'] = [item.text
+                                    for item in bag.findall('./{%s}li' % rdf)]
+
+        # Write all of the metadata we found.
+        if metadata == {}:
+            return
+        stream.write('# Specify various document metadata.\n'.encode('utf-8'))
+        try:
+            # Rename date to raw_date.
+            metadata['raw_date'] = metadata['date']
+            del metadata['date']
+        except KeyError:
+            pass
+        for key, value in sorted(metadata.items()):
+            ln = 'metadata.%s = %s\n' % (key, repr(value))
+            stream.write(ln.encode('utf-8'))
+        stream.write('\n'.encode('utf-8'))
+
     def write_header(self, stream):
         'Write header comments, and set the canvas size.'
         # Gather some document information.
@@ -1210,6 +1270,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                  pg.x, pg.y, pg.width, pg.height)
         header += '\n'
         stream.write(header.encode('utf-8'))
+        self._write_metadata(stream)
         self._write_license(stream)
 
     def save(self, stream):
