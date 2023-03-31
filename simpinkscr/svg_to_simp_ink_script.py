@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 import inkex
 from inkex.localization import inkex_gettext as _
 import math
+import pprint
 import re
 
 
@@ -1129,8 +1130,47 @@ class SvgToPythonScript(inkex.OutputExtension):
             seen.add(stmt)
         return ordered_code
 
-    def save(self, stream):
-        'Write Python code that regenerates the SVG to an output stream.'
+    def _write_license(self, stream):
+        '''If license data exists, write it to the stream.  This is a helper
+        method for write_header.'''
+        rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        cc = 'http://creativecommons.org/ns#'
+        meta = self.svg.metadata
+        info = {}
+
+        # Search for a license URL.
+        elt = meta.find('./{%s}RDF/{%s}Work/{%s}license' % (rdf, cc, cc))
+        if elt is not None:
+            info['url'] = elt.get('{%s}resource' % rdf)
+
+        # Search for permits, requires, and prohibits elements.
+        for key in ['permits', 'requires', 'prohibits']:
+            for elt in meta.findall('./{%s}RDF/{%s}License/{%s}%s' %
+                                    (rdf, cc, cc, key)):
+                res = elt.get('{%s}resource' % rdf)
+                if res is None:
+                    continue
+                try:
+                    info[key].append(res)
+                except KeyError:
+                    info[key] = [res]
+
+        # Remove keys with None values.  Write the license data, if any.
+        info = {k: v for k, v in info.items() if v is not None}
+        if info == {}:
+            return
+        stream.write("# Define the document's usage"
+                     " license.\n".encode('utf-8'))
+        pp = pprint.PrettyPrinter(width=68, sort_dicts=False)
+        prefix = 'info ='
+        for ln in pp.pformat(info).split('\n'):
+            ln = '%s %s\n' % (prefix, ln)
+            stream.write(ln.encode('utf-8'))
+            prefix = '      '
+        stream.write("\n".encode('utf-8'))
+
+    def write_header(self, stream):
+        'Write header comments, and set the canvas size.'
         # Gather some document information.
         try:
             # Inkscape 1.2+
@@ -1145,16 +1185,18 @@ class SvgToPythonScript(inkex.OutputExtension):
                  for node in self.svg.xpath('//inkscape:page')
                  if isinstance(node, inkex.Page)]
 
-        # Write some stock header code.
         header = '''\
-# This Python script is intended to be run from Inkscape's Simple
-# Inkscape Scripting extension.
+###################################################
+# This Python script is intended to be run from   #
+# Inkscape's Simple Inkscape Scripting extension. #
+###################################################
 
 '''
         canvas_cmt = '#'     # Normally comment out canvas modifications.
         if len(pages) >= 1:
             canvas_cmt = ''  # Set the canvas if we're also creating pages.
         header += '''\
+# Prepare the canvas.
 %scanvas.true_width = %.10g
 %scanvas.true_height = %.10g
 %scanvas.viewbox = %s
@@ -1168,8 +1210,15 @@ class SvgToPythonScript(inkex.OutputExtension):
                  pg.x, pg.y, pg.width, pg.height)
         header += '\n'
         stream.write(header.encode('utf-8'))
+        self._write_license(stream)
+
+    def save(self, stream):
+        'Write Python code that regenerates the SVG to an output stream.'
+        # Write some header code.
+        self.write_header(stream)
 
         # Convert shapes and other objects to Python.
+        stream.write('# Generate an image.\n'.encode('utf-8'))
         code = self.convert_all_shapes()
         self.find_dependencies(code)
         code = self.sort_statement_forest(code)
