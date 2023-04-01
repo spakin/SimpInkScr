@@ -1258,6 +1258,8 @@ class SvgToPythonScript(inkex.OutputExtension):
             svg_width = self.svg.width
             svg_height = self.svg.height
         svg_viewbox = self.svg.get_viewbox()
+        if svg_viewbox == [0, 0, 0, 0]:
+            svg_viewbox = [0, 0, svg_width, svg_height]
         pages = [node
                  for node in self.svg.xpath('//inkscape:page')
                  if isinstance(node, inkex.Page)]
