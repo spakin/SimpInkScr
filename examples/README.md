@@ -40,6 +40,7 @@ List of examples
 | [Linear gradient](linear_gradient.py) | Fill a shape with a gradient pattern. |
 | [Markers](markers.py) | Draw arrows with begin, middle, and ending markers. |
 | [Mask](mask.py) | Demonstrate how to apply a mask to a number of objects. |
+| [Metadata](metadata.py) | Add metadata to an image. |
 | [Move rectangles](move_rectangles.py) | Move all rectangles in the image 2cm to the right.  All other shapes are left alone. |
 | [New layer](new_layer.py) | Add a layer to an image. |
 | [Overlapping circles](overlapping_circles.py) | Draw an array of hundreds of overlapping circles. |
