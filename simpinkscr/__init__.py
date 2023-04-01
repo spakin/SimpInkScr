@@ -3,9 +3,10 @@ from random import *
 from inkex import Transform
 from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
     TepidQuadratic, Vert, ZoneClose
-from .simple_inkscape_scripting import style, transform, circle, ellipse, \
-    rect, line, polyline, polygon, regular_polygon, star, arc, path, \
-    connector, text, image, clone, duplicate, group, layer, hyperlink, \
-    inkex_object, filter_effect, linear_gradient, radial_gradient, \
-    clip_path, mask, marker, push_defaults, pop_defaults, path_effect, \
-    selected_shapes, all_shapes, guide
+from .simple_inkscape_scripting import all_pages, all_shapes, \
+    apply_path_operation, arc, circle, clip_path, clone, connector, \
+    duplicate, ellipse, filter_effect, foreign, group, guide, hyperlink, \
+    image, inkex_object, layer, linear_gradient, line, main, marker, mask, \
+    objects_from_svg_file, page, path_effect, path, polygon, polyline, \
+    pop_defaults, push_defaults, radial_gradient, randcolor, rect, \
+    regular_polygon, save_file, selected_shapes, star, style, text, transform
