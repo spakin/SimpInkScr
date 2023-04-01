@@ -394,6 +394,45 @@ foreign((20, 20), (380, 200), '''\
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
+class SimpInkScrTestMetadata(ComparisonMixin,
+                             InkscapeExtensionTestMixin,
+                             TestCase):
+    'Test examples from the Metadata wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
+        ("""--program=
+import datetime
+
+now = datetime.datetime.now()
+metadata.title = 'This, Too, is Not a Pipe'
+metadata.date = datetime.datetime(2023, 3, 31, 22, 14)
+metadata.creator = 'John Doe'
+metadata.rights = 'Copyright (C) %d John Doe' % now.year
+metadata.publisher = 'Awesome Artwork, Inc.'
+metadata.identifier = '10.5555/12345678'
+metadata.source = 'https://collections.lacma.org/node/239578'
+metadata.relation = 'isVersionOf "La Trahison des Images"'
+metadata.language = 'fr.BE'
+metadata.keywords = [
+    'tobacco pipe',
+    'painting',
+    'cursive writing'
+]
+metadata.coverage = 'Lessines, Belgium'
+metadata.description = 'Painting of a tobacco pipe on a solid' \\
+    ' background with the French phrase,' \\
+    ' "Ce n\\'est pas non plus un tuyau" handwritten beneath it'
+metadata.contributors = 'Fred Nerk'
+metadata.license = 'CC Attribution-ShareAlike'
+""",)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
+
+
 class SimpInkScrTestAdditional(ComparisonMixin,
                                InkscapeExtensionTestMixin,
                                TestCase):
