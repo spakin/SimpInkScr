@@ -1190,8 +1190,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                 'relation',
                 'language',
                 'coverage',
-                'description',
-                'contributors']:
+                'description']:
             try:
                 metadata[key] = work.find('./{%s}%s' % (dc, key)).text
             except AttributeError:
@@ -1201,7 +1200,8 @@ class SvgToPythonScript(inkex.OutputExtension):
         for key in [
                 'creator',
                 'rights',
-                'publisher']:
+                'publisher',
+                'contributors']:
             try:
                 metadata[key] = work.find('./{%s}%s/{%s}Agent/{%s}title' %
                                           (dc, key, cc, dc)).text

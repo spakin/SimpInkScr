@@ -2191,8 +2191,6 @@ class SimpleMetadata:
     @property
     def creator(self):
         "Return the document's creator as a string or None if not present."
-        # The document's creator is a <dc:title>, but specifying the full
-        # path distinguishes it from the document's <dc:title> title.
         try:
             return self._search_hierarchy(*self._agent_title('creator')).text
         except AttributeError:
@@ -2211,9 +2209,6 @@ class SimpleMetadata:
     def rights(self):
         """Return the document's rights statement as a string or None if
         not present."""
-        # The document's rights statement is a <dc:title>, but specifying
-        # the full path distinguishes it from the document's <dc:title>
-        # title.
         try:
             return self._search_hierarchy(*self._agent_title('rights')).text
         except AttributeError:
@@ -2232,8 +2227,6 @@ class SimpleMetadata:
     def publisher(self):
         """Return the document's publisher as a string or None if not
         present."""
-        # The document's publisher is a <dc:title>, but specifying the full
-        # path distinguishes it from the document's <dc:title> title.
         try:
             return self._search_hierarchy(*self._agent_title('publisher')).text
         except AttributeError:
@@ -2400,20 +2393,19 @@ class SimpleMetadata:
         """Return the document's contributors as a string or None if not
         present."""
         try:
-            return self._search_hierarchy((self.cc, 'Work'),
-                                          (self.dc, 'contributor')).text
+            elt = self._search_hierarchy(*self._agent_title('contributor'))
+            return elt.text
         except AttributeError:
             return None
 
     @contributors.setter
-    def contributors(self, contributors_str):
+    def contributors(self, contributor_str):
         "Set the document's contributors to a given string."
-        elt = self._create_hierarchy((self.cc, 'Work'),
-                                     (self.dc, 'contributor'))
-        if contributors_str is None:
+        elt = self._create_hierarchy(*self._agent_title('contributor'))
+        if contributor_str is None:
             elt.getparent().remove(elt)
             return
-        elt.text = contributors_str
+        elt.text = contributor_str
 
     @property
     def license(self):
