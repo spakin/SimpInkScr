@@ -1923,12 +1923,28 @@ class RectangularForeignObject(inkex.ForeignObject,
 class SimpleMetadata:
     'Provide a simple interface to document metadata.'
 
-    # Define the namespaces used by Inkscape metadata.
-    rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-    cc = 'http://creativecommons.org/ns#'
-    dc = 'http://purl.org/dc/elements/1.1/'
-
     def __init__(self):
+        # Define the namespaces used by Inkscape metadata.  Although this
+        # is a bit of a hack, use the namespaces from the <svg> element if
+        # available.  The reason is that xmlns:cc is sometimes set to
+        # http://creativecommons.org/ns# and sometimes to
+        # http://web.resource.org/cc/.  Use of the wrong one causes
+        # Inkscape not to recognize the metadata.
+        global _simple_top
+        svg = _simple_top.svg_root
+        try:
+            self.rdf = svg.nsmap['rdf']
+        except KeyError:
+            self.rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        try:
+            self.cc = svg.nsmap['cc']
+        except KeyError:
+            self.cc = 'http://creativecommons.org/ns#'
+        try:
+            self.dc = svg.nsmap['dc']
+        except KeyError:
+            self.dc = 'http://purl.org/dc/elements/1.1/'
+
         # Construct a database of Creative Commons licenses that matches
         # Inkscape's Licenses dialog.
         #

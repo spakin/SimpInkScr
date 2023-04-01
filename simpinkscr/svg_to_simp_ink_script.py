@@ -1133,21 +1133,20 @@ class SvgToPythonScript(inkex.OutputExtension):
     def _write_license(self, stream):
         '''If license data exists, write it to the stream.  This is a helper
         method for write_header.'''
-        rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-        cc = 'http://creativecommons.org/ns#'
         meta = self.svg.metadata
         info = {}
 
         # Search for a license URL.
-        elt = meta.find('./{%s}RDF/{%s}Work/{%s}license' % (rdf, cc, cc))
+        elt = meta.find('./{%s}RDF/{%s}Work/{%s}license' %
+                        (self.rdf, self.cc, self.cc))
         if elt is not None:
-            info['url'] = elt.get('{%s}resource' % rdf)
+            info['url'] = elt.get('{%s}resource' % self.rdf)
 
         # Search for permits, requires, and prohibits elements.
         for key in ['permits', 'requires', 'prohibits']:
             for elt in meta.findall('./{%s}RDF/{%s}License/{%s}%s' %
-                                    (rdf, cc, cc, key)):
-                res = elt.get('{%s}resource' % rdf)
+                                    (self.rdf, self.cc, self.cc, key)):
+                res = elt.get('{%s}resource' % self.rdf)
                 if res is None:
                     continue
                 try:
@@ -1172,11 +1171,8 @@ class SvgToPythonScript(inkex.OutputExtension):
     def _write_metadata(self, stream):
         '''Write various metadata to the stream.  This is a helper
         method for write_header.'''
-        rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-        cc = 'http://creativecommons.org/ns#'
-        dc = 'http://purl.org/dc/elements/1.1/'
         meta = self.svg.metadata
-        work = meta.find('./{%s}RDF/{%s}Work' % (rdf, cc))
+        work = meta.find('./{%s}RDF/{%s}Work' % (self.rdf, self.cc))
         if work is None:
             return
         metadata = {}
@@ -1192,7 +1188,7 @@ class SvgToPythonScript(inkex.OutputExtension):
                 'coverage',
                 'description']:
             try:
-                metadata[key] = work.find('./{%s}%s' % (dc, key)).text
+                metadata[key] = work.find('./{%s}%s' % (self.dc, key)).text
             except AttributeError:
                 pass
 
@@ -1203,16 +1199,18 @@ class SvgToPythonScript(inkex.OutputExtension):
                 'publisher',
                 'contributors']:
             try:
-                metadata[key] = work.find('./{%s}%s/{%s}Agent/{%s}title' %
-                                          (dc, key, cc, dc)).text
+                elt = work.find('./{%s}%s/{%s}Agent/{%s}title' %
+                                (self.dc, key, self.cc, self.dc))
+                metadata[key] = elt.text
             except AttributeError:
                 pass
 
         # Handle keywords specially.
-        bag = work.find('./{%s}subject/{%s}Bag' % (dc, rdf))
+        bag = work.find('./{%s}subject/{%s}Bag' % (self.dc, self.rdf))
         if bag is not None:
             metadata['keywords'] = [item.text
-                                    for item in bag.findall('./{%s}li' % rdf)]
+                                    for item in bag.findall('./{%s}li' %
+                                                            self.rdf)]
 
         # Write all of the metadata we found.
         if metadata == {}:
@@ -1231,6 +1229,25 @@ class SvgToPythonScript(inkex.OutputExtension):
 
     def write_header(self, stream):
         'Write header comments, and set the canvas size.'
+        # Define the namespaces used by Inkscape metadata.  Although this
+        # is a bit of a hack, use the namespaces from the <svg> element if
+        # available.  The reason is that xmlns:cc is sometimes set to
+        # http://creativecommons.org/ns# and sometimes to
+        # http://web.resource.org/cc/.  Use of the wrong one causes
+        # Inkscape not to recognize the metadata.
+        try:
+            self.rdf = self.svg.nsmap['rdf']
+        except KeyError:
+            self.rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        try:
+            self.cc = self.svg.nsmap['cc']
+        except KeyError:
+            self.cc = 'http://creativecommons.org/ns#'
+        try:
+            self.dc = self.svg.nsmap['dc']
+        except KeyError:
+            self.dc = 'http://purl.org/dc/elements/1.1/'
+
         # Gather some document information.
         try:
             # Inkscape 1.2+
