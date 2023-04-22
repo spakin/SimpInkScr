@@ -9,9 +9,31 @@ from inkex.tester import ComparisonMixin, InkscapeExtensionTestMixin, TestCase
 from inkex.tester.filters import CompareOrderIndependentStyle
 from unittest.mock import patch
 from io import StringIO
+import hashlib
+import re
 
 
-class SimpInkScrTestShapeConst(ComparisonMixin,
+class CustomComparisonMixin(ComparisonMixin):
+    def get_compare_cmpfile(self, args, addout=None):
+        """Generate an output file for the arguments given"""
+        if addout is not None:
+            args = list(args) + [str(addout)]
+        opstr = (
+            "__".join(args)
+            .replace(self.tempdir, "TMP_DIR")
+            .replace(self.datadir(), "DAT_DIR")
+        )
+        opstr = re.sub(r"[^\w-]", "__", opstr)
+        if opstr:
+            # Modification from ComparisonMixin: always hash.
+            opstr = hashlib.md5(opstr.encode("latin1")).hexdigest()
+            opstr = "__" + opstr
+        return self.data_file(
+            "refs", f"sis{opstr}.out", check_exists=False
+        )
+
+
+class SimpInkScrTestShapeConst(CustomComparisonMixin,
                                InkscapeExtensionTestMixin,
                                TestCase):
     'Test examples from the Shape Construction wiki page.'
@@ -61,7 +83,7 @@ t.add_text('!!!')
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestPathOps(ComparisonMixin,
+class SimpInkScrTestPathOps(CustomComparisonMixin,
                             InkscapeExtensionTestMixin,
                             TestCase):
     'Test examples from the Path Operations wiki page.'
@@ -86,7 +108,7 @@ box.append([hole1.reverse(), hole2.reverse()])
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestCommonArgs(ComparisonMixin,
+class SimpInkScrTestCommonArgs(CustomComparisonMixin,
                                InkscapeExtensionTestMixin,
                                TestCase):
     'Test examples from the Common Arguments wiki page.'
@@ -127,7 +149,7 @@ polyline([(64,128), (320,64), (384,128), (640, 64)],
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestEffects(ComparisonMixin,
+class SimpInkScrTestEffects(CustomComparisonMixin,
                             InkscapeExtensionTestMixin,
                             TestCase):
     'Test examples from the Effects wiki page.'
@@ -180,7 +202,7 @@ p.apply_path_effect(roughen)
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestAnimation(ComparisonMixin,
+class SimpInkScrTestAnimation(CustomComparisonMixin,
                               InkscapeExtensionTestMixin,
                               TestCase):
     'Test examples from the Animation wiki page.'
@@ -220,7 +242,7 @@ r1.animate(r4, duration='3s')
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestModExObjs(ComparisonMixin,
+class SimpInkScrTestModExObjs(CustomComparisonMixin,
                               InkscapeExtensionTestMixin,
                               TestCase):
     'Test examples from the Modifying Existing Objects wiki page.'
@@ -292,7 +314,7 @@ c.unremove()
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestOtherFeatures(ComparisonMixin,
+class SimpInkScrTestOtherFeatures(CustomComparisonMixin,
                                   InkscapeExtensionTestMixin,
                                   TestCase):
     'Test examples from the Other Features wiki page.'
@@ -330,7 +352,7 @@ guides.extend([g1, g2])
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestDocLayout(ComparisonMixin,
+class SimpInkScrTestDocLayout(CustomComparisonMixin,
                               InkscapeExtensionTestMixin,
                               TestCase):
     'Test examples from the Document Layout wiki page.'
@@ -364,7 +386,7 @@ pop_defaults()
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestAdvanced(ComparisonMixin,
+class SimpInkScrTestAdvanced(CustomComparisonMixin,
                              InkscapeExtensionTestMixin,
                              TestCase):
     'Test examples from the Advanced Usage wiki page.'
@@ -394,7 +416,7 @@ foreign((20, 20), (380, 200), '''\
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestMetadata(ComparisonMixin,
+class SimpInkScrTestMetadata(CustomComparisonMixin,
                              InkscapeExtensionTestMixin,
                              TestCase):
     'Test examples from the Metadata wiki page.'
@@ -433,7 +455,7 @@ metadata.license = 'CC Attribution-ShareAlike'
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrTestAdditional(ComparisonMixin,
+class SimpInkScrTestAdditional(CustomComparisonMixin,
                                InkscapeExtensionTestMixin,
                                TestCase):
     'Test additional snippets of code to increase coverage.'
@@ -458,7 +480,7 @@ p.to_path(all_curves=True)
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
-class SimpInkScrModifyTest(ComparisonMixin,
+class SimpInkScrModifyTest(CustomComparisonMixin,
                            InkscapeExtensionTestMixin,
                            TestCase):
     effect_class = SimpleInkscapeScripting
@@ -472,7 +494,7 @@ for obj in all_shapes():
     ]
 
 
-class SimpInkScrOutputBasicTest(ComparisonMixin, TestCase):
+class SimpInkScrOutputBasicTest(CustomComparisonMixin, TestCase):
     effect_class = SvgToPythonScript
     compare_file = 'svg/shapes.svg'
     comparisons = [()]
