@@ -3334,6 +3334,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         sis_globals['extension'] = self
         sis_globals['canvas'] = _simple_top.canvas
         sis_globals['metadata'] = SimpleMetadata()
+        sis_globals['script_filename'] = None    # Modified below.
         try:
             # Inkscape 1.2+
             convert_unit = self.svg.viewport_to_unit
@@ -3362,6 +3363,7 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
             with open(self.options.py_source, encoding=enc) as fd:
                 code += fd.read()
             code += '\n'
+            sis_globals['script_filename'] = os.path.abspath(py_source)
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
 
