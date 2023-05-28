@@ -3118,6 +3118,13 @@ def apply_path_operation(op, paths):
     svg_root = _simple_top.svg_root
     ids_before = set([iobj.get_id() for iobj in svg_root.iter()])
 
+    # Remove but remember all layers that appear in the original image.
+    old_layers_iobjs = []
+    for obj in _simple_top.simple_objs:
+        if isinstance(obj, SimpleLayer):
+            old_layers_iobjs.append(obj.get_inkex_object())
+            obj.remove()
+
     # Construct an Inkscape action string.  As a special case, if the first
     # character of the operation is uppercase, assume we're using an older
     # (pre-1.2) version of Inkscape.  In this case we prepend "Selection"
@@ -3182,10 +3189,14 @@ def apply_path_operation(op, paths):
                 for iobj in old_iobjs
                 if iobj is not None]
 
-    # Set to None all old objects' underlying inkex object.  This will
+    # Set to None all old path objects' underlying inkex object.  This will
     # help catch errors if an old object is used inadvertently.
     for obj in paths:
         obj._inkscape_obj = None
+
+    # Recreate all layers.
+    for iobj in old_layers_iobjs:
+        inkex_object(iobj)
 
     # Return a list of old (but modified) objects and newly created
     # objects.
