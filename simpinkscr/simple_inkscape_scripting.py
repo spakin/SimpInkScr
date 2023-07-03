@@ -1569,7 +1569,7 @@ class SimplePathEffect(SVGOutputMixin):
 class SimpleGuide(SVGOutputMixin):
     'Represent an Inkscape guide.'
 
-    def __init__(self, pos, angle, color=None):
+    def __init__(self, pos, angle, color=None, label=None):
         'Create a guide at a given position and angle.'
         # pos is stored in user coordinates, and angle is clockwise.
         # In contrast, inkex expects pos to be relative to a
@@ -1578,6 +1578,7 @@ class SimpleGuide(SVGOutputMixin):
         self._inkscape_obj = inkex.elements.Guide()
         self._move_to_wrapper(pos, angle)
         self.color = color
+        self.label = label
 
     def get_inkex_object(self):
         "Return the guide's underlying inkex object."
@@ -1625,6 +1626,20 @@ class SimpleGuide(SVGOutputMixin):
         else:
             self._inkscape_obj.set('inkscape:color', str(c))
         self._color = c
+
+    @property
+    def label(self):
+        "Return the guide's label."
+        return self._label
+
+    @label.setter
+    def label(self, l):
+        "Change the guide's label."
+        if l is None:
+            self._inkscape_obj.attrib.pop('inkscape:label', None)
+        else:
+            self._inkscape_obj.set('inkscape:label', str(l))
+        self._label = l
 
     @classmethod
     def _from_inkex_object(self, iobj):
@@ -3042,9 +3057,9 @@ def all_shapes():
     return root_shapes + layer_shapes
 
 
-def guide(pos, angle, color=None):
+def guide(pos, angle, color=None, label=None):
     'Create a new guide without adding it to the document.'
-    return SimpleGuide(pos, angle, color)
+    return SimpleGuide(pos, angle, color, label)
 
 
 def page(name=None, pos=None, size=None):

@@ -1022,6 +1022,11 @@ class SvgToPythonScript(inkex.OutputExtension):
         if color is not None:
             extra = ', color=%s' % repr(color)
 
+        # Determine if we were given a label.
+        label = node.get('inkscape:label')
+        if label is not None:
+            extra += ', label=%s' % repr(label)
+
         # Generate code and wrap it in a statement.
         code = ['guides.append(guide((%.10g, %.10g), %.10g%s))' %
                 (pos[0], pos[1], angle, extra)]
