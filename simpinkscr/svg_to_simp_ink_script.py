@@ -1023,14 +1023,13 @@ class SvgToPythonScript(inkex.OutputExtension):
             extra = ', color=%s' % repr(color)
 
         # Determine if we were given a label.
-        extra_label = ''
         label = node.get('inkscape:label')
         if label is not None:
-            extra_label = ', label=%s' % repr(label)
+            extra += ', label=%s' % repr(label)
 
         # Generate code and wrap it in a statement.
         code = ['guides.append(guide((%.10g, %.10g), %.10g%s))' %
-                (pos[0], pos[1], angle, extra, extra_label)]
+                (pos[0], pos[1], angle, extra)]
         return self.Statement(code, node.get_id(), [])
 
     def convert_all_shapes(self):
