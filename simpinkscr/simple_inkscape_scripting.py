@@ -1590,8 +1590,7 @@ class SimpleGuide(SVGOutputMixin):
         self._pos = pos
         self._angle = angle
         pos = (pos[0], _simple_top.canvas.height - pos[1])
-        angle = -angle
-        self._inkscape_obj.move_to(pos[0], pos[1], angle)
+        self._inkscape_obj.move_to(pos[0], pos[1], 180 - angle)
 
     @property
     def position(self):
@@ -1633,13 +1632,13 @@ class SimpleGuide(SVGOutputMixin):
         return self._label
 
     @label.setter
-    def label(self, l):
+    def label(self, lbl):
         "Change the guide's label."
-        if l is None:
+        if lbl is None:
             self._inkscape_obj.attrib.pop('inkscape:label', None)
         else:
-            self._inkscape_obj.set('inkscape:label', str(l))
-        self._label = l
+            self._inkscape_obj.set('inkscape:label', str(lbl))
+        self._label = lbl
 
     @classmethod
     def _from_inkex_object(self, iobj):
@@ -1652,12 +1651,12 @@ class SimpleGuide(SVGOutputMixin):
         # Compute the angle at which the guide is oriented.
         try:
             # Inkscape 1.2+
-            angle = math.degrees(iobj.orientation.angle)
+            angle = 90 - math.degrees(iobj.orientation.angle)
         except AttributeError:
             # Inkscape 1.0 and 1.1
             orient = [float(s) for s in iobj.get('orientation').split(',')]
             angle = 180 - math.degrees(math.atan2(orient[0], orient[1]))
-        angle = -angle
+            angle = -angle
 
         # Return a Simple Inkscape Scripting SimpleGuide.
         return SimpleGuide(pos, angle)

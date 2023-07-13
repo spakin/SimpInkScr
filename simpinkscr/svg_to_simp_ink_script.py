@@ -1009,12 +1009,12 @@ class SvgToPythonScript(inkex.OutputExtension):
         # Compute the angle at which the guide is oriented.
         try:
             # Inkscape 1.2+
-            angle = math.degrees(node.orientation.angle)
+            angle = 90 - math.degrees(node.orientation.angle)
         except AttributeError:
             # Inkscape 1.0 and 1.1
             orient = [float(s) for s in node.get('orientation').split(',')]
             angle = 180 - math.degrees(math.atan2(orient[0], orient[1]))
-        angle = -angle
+            angle = -angle
 
         # Determine if we were given a color.
         extra = ''
