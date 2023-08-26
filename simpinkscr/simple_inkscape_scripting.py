@@ -65,6 +65,9 @@ _common_shape_style = {'stroke': 'black',
 # Store a stack of user-specified default transforms in _default_transform.
 _default_transform = [None]
 
+# Retain a reference to the user script's global variables.
+_user_globals = []
+
 
 def _debug_print(*args):
     'Implement print in terms of inkex.utils.debug.'
@@ -151,6 +154,45 @@ def _read_image_as_base64(fname):
     return b64, mime
 
 
+def _run_inkscape_and_replace_svg(action_str):
+    '''Invoke a set of actions in a child Inkscape then replace the current
+    SVG contents with those of the child Inkscape.'''
+    # Acquire references to global data.
+    global _simple_top, _user_globals
+    svg_root = _simple_top.svg_root
+
+    # Work within a temporary directory.
+    with TemporaryDirectory(prefix='inkscape-command-') as tmpdir:
+        # Write the current image to input.svg.
+        svg_file = inkex.command.write_svg(svg_root, tmpdir, 'input.svg')
+
+        # Change to svg_file's directory to support the hard-wired action,
+        # "export-filename:input.svg".
+        cwd = os.getcwd()
+        os.chdir(os.path.dirname(svg_file))
+
+        # Invoke another copy of Inkscape to perform the actions.
+        args = ['--batch-process']
+        if action_str[0].strip().islower():
+            # Newer version of Inkscape as indicated by actions beginning
+            # with lowercase letters.
+            instance_tag = ''.join(random.choices(string.ascii_letters, k=10))
+            args.append(f'--app-id-tag={instance_tag}')
+        inkex.command.inkscape(svg_file,
+                               *args,
+                               actions=action_str)
+
+        # Restore the previous directory.
+        os.chdir(cwd)
+
+        # Replace the current document with the modified one.
+        ext = _simple_top.extension
+        ext.document = inkex.load_svg(svg_file)
+        ext.svg = ext.document.getroot()
+        _simple_top.svg_root = ext.svg
+        _user_globals['svg_root'] = ext.svg
+
+
 def _abend(msg):
     'Abnormally end execution with an error message.'
     raise inkex.AbortExtension(msg)
@@ -233,7 +275,8 @@ class SimpleTopLevel():
         # Elide the Simple Inkscape Scripting object and dissociate the
         # underlying inkex object from its parent.
         self.simple_objs = [o for o in self.simple_objs if o is not obj]
-        obj._inkscape_obj.delete()
+        if obj._inkscape_obj is not None:
+            obj._inkscape_obj.delete()
 
     def last_obj(self):
         'Return the last Simple Inkscape Scripting object added by append_obj.'
@@ -2923,8 +2966,11 @@ def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
         return gr
     if isinstance(iobj, inkex.Marker):
         return SimpleMarker(iobj, **style)
-    return SimpleObject(iobj, merged_xform, conn_avoid, clip_path, mask,
-                        base_style, style)
+    if isinstance(iobj, inkex.ShapeElement):
+        return SimpleObject(iobj, merged_xform, conn_avoid, clip_path, mask,
+                            base_style, style)
+    _abend(_('object %s could not be converted to a'
+             ' Simple Inkscape Scripting object' % repr(iobj)))
 
 
 def filter_effect(name=None, pt1=None, pt2=None, filter_units=None,
@@ -3111,6 +3157,110 @@ def objects_from_svg_file(file, keep_layers=False):
     return objs
 
 
+def apply_action(action, obj=None):
+    '''Apply a one or more Inkscape actions to the document.  This call
+    launches a separate Inkscape process so it may be slow.  No checking is
+    performed on the action to ensure it is acceptable to Inkscape.  The
+    function returns a list of newly created Simple Inkscape Scripting
+    objects.'''
+    # Reject the trivial case up front.
+    if isinstance(action, str):
+        action_list = [action]
+    else:
+        # Assume we have an iterable.
+        action_list = action
+        if len(action_list) == 0:
+            return set()
+
+    # Acquire a list of IDs for any objects to select.
+    if obj is None:
+        id_list = []
+    elif isinstance(obj, collections.abc.Iterable):
+        id_list = [o.get_inkex_object().get_id() for o in obj]
+    else:
+        id_list = [obj.get_inkex_object().get_id()]
+
+    # Store a map from all object IDs that appear in the original image to
+    # the object represented by that ID.
+    global _simple_top
+    svg_root = _simple_top.svg_root
+    id2iobj_before = {iobj.get_id(): iobj for iobj in svg_root.iter()}
+
+    # Construct an Inkscape action string.  As a special case, if the first
+    # character of the operation is uppercase, assume we're using an older
+    # (pre-1.2) version of Inkscape.  In this case we prepend "Selection"
+    # instead of "path-" and use different actions to save the file.
+    action_chunks = []
+    action_chunks.extend(['select-by-id:' + obj_id for obj_id in id_list])
+    action_chunks.extend(action_list)
+    old_inkscape = action_list[0].isupper()
+    if old_inkscape:
+        # Inkscape 1.0 or 1.1
+        action_chunks.extend([f'Selection{op}', 'FileSave', 'FileQuit'])
+    else:
+        # Inkscape 1.2+
+        action_chunks.extend(['export-filename:input.svg',
+                              'export-overwrite',
+                              'export-do',
+                              'quit-immediate'])
+    action_str = ';'.join(action_chunks)
+
+    # Perform the actions within a child Inkscape.
+    _run_inkscape_and_replace_svg(action_str)
+
+    # Store a map from all object IDs that appear in the new image to the
+    # object represented by that ID.
+    svg_root = _simple_top.svg_root
+    id2iobj_after = {iobj.get_id(): iobj for iobj in svg_root.iter()}
+
+    # Replace IDs for all objects that persist across the call but changed
+    # object type.  This will cause them to appear as new objects.
+    for new_id, new_iobj in id2iobj_after.items():
+        new_tag = new_iobj.tag_name
+        try:
+            old_iobj = id2iobj_before[new_id]
+            old_tag = old_iobj.tag_name
+            if new_tag != old_tag:
+                new_iobj.set_random_id(backlinks=True)
+        except KeyError:
+            pass
+    ids_before = {iobj.get_id() for iobj in id2iobj_before.values()}
+    ids_after = {iobj.get_id() for iobj in id2iobj_after.values()}
+
+    def process_obj_changes(obj_list):
+        '''Set to None all old objects' underlying inkex object if it doesn't
+        exist in the new SVG.  This will help catch errors if an old object
+        is used inadvertently.'''
+        nonlocal ids_after
+        for obj in obj_list:
+            obj_id = obj.get_inkex_object().get_id()
+            if obj_id not in ids_after:
+                obj._inkscape_obj = None
+            else:
+                obj._inkscape_obj = svg_root.getElementById(obj_id)
+            if isinstance(obj, SimpleGroup):
+                process_obj_changes(list(obj))
+
+    # Update existing objects.
+    process_obj_changes(_simple_top.simple_objs)
+
+    # Elide all newly deleted objects from _simple_top.
+    for obj in _simple_top.simple_objs:
+        if obj._inkscape_obj is None:
+            _simple_top.remove_obj(obj)
+
+    # Return a set of newly created Simple Inkscape Scripting objects.
+    new_sis_objs = set()
+    for oid in ids_after.difference(ids_before):
+        iobj = svg_root.getElementById(oid)
+        try:
+            new_sis_objs.add(inkex_object(iobj))
+        except inkex.AbortExtension:
+            # Object type is not recognized by Simple Inkscape Scripting.
+            pass
+    return new_sis_objs
+
+
 def apply_path_operation(op, paths):
     '''Apply a named path operation (technically, an action named without
     the initial "path-") to one or more objects.  This call launches a
@@ -3154,33 +3304,8 @@ def apply_path_operation(op, paths):
         action_str += f';path-{op};export-filename:input.svg;' + \
             'export-overwrite;export-do;quit-immediate'
 
-    # Work within a temporary directory.
-    with TemporaryDirectory(prefix='inkscape-command-') as tmpdir:
-        # Write the current image to input.svg.
-        svg_file = inkex.command.write_svg(svg_root, tmpdir, 'input.svg')
-
-        # Change to svg_file's directory to support the hard-wired action,
-        # "export-filename:input.svg".
-        cwd = os.getcwd()
-        os.chdir(os.path.dirname(svg_file))
-
-        # Invoke another copy of Inkscape to perform the actions.
-        args = ['--batch-process']
-        if not old_inkscape:
-            instance_tag = ''.join(random.choices(string.ascii_letters, k=10))
-            args.append(f'--app-id-tag={instance_tag}')
-        inkex.command.inkscape(svg_file,
-                               *args,
-                               actions=action_str)
-
-        # Restore the previous directory.
-        os.chdir(cwd)
-
-        # Replace the current document with the modified one.
-        ext = _simple_top.extension
-        ext.document = inkex.load_svg(svg_file)
-        ext.svg = ext.document.getroot()
-        _simple_top = SimpleTopLevel(ext.svg, ext)
+    # Perform the actions within a child Inkscape.
+    _run_inkscape_and_replace_svg(action_str)
 
     # Construct a list of all objects that were created by the operation.
     svg_root = _simple_top.svg_root
@@ -3342,7 +3467,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
     def effect(self):
         'Generate objects from user-provided Python code.'
         # Prepare global values we use internally.
-        global _simple_top, _simple_pages
+        global _simple_top, _simple_pages, _user_globals
         _simple_top = SimpleTopLevel(self.svg, self)
 
         # The following must be executed after _simple_top has been
@@ -3351,15 +3476,15 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         _simple_top.simple_pages = _simple_top.get_existing_pages()
 
         # Prepare global values we want to export.
-        sis_globals = globals().copy()
-        sis_globals['svg_root'] = self.svg
-        sis_globals['guides'] = _simple_top.get_existing_guides()
-        sis_globals['print'] = _debug_print
-        sis_globals['user_args'] = self.options.user_args
-        sis_globals['extension'] = self
-        sis_globals['canvas'] = _simple_top.canvas
-        sis_globals['metadata'] = SimpleMetadata()
-        sis_globals['script_filename'] = None    # Modified below.
+        _user_globals = globals().copy()
+        _user_globals['svg_root'] = self.svg
+        _user_globals['guides'] = _simple_top.get_existing_guides()
+        _user_globals['print'] = _debug_print
+        _user_globals['user_args'] = self.options.user_args
+        _user_globals['extension'] = self
+        _user_globals['canvas'] = _simple_top.canvas
+        _user_globals['metadata'] = SimpleMetadata()
+        _user_globals['script_filename'] = None    # Modified below.
         try:
             # Inkscape 1.2+
             convert_unit = self.svg.viewport_to_unit
@@ -3367,8 +3492,8 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
             # Inkscape 1.0 and 1.1
             convert_unit = self.svg.unittouu
         for unit in ['mm', 'cm', 'pt', 'px']:
-            sis_globals[unit] = convert_unit('1' + unit)
-        sis_globals['inch'] = \
+            _user_globals[unit] = convert_unit('1' + unit)
+        _user_globals['inch'] = \
             convert_unit('1in')  # "in" is a keyword.
 
         # Construct a string of code to execute by combining code read
@@ -3388,7 +3513,7 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
             with open(self.options.py_source, encoding=enc) as fd:
                 code += fd.read()
             code += '\n'
-            sis_globals['script_filename'] = os.path.abspath(py_source)
+            _user_globals['script_filename'] = os.path.abspath(py_source)
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
 
@@ -3398,10 +3523,10 @@ from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
 
         # Launch the user's script.
         try:
-            exec(code, sis_globals)
+            exec(code, _user_globals)
         except SystemExit:
             pass
-        _simple_top.replace_all_guides(sis_globals['guides'])
+        _simple_top.replace_all_guides(_user_globals['guides'])
 
 
 def main():
