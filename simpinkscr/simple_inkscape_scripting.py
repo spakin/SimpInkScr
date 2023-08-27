@@ -340,6 +340,18 @@ class SimpleTopLevel():
             return True
         return False
 
+    def all_known_objects(self, from_objs=None):
+        '''Return a postorder traversal of all Simple Inkscape Scripting
+        objects reachable from the top-level objects.'''
+        if from_objs is None:
+            from_objs = self.simple_objs
+        all_objs = []
+        for obj in from_objs:
+            if isinstance(obj, SimpleGroup):
+                all_objs.extend(self.all_known_objects(obj))
+            all_objs.append(obj)
+        return all_objs
+
 
 class SVGOutputMixin():
     '''Provide an svg method for converting an underlying inkex object to
@@ -3227,27 +3239,16 @@ def apply_action(action, obj=None):
     ids_before = {iobj.get_id() for iobj in id2iobj_before.values()}
     ids_after = {iobj.get_id() for iobj in id2iobj_after.values()}
 
-    def process_obj_changes(obj_list):
-        '''Set to None all old objects' underlying inkex object if it doesn't
-        exist in the new SVG.  This will help catch errors if an old object
-        is used inadvertently.'''
-        nonlocal ids_after
-        for obj in obj_list:
-            obj_id = obj.get_inkex_object().get_id()
-            if obj_id not in ids_after:
-                obj._inkscape_obj = None
-            else:
-                obj._inkscape_obj = svg_root.getElementById(obj_id)
-            if isinstance(obj, SimpleGroup):
-                process_obj_changes(list(obj))
-
-    # Update existing objects.
-    process_obj_changes(_simple_top.simple_objs)
-
-    # Elide all newly deleted objects from _simple_top.
-    for obj in _simple_top.simple_objs:
-        if obj._inkscape_obj is None:
-            _simple_top.remove_obj(obj)
+    # Update existing objects, removing them and setting their underlying
+    # inkex object is None if the object has been deleted.  This code
+    # assumes that all_known_objects uses a postorder traversal.
+    for obj in _simple_top.all_known_objects():
+        obj_id = obj.get_inkex_object().get_id()
+        if obj_id not in ids_after:
+            obj.remove()
+            obj._inkscape_obj = None
+        else:
+            obj._inkscape_obj = svg_root.getElementById(obj_id)
 
     # Return a set of newly created Simple Inkscape Scripting objects.
     new_sis_objs = set()
