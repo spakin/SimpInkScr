@@ -288,6 +288,13 @@ S = path([Move(57, 13),
           ZoneClose()],
          fill='#decd87', stroke_width=5)
 '''
+    z_order = '''
+boxes = []
+ul = inkex.Vector2d()
+for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
+    boxes.append(rect(ul, ul + (100, 60), fill=c, opacity=0.9))
+    ul += (10, 10)
+'''
 
     # Define a sequence of tests.
     comparisons = [
@@ -309,7 +316,12 @@ c = circle((75, 75), 38, fill='darkturquoise', stroke_width=2)
 rect((0, 0), (75, 75), fill='aquamarine', stroke_width=2)
 c.remove()
 c.unremove()
-''',)
+''',),
+        ("--program=%s\nboxes[0].z_order('top')" % z_order,),
+        ("--program=%s\nboxes[-1].z_order('bottom')" % z_order,),
+        ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
+        ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
+        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 
@@ -321,15 +333,6 @@ class SimpInkScrTestOtherFeatures(CustomComparisonMixin,
     # Indicate how testing should be performed.
     effect_class = SimpleInkscapeScripting
     compare_filters = [CompareOrderIndependentStyle()]
-
-    # Define a helper string.
-    z_order = '''
-boxes = []
-ul = inkex.Vector2d()
-for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
-    boxes.append(rect(ul, ul + (100, 60), fill=c, opacity=0.9))
-    ul += (10, 10)
-'''
 
     # Define a sequence of tests.
     comparisons = [
@@ -343,11 +346,6 @@ g1 = guide((0, 0), 10)
 g2 = guide((canvas.width, canvas.height), 10, color='#00ff00')
 guides.extend([g1, g2])
 ''',),
-        ("--program=%s\nboxes[0].z_order('top')" % z_order,),
-        ("--program=%s\nboxes[-1].z_order('bottom')" % z_order,),
-        ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
-        ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
-        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,),
         ('''--program=
 r = rect((100, 100), (200, 200), stroke_width=16, stroke='#000080', fill='#add8e6')
 new_objs = apply_action('object-stroke-to-path', r)
