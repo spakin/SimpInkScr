@@ -347,7 +347,17 @@ guides.extend([g1, g2])
         ("--program=%s\nboxes[-1].z_order('bottom')" % z_order,),
         ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
         ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
-        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,)
+        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,),
+        ('''--program=
+r = rect((100, 100), (200, 200), stroke_width=16, stroke='#000080', fill='#add8e6')
+new_objs = apply_action('object-stroke-to-path', r)
+for obj in new_objs:
+    try:
+        if obj.style()['fill'] == '#000080':
+            obj.translate_path((50, 50))
+    except KeyError:
+        pass
+''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 

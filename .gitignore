@@ -1,8 +1,9 @@
-/*.egg-info
 /build
 /dist
-/sbdist
+/*.egg-info
 __pycache__/
-tests/__pycache__/
+/sbdist
+tests/data/cmd/
 tests/data/refs/simple_inkscape_scripting*.out.export
 tests/data/refs/svg_to_simp_ink_script*.out.export
+tests/__pycache__/
