@@ -3251,19 +3251,19 @@ def apply_action(action, obj=None):
         else:
             obj._inkscape_obj = svg_root.getElementById(obj_id)
 
-    # Acquire a set of newly created objects, each converted to a Simple
+    # Acquire a list of newly created objects, each converted to a Simple
     # Inkscape Scripting object.
-    new_sis_objs = set()
+    new_sis_objs = []
     for oid in ids_after.difference(ids_before):
         iobj = svg_root.getElementById(oid)
         try:
-            new_sis_objs.add(inkex_object(iobj))
+            new_sis_objs.append(inkex_object(iobj))
         except inkex.AbortExtension:
             # Object type is not recognized by Simple Inkscape Scripting.
             pass
 
     # Assign a parent to each created object.
-    iobj2obj = {o.get_inkex_object(): o for o in all_objs + list(new_sis_objs)}
+    iobj2obj = {o.get_inkex_object(): o for o in all_objs + new_sis_objs}
     for obj in new_sis_objs:
         # Identify a mismatch between the SIS object's parent and the SIS
         # object corresponding to the SIS object's inkex object's parent.
@@ -3301,69 +3301,24 @@ def apply_path_operation(op, paths):
         if not isinstance(p, SimplePathObject):
             _abend(_('apply_path_operation was passed a non-path object'))
 
-    # Store the set of all object IDs that appear in the original image.
-    global _simple_top
-    svg_root = _simple_top.svg_root
-    ids_before = set([iobj.get_id() for iobj in svg_root.iter()])
-
-    # Remove but remember all layers that appear in the original image.
-    old_layers_iobjs = []
-    for obj in _simple_top.simple_objs:
-        if isinstance(obj, SimpleLayer):
-            old_layers_iobjs.append(obj.get_inkex_object())
-            obj.remove()
-
-    # Construct an Inkscape action string.  As a special case, if the first
-    # character of the operation is uppercase, assume we're using an older
-    # (pre-1.2) version of Inkscape.  In this case we prepend "Selection"
-    # instead of "path-" and use different actions to save the file.
-    id_list = [obj._inkscape_obj.get_id() for obj in paths]
-    action_str = ';'.join(['select-by-id:' + obj_id for obj_id in id_list])
+    # Convert op to an action string.
     old_inkscape = op[0].isupper()
     if old_inkscape:
         # Inkscape 1.0 or 1.1
-        action_str += f';Selection{op};FileSave;FileQuit'
+        action_str = 'Selection' + op
     else:
         # Inkscape 1.2+
-        action_str += f';path-{op};export-filename:input.svg;' + \
-            'export-overwrite;export-do;quit-immediate'
+        action_str = 'path-' + op
 
-    # Perform the actions within a child Inkscape.
-    _run_inkscape_and_replace_svg(action_str)
+    # Invoke the more general apply_action function to perform the bulk of
+    # the work.
+    new_objs = apply_action(action_str, paths)
 
-    # Construct a list of all objects that were created by the operation.
-    svg_root = _simple_top.svg_root
-    ids_after = set([iobj.get_id() for iobj in svg_root.iter()])
-    new_ids = ids_after.difference(ids_before)
-    new_iobjs = [svg_root.getElementById(iobj_id)
-                 for iobj_id in new_ids]
-    new_iobjs = [iobj
-                 for iobj in new_iobjs
-                 if isinstance(iobj, inkex.PathElement)]
-    new_objs = [inkex_object(iobj) for iobj in new_iobjs]
-
-    # Construct a list of all objects that were passed into
-    # apply_path_operation and that still exist.  The corresponding Simple
-    # Inkscape Scripting object needs to be recreated because it likely
-    # changed as a result of the path operation.
-    old_ids = [obj._inkscape_obj.get_id() for obj in paths]
-    old_iobjs = [svg_root.getElementById(obj_id) for obj_id in old_ids]
-    old_objs = [inkex_object(iobj)
-                for iobj in old_iobjs
-                if iobj is not None]
-
-    # Set to None all old path objects' underlying inkex object.  This will
-    # help catch errors if an old object is used inadvertently.
-    for obj in paths:
-        obj._inkscape_obj = None
-
-    # Recreate all layers.
-    for iobj in old_layers_iobjs:
-        inkex_object(iobj)
-
-    # Return a list of old (but modified) objects and newly created
-    # objects.
-    return old_objs + new_objs
+    # Return the subset of old path objects that still exist plus the
+    # subset of new objects that represent paths.
+    old_paths = [obj for obj in paths if obj.get_inkex_object() is not None]
+    new_paths = [obj for obj in new_objs if isinstance(obj, SimplePathObject)]
+    return old_paths + new_paths
 
 
 def save_file(file=None):
