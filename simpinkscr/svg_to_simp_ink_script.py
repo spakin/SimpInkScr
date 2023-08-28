@@ -767,7 +767,7 @@ class SvgToPythonScript(inkex.OutputExtension):
             # The stop offset is a mandatory field.
             if not isinstance(stop, inkex.Stop):
                 continue
-            stop_args = [str(self._svg_str_to_python(stop.offset))]
+            stop_args = [str(self._svg_str_to_python(str(stop.offset)))]
 
             # stop-color and stop-opacity can be expressed directly or
             # within a style.  We therefore have to look in both places.

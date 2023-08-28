@@ -1644,8 +1644,14 @@ class SimpleGuide(SVGOutputMixin):
         global _simple_top
         self._pos = pos
         self._angle = angle
-        pos = (pos[0], _simple_top.canvas.height - pos[1])
-        self._inkscape_obj.move_to(pos[0], pos[1], 180 - angle)
+        try:
+            # Inkscape 1.3+
+            nv = _simple_top.svg_root.namedview
+            self._inkscape_obj = nv.add_guide((pos[0], pos[1]), float(angle))
+        except AttributeError:
+            # Older Inkscapes
+            pos = (pos[0], _simple_top.canvas.height - pos[1])
+            self._inkscape_obj.move_to(pos[0], pos[1], 180 - angle)
 
     @property
     def position(self):
@@ -1699,11 +1705,8 @@ class SimpleGuide(SVGOutputMixin):
     def _from_inkex_object(self, iobj):
         '''Create a Simple Inkscape Scripting SimpleGuide from an inkex
         Guide object.'''
-        # Convert the point from the pre-Inkscape 1.0 coordinate system.
-        pt = iobj.point
-        pos = (pt.x, _simple_top.canvas.height - pt.y)
-
         # Compute the angle at which the guide is oriented.
+        pos = iobj.position
         try:
             # Inkscape 1.2+
             angle = 90 - math.degrees(iobj.orientation.angle)
@@ -3262,6 +3265,12 @@ def apply_action(action, obj=None):
             # Object type is not recognized by Simple Inkscape Scripting.
             pass
 
+    # Sort new_sis_objs by the underlying inkex objects' order in the SVG
+    # file.
+    svg_order = {iobj: num
+                 for iobj, num in zip(svg_root.iter(), range(2**31))}
+    new_sis_objs.sort(key=lambda k: svg_order[k.get_inkex_object()])
+
     # Assign a parent to each created object.
     iobj2obj = {o.get_inkex_object(): o for o in all_objs + new_sis_objs}
     for obj in new_sis_objs:
@@ -3281,7 +3290,7 @@ def apply_action(action, obj=None):
             # nothing and hope for the best.
             pass
 
-    # Return the set of newly created objects.
+    # Return the list of newly created objects.
     return new_sis_objs
 
 
