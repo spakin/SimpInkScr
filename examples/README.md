@@ -50,7 +50,7 @@ List of examples
 | [Sierpinski triangle](sierpinski_triangle.py) | Draw a colorful Sierpinski triangle. |
 | [Speedometer](speedometer.py) | Draw an unnumbered speedometer. |
 | [Star groups](star_groups.py) | Draw rows of stars with the stars in each row grouped together. |
-| [Stroke to path](stroke_to_path.py) | Show how to invoke Inkscape's *Path* → *Stroke to Path* function. |
+| [Stroke to path](stroke_to_path.py) | Invoke Inkscape's *Path* → *Stroke to Path* function. |
 | [Text flow](text_flow.py) | Flow text into a frame. |
 | [Text path](text_path.py) | Place text on a curved path. |
 | [Turtle spiral](turtle_spiral.py) | Create a path using turtle graphics and render it. |

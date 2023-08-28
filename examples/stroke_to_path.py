@@ -1,7 +1,6 @@
-############################################################
-# Show how Simple Inkscape Scripting can invoke Inkscape's #
-# *Path* → *Stroke to Path* function.                      #
-############################################################
+#########################################################
+# Invoke Inkscape's *Path* → *Stroke to Path* function. #
+#########################################################
 
 r = rect((100, 100), (200, 200),
          stroke_width=16, stroke='#000080', fill='#add8e6')
