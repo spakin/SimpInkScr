@@ -3225,8 +3225,8 @@ def apply_action(action, obj=None):
     svg_root = _simple_top.svg_root
     id2iobj_after = {iobj.get_id(): iobj for iobj in svg_root.iter()}
 
-    # Replace IDs for all objects that persist across the call but changed
-    # object type.  This will cause them to appear as new objects.
+    # Replace IDs for all objects that persisted across the call but
+    # changed object type.  This will cause them to appear as new objects.
     for new_id, new_iobj in id2iobj_after.items():
         new_tag = new_iobj.tag_name
         try:
@@ -3242,7 +3242,8 @@ def apply_action(action, obj=None):
     # Update existing objects, removing them and setting their underlying
     # inkex object is None if the object has been deleted.  This code
     # assumes that all_known_objects uses a postorder traversal.
-    for obj in _simple_top.all_known_objects():
+    all_objs = _simple_top.all_known_objects()
+    for obj in all_objs:
         obj_id = obj.get_inkex_object().get_id()
         if obj_id not in ids_after:
             obj.remove()
@@ -3250,7 +3251,8 @@ def apply_action(action, obj=None):
         else:
             obj._inkscape_obj = svg_root.getElementById(obj_id)
 
-    # Return a set of newly created Simple Inkscape Scripting objects.
+    # Acquire a set of newly created objects, each converted to a Simple
+    # Inkscape Scripting object.
     new_sis_objs = set()
     for oid in ids_after.difference(ids_before):
         iobj = svg_root.getElementById(oid)
@@ -3259,6 +3261,27 @@ def apply_action(action, obj=None):
         except inkex.AbortExtension:
             # Object type is not recognized by Simple Inkscape Scripting.
             pass
+
+    # Assign a parent to each created object.
+    iobj2obj = {o.get_inkex_object(): o for o in all_objs + list(new_sis_objs)}
+    for obj in new_sis_objs:
+        # Identify a mismatch between the SIS object's parent and the SIS
+        # object corresponding to the SIS object's inkex object's parent.
+        try:
+            # The object's parent is known to Simple Inkscape Scripting.
+            iobj_parent = iobj2obj[obj.get_inkex_object().getparent()]
+            if obj.parent != iobj_parent:
+                # Move the parent to the top level then reparent it to its
+                # proper parent.
+                _simple_top.append_obj(obj)
+                iobj_parent.append(obj)
+        except KeyError:
+            # The object's parent is not known to Simple Inkscape
+            # Scripting.  It may be the default layer, for instance.  Do
+            # nothing and hope for the best.
+            pass
+
+    # Return the set of newly created objects.
     return new_sis_objs
 
 
