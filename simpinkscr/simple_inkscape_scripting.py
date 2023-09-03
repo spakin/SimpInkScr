@@ -1707,8 +1707,16 @@ class SimpleGuide(SVGOutputMixin):
     def _from_inkex_object(self, iobj):
         '''Create a Simple Inkscape Scripting SimpleGuide from an inkex
         Guide object.'''
+        # Find the guide's anchor point.
+        try:
+            # Inkscape 1.3+
+            pos = iobj.position
+        except AttributeError:
+            # Inkscape 1.2 and earlier
+            pt = iobj.point
+            pos = (pt.x, _simple_top.canvas.height - pt.y)
+
         # Compute the angle at which the guide is oriented.
-        pos = iobj.position
         try:
             # Inkscape 1.2+
             angle = 90 - math.degrees(iobj.orientation.angle)
