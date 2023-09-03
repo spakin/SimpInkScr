@@ -190,6 +190,7 @@ def _run_inkscape_and_replace_svg(action_str):
         ext.document = inkex.load_svg(svg_file)
         ext.svg = ext.document.getroot()
         _simple_top.svg_root = ext.svg
+        _simple_top.svg_attach = _simple_top.find_attach_point()
         _user_globals['svg_root'] = ext.svg
 
 
@@ -424,6 +425,7 @@ class SimpleObject(SVGOutputMixin):
         self._inkscape_obj = obj
         if obj.getparent() is None and self._track:
             _simple_top.append_obj(self)
+            _simple_top.svg_attach.append(obj)
         self.parent = None
 
     def __str__(self):
@@ -1329,7 +1331,7 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
         # Add each object to the top level.
         if objs is None:
             objs = self._children
-        elif not isinstance(objs, list):
+        elif not isinstance(objs, collections.abc.Iterable):
             objs = [objs]   # Convert scalar to list
         global _simple_top
         for o in objs:
@@ -2957,7 +2959,7 @@ def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
     except TypeError:
         # Inkscape 1.0 and 1.1
         merged_xform = inkex.Transform(transform) * iobj.transform
-    base_style = iobj.style
+    base_style = dict(iobj.style)
     if isinstance(iobj, inkex.PathElement):
         return SimplePathObject(iobj, merged_xform, conn_avoid, clip_path,
                                 mask, base_style, style)
@@ -3257,9 +3259,14 @@ def apply_action(action, obj=None):
     # Acquire a list of newly created objects, each converted to a Simple
     # Inkscape Scripting object.
     new_sis_objs = []
-    for oid in ids_after.difference(ids_before):
+    new_ids = ids_after.difference(ids_before)
+    for oid in new_ids:
         iobj = svg_root.getElementById(oid)
         try:
+            if iobj.getparent().get_id() in new_ids:
+                # If the object's parent is also new, inkex_object will
+                # convert the object as part of converting its parent.
+                continue
             new_sis_objs.append(inkex_object(iobj))
         except inkex.AbortExtension:
             # Object type is not recognized by Simple Inkscape Scripting.
@@ -3277,9 +3284,10 @@ def apply_action(action, obj=None):
         # Identify a mismatch between the SIS object's parent and the SIS
         # object corresponding to the SIS object's inkex object's parent.
         try:
-            # The object's parent is known to Simple Inkscape Scripting.
+            # The object's parent is either None or is known to Simple
+            # Inkscape Scripting.
             iobj_parent = iobj2obj[obj.get_inkex_object().getparent()]
-            if obj.parent != iobj_parent:
+            if obj.parent is not None and obj.parent != iobj_parent:
                 # Move the parent to the top level then reparent it to its
                 # proper parent.
                 _simple_top.append_obj(obj)
@@ -3290,8 +3298,9 @@ def apply_action(action, obj=None):
             # nothing and hope for the best.
             pass
 
-    # Return the list of newly created objects.
-    return new_sis_objs
+    # Return the list of newly created objects, including all of their
+    # descendants.
+    return _simple_top.all_known_objects(from_objs=new_sis_objs)
 
 
 def apply_path_operation(op, paths):
