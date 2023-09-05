@@ -3510,6 +3510,8 @@ from math import *
 from random import *
 from inkex.paths import Arc, Curve, Horz, Line, Move, Quadratic, Smooth, \
     TepidQuadratic, Vert, ZoneClose
+from inkex.paths import curve, horz, move, quadratic, smooth, \
+    tepidQuadratic, vert, zoneClose
 '''
         py_source = self.options.py_source
         if py_source is not None and not os.path.isdir(py_source):

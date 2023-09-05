@@ -41,9 +41,6 @@ class SvgToPythonScript(inkex.OutputExtension):
     # SVG uses both spaces and commas to separate numbers.
     sep_re = re.compile(r'[\s,]+')
 
-    # We separate command characters in path strings from adjoining numbers.
-    char_re = re.compile(r'([A-Za-z])')
-
     class Statement(object):
         '''Represent a Python statement (or multiple related statements)
         plus dependencies.'''
@@ -444,18 +441,17 @@ class SvgToPythonScript(inkex.OutputExtension):
             return self.convert_connector(node)
 
         # Handle the case of a generic path.
-        d_str = node.get('inkscape:original-d') or node.get('d')
-        d_str = self.char_re.sub(r' \1 ', d_str).strip()
-        toks = self.sep_re.split(d_str)
         cmds = []
-        for t in toks:
-            try:
-                # Number
-                f = float(t)
-                cmds.append(t)
-            except ValueError:
-                # String
-                cmds.append(repr(t))
+        d_str = node.get('inkscape:original-d') or node.get('d')
+        path_obj = inkex.Path(d_str)
+        for c in path_obj:
+            cmd_name = c.name
+            if cmd_name in ['arc', 'line']:
+                # Specify an explicit namespace for path command names that
+                # conflict with Simple Inkscape Scripting command names.
+                cmd_name = 'inkex.paths.' + cmd_name
+            cmds.append('%s(%s)' %
+                        (cmd_name, ', '.join([str(a) for a in c.args])))
         extra, extra_deps = self.extra_args(node)
 
         # Depend on any path effects applied to the path.
@@ -1002,9 +998,14 @@ class SvgToPythonScript(inkex.OutputExtension):
             # Inkscape 1.0 and 1.1
             height = self.svg.height
 
-        # Convert the point from the pre-Inkscape 1.0 coordinate system.
-        pt = node.point
-        pos = (pt.x, height - pt.y)
+        # Find the guide's anchor point.
+        try:
+            # Inkscape 1.3+
+            pos = node.position
+        except AttributeError:
+            # Inkscape 1.2 and earlier
+            pt = node.point
+            pos = (pt.x, _simple_top.canvas.height - pt.y)
 
         # Compute the angle at which the guide is oriented.
         try:
