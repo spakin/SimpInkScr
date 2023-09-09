@@ -727,6 +727,7 @@ class SimpleObject(SVGOutputMixin):
         tr = inkex.Transform()
         tr.add_translate(dist[0], dist[1])
         self._multiply_transform(tr, first)
+        return self
 
     def rotate(self, angle, around='center', first=False):
         'Apply a rotation transformation, optionally around a given point.'
@@ -734,6 +735,7 @@ class SimpleObject(SVGOutputMixin):
         around = self._find_transform_point(around)
         tr.add_rotate(angle, around.x, around.y)
         self._multiply_transform(tr, first)
+        return self
 
     def scale(self, factor, around='center', first=False):
         'Apply a scaling transformation.'
@@ -747,6 +749,7 @@ class SimpleObject(SVGOutputMixin):
         tr.add_scale(sx, sy)
         tr.add_translate(-around)
         self._multiply_transform(tr, first)
+        return self
 
     def skew(self, angles, around='center', first=False):
         'Apply a skew transformation.'
@@ -757,6 +760,7 @@ class SimpleObject(SVGOutputMixin):
         tr.add_skewy(angles[1])
         tr.add_translate(-around)
         self._multiply_transform(tr, first)
+        return self
 
     @property
     def transform(self):
