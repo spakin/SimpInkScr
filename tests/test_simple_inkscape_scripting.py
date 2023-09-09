@@ -307,6 +307,7 @@ for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
         ("--program=%s\nred.scale(1.5, 'ur')" % blue_red,),
         ('--program=%s\nred.skew((10, 0))' % blue_red,),
         ("--program=%s\nred.skew((0, 10), 'lr')" % blue_red,),
+        ("--program=%s\nred.scale(1.5, 'ul').rotate(14, 'ul')" % blue_red,),
         ("--program=%s\nS.translate_path((100, 100))" % s_path,),
         ("--program=%s\nS.rotate_path(-25)" % s_path,),
         ("--program=%s\nS.scale_path((0.75, 1.5), 'ul')" % s_path,),
