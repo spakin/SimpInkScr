@@ -1345,6 +1345,16 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
             o.parent = None
             _simple_top.append_obj(o)
 
+        # Apply the SimpleGroup's transform (if any) to each of the
+        # objects to be removed from it.
+        for o in objs:
+            try:
+                # Inkscape 1.2+
+                o.transform = self.transform @ o.transform
+            except TypeError:
+                # Inkscape 1.1
+                o.transform = o.transform * self.transform
+
         # Remove each object from the SimpleGroup.  It has already been
         # removed from the SVG group as a side effect of the call to
         # append_obj above.
