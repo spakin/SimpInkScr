@@ -1329,7 +1329,7 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
         else:
             self.append(objs)
 
-    def ungroup(self, objs=None):
+    def ungroup(self, objs=None, preserve_transform=True):
         '''Remove one or more objects from the group and add it to the
         top level.  Return the list of objects that were ungrouped.'''
         # Add each object to the top level.
@@ -1347,13 +1347,14 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
 
         # Apply the SimpleGroup's transform (if any) to each of the
         # objects to be removed from it.
-        for o in objs:
-            try:
-                # Inkscape 1.2+
-                o.transform = self.transform @ o.transform
-            except TypeError:
-                # Inkscape 1.1
-                o.transform = o.transform * self.transform
+        if preserve_transform:
+            for o in objs:
+                try:
+                    # Inkscape 1.2+
+                    o.transform = self.transform @ o.transform
+                except TypeError:
+                    # Inkscape 1.1
+                    o.transform = o.transform * self.transform
 
         # Remove each object from the SimpleGroup.  It has already been
         # removed from the SVG group as a side effect of the call to
