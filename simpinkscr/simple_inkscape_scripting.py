@@ -400,7 +400,7 @@ class SimpleObject(SVGOutputMixin):
             else:
                 if not isinstance(clip_path_obj, SimpleClippingPath):
                     clip_path_obj = clip_path(clip_path_obj)
-                clip_str = 'url(#%s)' % clip_path_obj._inkscape_obj.get_id()
+                clip_str = clip_path_obj._inkscape_obj.get_id(as_url=2)
             obj.set('clip-path', clip_str)
 
         # Optionally employ a mask.
@@ -410,7 +410,7 @@ class SimpleObject(SVGOutputMixin):
             else:
                 if not isinstance(mask_obj, SimpleMask):
                     mask_obj = mask(mask_obj)
-                mask_str = 'url(#%s)' % mask_obj._inkscape_obj.get_id()
+                mask_str = mask_obj._inkscape_obj.get_id(as_url=2)
             obj.set('mask', mask_str)
 
         # Combine the current and default styles.
@@ -432,7 +432,7 @@ class SimpleObject(SVGOutputMixin):
         '''Return the object as a string of the form "url(#id)".  This
         enables the object to be used as a value in style key=value
         arguments such as shape_inside.'''
-        return 'url(#%s)' % self._inkscape_obj.get_id()
+        return self._inkscape_obj.get_id(as_url=2)
 
     def __eq__(self, other):
         '''Two SimpleObjects are equal if they encapsulate the same
@@ -1457,7 +1457,7 @@ class SimpleFilter(SVGOutputMixin):
         return self.filt
 
     def __str__(self):
-        return 'url(#%s)' % self.filt.get_id()
+        return self.filt.get_id(as_url=2)
 
     class SimpleFilterPrimitive(SVGOutputMixin):
         'Represent one component of an SVG filter effect.'
@@ -1553,7 +1553,7 @@ class SimpleGradient(SVGOutputMixin):
         grad.set('inkscape:collect', 'always')
 
     def __str__(self):
-        return 'url(#%s)' % self.grad.get_id()
+        return self.grad.get_id(as_url=2)
 
     def add_stop(self, ofs, color, opacity=None, **style):
         'Add a stop to a gradient.'
