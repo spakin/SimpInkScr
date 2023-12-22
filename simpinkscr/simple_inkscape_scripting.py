@@ -1259,6 +1259,36 @@ class SimpleTextObject(SimpleObject):
         self._inkscape_obj.append(tspan)
         return self
 
+    def to_path(self, all_curves=False):
+        '''Convert the text to a path, removing it from the list of
+        rendered objects.'''
+        # Store the text's style and transform.
+        orig_style = self.svg_get('style')
+        orig_xform = self.svg_get('transform')
+
+        # Spawn a child Inkscape to convert the text to a list of paths.
+        path_objs = apply_action('object-to-path', self)
+        paths = []
+        for p in path_objs:
+            if isinstance(p, SimplePathObject):
+                paths.append(p)
+            elif isinstance(p, SimpleGroup):
+                p.ungroup()
+
+        # Spawn another child Inkscape to merge all paths into one.
+        # Caveat: This operation will fail silently on Inkscape versions
+        # earlier than 1.2.
+        union = apply_path_operation('union', paths)[0]
+
+        # Convert the path elements to curves if requested.
+        if all_curves:
+            union.svg_set('d', self._path_to_curve(union._inkscape_obj))
+
+        # Restore the saved style and transform and return the new path.
+        union.svg_set('style', orig_style)
+        union.svg_set('transform', orig_xform)
+        return union
+
 
 class SimpleMarker(SimpleObject):
     'Represent a path marker, which wraps an arbitrary object.'
