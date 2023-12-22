@@ -3006,6 +3006,9 @@ def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
         return gr
     if isinstance(iobj, inkex.Marker):
         return SimpleMarker(iobj, **style)
+    if isinstance(iobj, inkex.TextElement):
+        return SimpleTextObject(iobj, merged_xform, conn_avoid, clip_path,
+                                mask, base_style, style)
     if isinstance(iobj, inkex.ShapeElement):
         return SimpleObject(iobj, merged_xform, conn_avoid, clip_path, mask,
                             base_style, style)
