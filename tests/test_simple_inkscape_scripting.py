@@ -322,7 +322,12 @@ c.unremove()
         ("--program=%s\nboxes[-1].z_order('bottom')" % z_order,),
         ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
         ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
-        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,)
+        ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,),
+        (f'''--program=
+{z_order}
+for obj in z_sort(boxes):
+    obj.z_order('bottom')
+''',)
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 
