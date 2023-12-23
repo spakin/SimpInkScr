@@ -3140,6 +3140,15 @@ def path_effect(effect, **kwargs):
     return SimplePathEffect(effect, **kwargs)
 
 
+def z_sort(objs):
+    '''Sort a list of shape objects from bottommost to topmost in the
+    Z ordering.'''
+    global _simple_top
+    svg_root = _simple_top.svg_root
+    iobj_to_order = {o: i for i, o in enumerate(svg_root.iter())}
+    return sorted(objs, key=lambda o: iobj_to_order[o.get_inkex_object()])
+
+
 def selected_shapes():
     '''Return a list of all directly selected shapes as Simple Inkscape
     Scripting objects.  Layers do not count as shapes in this context.'''
