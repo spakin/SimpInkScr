@@ -527,6 +527,11 @@ class SimpleObject(SVGOutputMixin):
                 pass
         return bbox
 
+    def get_parent(self):
+        """Return the current object's parent or None if it lies at the
+        top level."""
+        return self.parent
+
     def remove(self):
         'Remove the current object from the list of rendered objects.'
         try:
