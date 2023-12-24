@@ -637,11 +637,13 @@ class SimpleObject(SVGOutputMixin):
             p = path(pes)
             p_obj = p._inkscape_obj
 
-        # Copy over the original object's style and transform.
+        # Copy over the original object's style, transform, and parent.
         p_obj.set('style', obj.get('style'))
         xform = obj.get('transform')
         if xform is not None:
             p.transform = xform
+        if self.parent is not None:
+            self.parent.append(p)
 
         # Remove the old object and return the new object.
         self.remove()
