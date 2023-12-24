@@ -149,6 +149,37 @@ polyline([(64,128), (320,64), (384,128), (640, 64)],
     compare_file = 'svg/default-inkscape-SVG.svg'
 
 
+class SimpInkScrTestCollections(CustomComparisonMixin,
+                                InkscapeExtensionTestMixin,
+                                TestCase):
+    'Test examples from the Object Collections wiki page.'
+    # Indicate how testing should be performed.
+    effect_class = SimpleInkscapeScripting
+    compare_filters = [CompareOrderIndependentStyle()]
+
+    # Define a sequence of tests.
+    comparisons = [
+        ('''--program=
+colors = ['red', 'orange', 'yellow', 'green', 'blue']
+diag = []
+for j in range(5):
+    gr = group()
+    for i in range(5):
+        c = circle((i*20 + 20, j*20 + 20), 8, fill=colors[j])
+        gr.append(c)
+        if i == j:
+            diag.append(c)
+
+diag_gr = group()
+for c in diag:
+    c.get_parent().ungroup(c)
+    diag_gr.append(c)
+diag_gr.translate((120, 0))
+''',)
+    ]
+    compare_file = 'svg/default-inkscape-SVG.svg'
+
+
 class SimpInkScrTestEffects(CustomComparisonMixin,
                             InkscapeExtensionTestMixin,
                             TestCase):
