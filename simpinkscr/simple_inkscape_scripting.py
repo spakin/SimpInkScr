@@ -692,14 +692,22 @@ class SimpleObject(SVGOutputMixin):
                 return inkex.Vector2d(0, 0)
             if around in ['c', 'center']:
                 around = bbox.center
-            elif around == 'ul':
+            elif around in ['ul', 'nw']:
                 around = inkex.Vector2d(bbox.left, bbox.top)
-            elif around == 'ur':
+            elif around in ['ur', 'ne']:
                 around = inkex.Vector2d(bbox.right, bbox.top)
-            elif around == 'll':
+            elif around in ['ll', 'sw']:
                 around = inkex.Vector2d(bbox.left, bbox.bottom)
-            elif around == 'lr':
+            elif around in ['lr', 'se']:
                 around = inkex.Vector2d(bbox.right, bbox.bottom)
+            elif around == 'n':
+                around = inkex.Vector2d(bbox.center_x, bbox.top)
+            elif around == 's':
+                around = inkex.Vector2d(bbox.center_x, bbox.bottom)
+            elif around == 'e':
+                around = inkex.Vector2d(bbox.right, bbox.center_y)
+            elif around == 'w':
+                around = inkex.Vector2d(bbox.left, bbox.center_y)
             else:
                 _abend(_('Unexpected transform argument %s') % repr(around))
         else:
