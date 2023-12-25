@@ -1249,6 +1249,53 @@ class SimplePathObject(SimpleObject):
         iobj.set('d', iobj.path.transform(tr))
         return self
 
+    def _do_path_op(self, op, other):
+        '''Move the other path object into our group, raise it to the top,
+        destructively apply a path operation, and return the new path.'''
+        # Complain if the other object is not a path.
+        if not isinstance(other, SimplePathObject):
+            _abend(_('path operations can be applied only to path objects'))
+
+        # Move the other path into our group (if any).
+        parent2 = other.get_parent()
+        if parent2 is not None:
+            parent2.ungroup(other)
+        parent1 = self.get_parent()
+        if parent1 is not None:
+            parent1.append(other)
+
+        # Raise the other path above ours so the operation behaves
+        # consistently and as expected.
+        other.z_order('top')
+
+        # Apply the named path operation.
+        new_objs = apply_path_operation(op, [self, other])
+        return new_objs
+
+    def __add__(self, other):
+        'Destructively apply a path-union operation.'
+        return self._do_path_op('union', other)[0]
+
+    def __sub__(self, other):
+        'Destructively apply a path-difference operation.'
+        return self._do_path_op('difference', other)[0]
+
+    def __mul__(self, other):
+        'Destructively apply a path-intersection operation.'
+        return self._do_path_op('intersection', other)[0]
+
+    def __xor__(self, other):
+        'Destructively apply a path-exclusion operation.'
+        return self._do_path_op('exclusion', other)[0]
+
+    def __truediv__(self, other):
+        'Destructively apply a path-division operation.'
+        return self._do_path_op('division', other)
+
+    def __floordiv__(self, other):
+        'Destructively apply a path-cut operation.'
+        return self._do_path_op('cut', other)
+
 
 class SimpleTextObject(SimpleObject):
     '''A SimpleTextObject is a SimpleObject to which additional text can
