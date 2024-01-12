@@ -113,6 +113,18 @@ def _python_to_svg_str(val):
         else:
             # Common case
             return ' '.join([_python_to_svg_str(v) for v in val])
+    try:
+        # Simple Inkscape Scripting objects are converted to a string of
+        # the form "url(#id)".
+        return val.get_inkex_object().get_id(as_url=2)
+    except AttributeError:
+        pass
+    try:
+        # inkex objects also are converted to a string of the form
+        # "url(#id)".
+        return val.get_id(as_url=2)
+    except AttributeError:
+        pass
     return str(val)  # Everything else is converted to a string as usual.
 
 
@@ -369,6 +381,18 @@ class SVGOutputMixin():
         return obj.tostring().decode('utf-8')
 
 
+class GenericReprMixin():
+    '''Provide a generic __repr__ method for Simple Inkscape Scripting
+    classes that don't define a more customized __repr__.'''
+
+    def __repr__(self):
+        iobj = self.get_inkex_object()
+        return '<%s %s %s>' % \
+            (self.__class__.__name__,
+             iobj.TAG,
+             iobj.get_id(1))
+
+
 class SimpleObject(SVGOutputMixin):
     'Encapsulate an Inkscape object and additional metadata.'
 
@@ -428,11 +452,15 @@ class SimpleObject(SVGOutputMixin):
             _simple_top.svg_attach.append(obj)
         self.parent = None
 
-    def __str__(self):
-        '''Return the object as a string of the form "url(#id)".  This
-        enables the object to be used as a value in style key=value
-        arguments such as shape_inside.'''
-        return self._inkscape_obj.get_id(as_url=2)
+    def __repr__(self):
+        'Return a unique description of the object as a string.'
+        iobj = self.get_inkex_object()
+        bbox = iobj.bounding_box()
+        return '<%s %s (%s) %s>' % \
+            (self.__class__.__name__,
+             iobj.TAG,
+             bbox.center,
+             iobj.get_id(1))
 
     def __eq__(self, other):
         '''Two SimpleObjects are equal if they encapsulate the same
@@ -1512,7 +1540,7 @@ class SimpleHyperlink(SimpleGroup):
         self._self_type = 'hyperlink'
 
 
-class SimpleFilter(SVGOutputMixin):
+class SimpleFilter(SVGOutputMixin, GenericReprMixin):
     'Represent an SVG filter effect.'
 
     def __init__(self, name=None, pt1=None, pt2=None, filter_units=None,
@@ -1612,7 +1640,7 @@ class SimpleFilter(SVGOutputMixin):
         return self.SimpleFilterPrimitive(self, 'fe' + ftype, **kw_args)
 
 
-class SimpleGradient(SVGOutputMixin):
+class SimpleGradient(SVGOutputMixin, GenericReprMixin):
     'Virtual base class for an SVG linear or radial gradient pattern.'
 
     # Map Inkscape repetition names to SVG names.
@@ -1708,7 +1736,7 @@ class SimpleRadialGradient(SimpleGradient):
         self.grad = grad
 
 
-class SimplePathEffect(SVGOutputMixin):
+class SimplePathEffect(SVGOutputMixin, GenericReprMixin):
     'Represent an Inkscape live path effect.'
 
     def __init__(self, effect, **kwargs):
@@ -1750,6 +1778,15 @@ class SimpleGuide(SVGOutputMixin):
     def get_inkex_object(self):
         "Return the guide's underlying inkex object."
         return self._inkscape_obj
+
+    def __repr__(self):
+        'Return a unique description of the guide as a string.'
+        iobj = self.get_inkex_object()
+        return '<%s %s %s %s>' % \
+            (self.__class__.__name__,
+             iobj.TAG,
+             self._pos,
+             iobj.get_id(1))
 
     def _move_to_wrapper(self, pos, angle):
         "Wrap inkex's move_to with a coordinate transformation."
@@ -1840,7 +1877,7 @@ class SimpleGuide(SVGOutputMixin):
         return SimpleGuide(pos, angle, _inkex_object=iobj)
 
 
-class SimpleCanvas:
+class SimpleCanvas():
     'Get and set the canvas size and viewbox.'
 
     def __init__(self, svg_root):
@@ -2031,7 +2068,7 @@ class SimpleCanvas:
         self.true_height = '%.10g%s' % (tht, uht)
 
 
-class SimplePage(SVGOutputMixin):
+class SimplePage(SVGOutputMixin, GenericReprMixin):
     'Represent an Inkscape page.'
 
     def __init__(self, number, name=None, pos=None, size=None, iobj=None):
@@ -2112,7 +2149,7 @@ class RectangularForeignObject(inkex.ForeignObject,
     pass
 
 
-class SimpleMetadata:
+class SimpleMetadata(GenericReprMixin):
     'Provide a simple interface to document metadata.'
 
     def __init__(self):
@@ -2292,12 +2329,19 @@ class SimpleMetadata:
         }
         self._licenses['Open Font License'] = self._licenses['OFL']
 
+    def get_inkex_object(self):
+        '''Return the SimpleMetadata's underlying inkex object.
+        Regrettably, this exhibits the side effect of creating a
+        <metadata> tag if one does not already exist (tested with
+        Inkscape 1.3.2.'''
+        global _simple_top
+        return _simple_top.svg_root.metadata
+
     def _search_hierarchy(self, *args):
         '''Search an XML hierarchy given tuples of (namespace, tag).
         <rdf:RDF> is the implicit first element of the hierarchy.  This
         method returns the final node.'''
-        global _simple_top
-        elt = _simple_top.svg_root.metadata
+        elt = self.get_inkex_object()
         for ns_tag in [(self.rdf, 'RDF')] + list(args):
             child = elt.find('./{%s}%s' % ns_tag)
             if child is None:
@@ -2309,8 +2353,7 @@ class SimpleMetadata:
         '''Create an XML hierarchy given tuples of (namespace, tag).
         <rdf:RDF> is the implicit first element of the hierarchy.  This
         method returns the final node.'''
-        global _simple_top
-        elt = _simple_top.svg_root.metadata
+        elt = self.get_inkex_object()
         for ns_tag in [(self.rdf, 'RDF')] + list(args):
             child = elt.find('./{%s}%s' % ns_tag)
             if child is None:
