@@ -45,6 +45,7 @@ List of examples
 | [New layer](new_layer.py) | Add a layer to an image. |
 | [Overlapping circles](overlapping_circles.py) | Draw an array of hundreds of overlapping circles. |
 | [Path effects](path_effects.py) | Demonstrate the application of live path effects to a curve. |
+| [Pixels to rectangles](pixels_to_rectangles.py) | Show how to use the Python Imaging Library to convert each pixel of a bitmapped image to a colored rectangle. |
 | [Poly by angle](poly_by_angle.py) | Draw (possibly self-intersecting) polygons. |
 | [Screen vs print](screen_vs_print.py) | Create a printable page that is differently sized and disjoint from the main canvas. |
 | [Sierpinski triangle](sierpinski_triangle.py) | Draw a colorful Sierpinski triangle. |
