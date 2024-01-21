@@ -36,6 +36,7 @@ import PIL.Image
 import lxml
 import inkex
 import inkex.command
+import urllib.request
 from inkex.localization import inkex_gettext as _
 from tempfile import TemporaryDirectory
 
@@ -148,22 +149,37 @@ def _svg_str_to_python(s):
 
 
 def _read_image_as_base64(fname):
-    "Return image data in base-64 encoding and the image's MIME type."
+    "Return image data in base64 encoding and the image's MIME type."
     try:
         # See if the image is SVG.
-        with open(fname, mode='rb') as r:
-            data = r.read()
+        try:
+            # Local file
+            with open(fname, mode='rb') as r:
+                data = r.read()
+        except FileNotFoundError:
+            # URL
+            with urllib.request.urlopen(fname) as r:
+                data = r.read()
         tree = lxml.etree.fromstring(data)
         mime = 'image/svg+xml'
         b64 = base64.b64encode(data).decode('utf-8')
+        width = inkex.units.convert_unit(tree.get('width', '1'), 'px')
+        height = inkex.units.convert_unit(tree.get('height', '1'), 'px')
+        size = (width, height)
     except lxml.etree.XMLSyntaxError:
         # The image is not SVG.  Use PIL to interpret it as a bitmap image.
-        img = PIL.Image.open(fname)
+        try:
+            # Local file
+            img = PIL.Image.open(fname)
+        except FileNotFoundError:
+            # URL
+            img = PIL.Image.open(urllib.request.urlopen(fname))
         data = io.BytesIO()
         img.save(data, img.format)
         mime = PIL.Image.MIME[img.format]
         b64 = base64.b64encode(data.getvalue()).decode('utf-8')
-    return b64, mime
+        size = img.size
+    return b64, mime, size
 
 
 def _run_inkscape_and_replace_svg(action_str):
@@ -3007,18 +3023,29 @@ def text(msg, base, path=None, transform=None, conn_avoid=False,
 def image(fname, ul, embed=True, transform=None, conn_avoid=False,
           clip_path=None, mask=None, **style):
     'Include an image, either embedded or linked.'
-    obj = inkex.Image()
-    obj.set('x', ul[0])
-    obj.set('y', ul[1])
+    # Always read the file, whether it's embedded or linked.  Doing so
+    # provides the image size, which is needed to assign the width and
+    # height attributes.
+    b64, mime, size = _read_image_as_base64(fname)
+
+    # Define an appropriate URI based on whether the data are embedded or
+    # simply referenced.
     if embed:
-        # Read and embed the named file.
-        b64, mime = _read_image_as_base64(fname)
+        # Embed the named file.
         uri = 'data:%s;base64,%s' % (mime, b64)
     else:
-        # Point to an external file.
+        # Merely reference the named file.
         uri = fname
-    obj.set('xlink:href', uri)
-    return SimpleObject(obj, transform, conn_avoid, clip_path, mask, {}, style)
+
+    # Create an inkex object and wrap it in a Simple Inkscape Scripting object.
+    iobj = inkex.Image()
+    iobj.set('x', ul[0])
+    iobj.set('y', ul[1])
+    iobj.set('width', str(size[0]))
+    iobj.set('height', str(size[1]))
+    iobj.set('xlink:href', uri)
+    return SimpleObject(iobj,
+                        transform, conn_avoid, clip_path, mask, {}, style)
 
 
 def foreign(pt1, pt2, xml='', transform=None, conn_avoid=False,
