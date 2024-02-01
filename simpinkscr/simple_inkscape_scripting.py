@@ -472,6 +472,10 @@ class SimpleObject(SVGOutputMixin):
         'Return a unique description of the object as a string.'
         iobj = self.get_inkex_object()
         bbox = iobj.bounding_box()
+        if bbox is None:
+            # Make empty paths produce a center of (NaN, NaN) instead
+            # of crashing with an AttributeError.
+            bbox = inkex.BoundingBox()
         return '<%s %s (%s) %s>' % \
             (self.__class__.__name__,
              iobj.TAG,
