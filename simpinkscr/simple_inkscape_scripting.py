@@ -1792,6 +1792,8 @@ class SimpleGuide(SVGOutputMixin):
             self._move_to_wrapper(pos, angle)
         else:
             self._inkscape_obj = _inkex_object
+            self._pos = pos
+            self._angle = angle
         self.color = color
         self.label = label
 
