@@ -3724,7 +3724,8 @@ from inkex.paths import curve, horz, move, quadratic, smooth, \
 
         # Remove an unnecessary import that may be introduced when
         # running from Visual Studio Code.
-        code.replace("from simpinkscr import *", "")
+        pattern = r"^(import (inkex|simpinkscr)|(from (inkex|simpinkscr) import.*))\r*\n*"
+        code = re.sub(pattern, "", code, flags=re.MULTILINE+re.IGNORECASE)
 
         # Launch the user's script.
         try:
