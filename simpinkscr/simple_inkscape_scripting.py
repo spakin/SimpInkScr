@@ -485,14 +485,14 @@ class SimpleObject(SVGOutputMixin):
     def __eq__(self, other):
         '''Two SimpleObjects are equal if they encapsulate the same
         inkex object.'''
-        if type(self) != type(other):
+        if type(self) is not type(other):
             return NotImplemented
         return self.get_inkex_object() == other.get_inkex_object()
 
     def __ne__(self, other):
         '''Two SimpleObjects are unequal if they do not encapsulate the
         same inkex object.'''
-        if type(self) != type(other):
+        if type(self) is not type(other):
             return NotImplemented
         return self.get_inkex_object() != other.get_inkex_object()
 
@@ -3724,7 +3724,8 @@ from inkex.paths import curve, horz, move, quadratic, smooth, \
 
         # Remove an unnecessary import that may be introduced when
         # running from Visual Studio Code.
-        pattern = r"^[ \t]*(import\s+(inkex|simpinkscr).*|(from\s+(inkex|simpinkscr)\s+import).*)[\r\n]"
+        pattern = r"^[ \t]*(import\s+(inkex|simpinkscr).*|" \
+            r"(from\s+(inkex|simpinkscr)\s+import).*)[\r\n]"
         code = re.sub(pattern, "", code, flags=re.MULTILINE)
 
         # Launch the user's script.
