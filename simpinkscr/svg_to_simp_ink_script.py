@@ -1005,7 +1005,7 @@ class SvgToPythonScript(inkex.OutputExtension):
         except AttributeError:
             # Inkscape 1.2 and earlier
             pt = node.point
-            pos = (pt.x, _simple_top.canvas.height - pt.y)
+            pos = (pt.x, self.svg.height - pt.y)
 
         # Compute the angle at which the guide is oriented.
         try:
