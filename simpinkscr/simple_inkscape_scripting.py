@@ -40,6 +40,27 @@ import urllib.request
 from inkex.localization import inkex_gettext as _
 from tempfile import TemporaryDirectory
 
+
+# ----------------------------------------------------------------------
+
+# The following classes are needed only until inkex gets around to
+# providing its own versions.
+
+class Animate(inkex.BaseElement):
+    'Represent an <animate> element.'
+    tag_name = 'animate'
+
+
+class AnimateMotion(inkex.BaseElement):
+    'Represent an <animateMotion> element.'
+    tag_name = 'animateMotion'
+
+
+class AnimateTransform(inkex.BaseElement):
+    'Represent an <animateTransform> element.'
+    tag_name = 'animateTransform'
+
+
 # ----------------------------------------------------------------------
 
 # The following variable, class, and function definitions are utilized by
@@ -978,7 +999,7 @@ class SimpleObject(SVGOutputMixin):
             # groups and apply one transform to each group.
             if i > 0:
                 target = group([target])
-            anim = lxml.etree.Element('animateTransform')
+            anim = AnimateTransform()
             anim.set('attributeName', 'transform')
             anim.set('type', xf[0])
             anim.set('values', '; '.join(xf[1]))
@@ -1083,7 +1104,7 @@ class SimpleObject(SVGOutputMixin):
 
         # Add one <animate> element per attribute.
         for a, vs in attr2vals.items():
-            anim = lxml.etree.Element('animate')
+            anim = Animate()
             anim.set('attributeName', a)
             anim.set('values', '; '.join(vs))
             if duration is not None:
@@ -1108,7 +1129,7 @@ class SimpleObject(SVGOutputMixin):
         # Add an <animateMotion> element if a path was supplied.
         if path is not None:
             # Create an <animateMotion> element.
-            anim_mo = lxml.etree.Element('animateMotion')
+            anim_mo = AnimateMotion()
             if duration is not None:
                 anim_mo.set('dur', _python_to_svg_str(duration))
             if begin_time is not None:
@@ -3131,7 +3152,7 @@ def hyperlink(objs, href, title=None, target=None, mime_type=None,
         anc.set('{http://www.w3.org/1999/xlink}title', title)
 
         # Newer SVG files should include a <title> element.
-        t_obj = lxml.etree.Element('title')
+        t_obj = inkex.Title()
         t_obj.text = title
         anc.append(t_obj)
     if target is not None:
