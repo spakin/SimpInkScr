@@ -1,0 +1,38 @@
+###################################################
+# This Python script is intended to be run from   #
+# Inkscape's Simple Inkscape Scripting extension. #
+###################################################
+
+# Prepare the canvas.
+#canvas.true_width = 1000
+#canvas.true_height = 1000
+#canvas.viewbox = [0.0, 0.0, 1000.0, 1000.0]
+
+# Generate an image.
+path859 = path([Move(8.7185878, 4.0337352), Line(-2.2072895, 0.016013256), Line(8.7185884, -4.0017078), Curve(6.97309, -1.6296469, 6.9831476, 1.6157441, 8.7185878, 4.0337352), zoneClose()], transform='matrix(1.1 0 0 1.1 1.1 0)', fill='#000000', fill_rule='evenodd', stroke_width=0.625, stroke_linejoin='round', stroke_opacity=1, fill_opacity=1)
+Arrow2Lstart = marker(path859, ref=(0.0, 0.0), orient='auto', overflow='visible')
+rect((651.3089, 353.92661), (900.00002, 555.42472), stroke='none', fill='#ff0000', opacity=0.5, stroke_width=1.11927199)
+circle((150, 450), 50, stroke='none', fill='#000080', display='inline')
+ellipse((400, 450), (100, 50), stroke='#ff0000', display='inline', stroke_width=16)
+arc((700, 450), (100, 50), (0.59013865, 5.6484511), arc_type='slice', stroke='#008000', fill='#ffff00', display='inline', stroke_width=16)
+path([Move(100.0, 600.0), Line(200.0, 700.0), Line(300.0, 600.0), Line(400.0, 700.0)], display='inline', stroke_width=10, marker_start=Arrow2Lstart)
+path([move(500.0, 600.0), curve(0.0, 0.0, 0.0, 100.0, 100.0, 100.0), curve(100.0, 0.0, 0.0, -100.0, 100.0, -100.0), curve(100.0, 0.0, 100.0, 100.0, 100.0, 100.0)], display='inline', stroke_width=10)
+s1 = star(5, (189.03001, 847.93945), (69.364868, 34.682434), angles=(0.63598373, 1.2643023), stroke='#008000', fill='#ffff00', display='inline', stroke_width=10)
+clone(s1, transform='translate(200, 2.99622)', display='inline')
+t1 = text('', (100, 100), font_size='14.66666698px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
+t1.add_text('Hello World', (100, 100))
+rect((105.71429, 219.66254), (370.28179, 481.82441), stroke=None, fill=None)
+t2 = text('', (200, 100), font_size='14.66666698px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
+t2.add_text('UPPER', (200, 100), font_size='14.66666698px')
+t3 = text('', (300, 100), font_size='10.58333302px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
+t3.add_text('Multi line', (300, 100), font_size='14.66666698px')
+t3.add_text('text', (300, 118.33334), font_size='14.66666698px')
+t3.add_text('FOO', (300, 136.66667), font_size='14.66666698px')
+text3762 = text('', (54.289616, 229.64807), font_size='10.58333302px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
+text3762.add_text('Grouped', (54.289616, 229.64807), font_size='14.66666698px')
+text3766 = text('', (54.289619, 259.64807), font_size='14.66666698px', line_height=1.25, font_family='sans-serif', fill='#000000', stroke='none')
+text3766.add_text('text', (54.289619, 259.64807), font_size='14.66666698px')
+group([text3762, text3766], transform='translate(445.71, -129.648)')
+rect((100, 200), (200, 300), stroke='none', fill='#000080')
+rect((300, 200), (500, 300), stroke='#ff0000', stroke_width=16)
+rect((600, 200), (800, 300), round=(44.943226, 38.950798), stroke='#008000', fill='#ffff00', stroke_width=16)

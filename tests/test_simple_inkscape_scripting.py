@@ -4,7 +4,6 @@
 #############################################################
 
 from simpinkscr.simple_inkscape_scripting import SimpleInkscapeScripting
-from simpinkscr.svg_to_simp_ink_script import SvgToPythonScript
 from inkex.tester import ComparisonMixin, InkscapeExtensionTestMixin, TestCase
 from inkex.tester.filters import CompareOrderIndependentStyle
 from unittest.mock import patch
@@ -537,12 +536,6 @@ for obj in all_shapes():
     obj.rotate(15, 'center', first=True)
 ''',)
     ]
-
-
-class SimpInkScrOutputBasicTest(CustomComparisonMixin, TestCase):
-    effect_class = SvgToPythonScript
-    compare_file = 'svg/shapes.svg'
-    comparisons = [()]
 
 
 class SimpInkScrCmdlineArgsTest(TestCase):
