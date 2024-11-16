@@ -3,10 +3,10 @@
 # Inkscape Scripting.                                            #
 ##################################################################
 
-from inkex import turtle as pturtle
+from inkex.turtle import PathTurtle
 
 # Draw the picture using inkex's turtle-graphics module.
-t = pturtle.pTurtle()
+t = PathTurtle()
 t.pendown()
 t.right(28)
 for dist in range(500, 0, -10):
