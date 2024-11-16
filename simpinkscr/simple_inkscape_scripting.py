@@ -3094,7 +3094,14 @@ def foreign(pt1, pt2, xml='', transform=None, conn_avoid=False,
                                    width=_python_to_svg_str(wd),
                                    height=_python_to_svg_str(ht))
     if xml.strip() != '':
-        obj.append(lxml.etree.fromstring(xml))
+        # The intention here is to append a raw (i.e., non-inkex-wrapped)
+        # lxml.etree._Element to obj, which is an inkex object.  A
+        # straightforward obj.append(xml_obj) fails because
+        # inkex.BaseElement.append tries to access xml_obj.root, which does
+        # not exist.  Hence, we bypass inkex.BaseElement's append method
+        # and directly invoke the underlying lxml.etree._Element's append
+        # method instead.
+        lxml.etree._Element.append(obj, lxml.etree.fromstring(xml))
     return SimpleObject(obj, transform, conn_avoid, clip_path, mask,
                         {}, style)
 
