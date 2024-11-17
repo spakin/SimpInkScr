@@ -749,9 +749,9 @@ class SimpleObject(SVGOutputMixin):
                             m_inv[0][2], m_inv[1][2])
         return un_xform
 
-    def _find_transform_point(self, around):
+    def _find_transform_point(self, anchor):
         'Return the center point around which to apply a transformation.'
-        if isinstance(around, str):
+        if isinstance(anchor, str):
             obj = self._inkscape_obj
             un_xform = self._inverse_transform()
             bbox = obj.bounding_box(un_xform)
@@ -759,29 +759,29 @@ class SimpleObject(SVGOutputMixin):
                 # Special case first encountered in Inkscape 1.2-dev when
                 # an empty layer is selected.
                 return inkex.Vector2d(0, 0)
-            if around in ['c', 'center']:
-                around = bbox.center
-            elif around in ['ul', 'nw']:
-                around = inkex.Vector2d(bbox.left, bbox.top)
-            elif around in ['ur', 'ne']:
-                around = inkex.Vector2d(bbox.right, bbox.top)
-            elif around in ['ll', 'sw']:
-                around = inkex.Vector2d(bbox.left, bbox.bottom)
-            elif around in ['lr', 'se']:
-                around = inkex.Vector2d(bbox.right, bbox.bottom)
-            elif around == 'n':
-                around = inkex.Vector2d(bbox.center_x, bbox.top)
-            elif around == 's':
-                around = inkex.Vector2d(bbox.center_x, bbox.bottom)
-            elif around == 'e':
-                around = inkex.Vector2d(bbox.right, bbox.center_y)
-            elif around == 'w':
-                around = inkex.Vector2d(bbox.left, bbox.center_y)
+            if anchor in ['c', 'center']:
+                anchor = bbox.center
+            elif anchor in ['ul', 'nw']:
+                anchor = inkex.Vector2d(bbox.left, bbox.top)
+            elif anchor in ['ur', 'ne']:
+                anchor = inkex.Vector2d(bbox.right, bbox.top)
+            elif anchor in ['ll', 'sw']:
+                anchor = inkex.Vector2d(bbox.left, bbox.bottom)
+            elif anchor in ['lr', 'se']:
+                anchor = inkex.Vector2d(bbox.right, bbox.bottom)
+            elif anchor == 'n':
+                anchor = inkex.Vector2d(bbox.center_x, bbox.top)
+            elif anchor == 's':
+                anchor = inkex.Vector2d(bbox.center_x, bbox.bottom)
+            elif anchor == 'e':
+                anchor = inkex.Vector2d(bbox.right, bbox.center_y)
+            elif anchor == 'w':
+                anchor = inkex.Vector2d(bbox.left, bbox.center_y)
             else:
-                _abend(_('Unexpected transform argument %s') % repr(around))
+                _abend(_('Unexpected transform argument %s') % repr(anchor))
         else:
-            around = inkex.Vector2d(around)
-        return around
+            anchor = inkex.Vector2d(anchor)
+        return anchor
 
     def _apply_transform(self):
         "Apply the SimpleObject's transform to the underlying SVG object."
@@ -813,36 +813,36 @@ class SimpleObject(SVGOutputMixin):
         self._multiply_transform(tr, first)
         return self
 
-    def rotate(self, angle, around='center', first=False):
+    def rotate(self, angle, anchor='center', first=False):
         'Apply a rotation transformation, optionally around a given point.'
         tr = inkex.Transform()
-        around = self._find_transform_point(around)
-        tr.add_rotate(angle, around.x, around.y)
+        anchor = self._find_transform_point(anchor)
+        tr.add_rotate(angle, anchor.x, anchor.y)
         self._multiply_transform(tr, first)
         return self
 
-    def scale(self, factor, around='center', first=False):
+    def scale(self, factor, anchor='center', first=False):
         'Apply a scaling transformation.'
         try:
             sx, sy = factor
         except (TypeError, ValueError):
             sx, sy = factor, factor
-        around = inkex.Vector2d(self._find_transform_point(around))
+        anchor = inkex.Vector2d(self._find_transform_point(anchor))
         tr = inkex.Transform()
-        tr.add_translate(around)
+        tr.add_translate(anchor)
         tr.add_scale(sx, sy)
-        tr.add_translate(-around)
+        tr.add_translate(-anchor)
         self._multiply_transform(tr, first)
         return self
 
-    def skew(self, angles, around='center', first=False):
+    def skew(self, angles, anchor='center', first=False):
         'Apply a skew transformation.'
-        around = inkex.Vector2d(self._find_transform_point(around))
+        anchor = inkex.Vector2d(self._find_transform_point(anchor))
         tr = inkex.Transform()
-        tr.add_translate(around)
+        tr.add_translate(anchor)
         tr.add_skewx(angles[0])
         tr.add_skewy(angles[1])
-        tr.add_translate(-around)
+        tr.add_translate(-anchor)
         self._multiply_transform(tr, first)
         return self
 
@@ -1296,32 +1296,32 @@ class SimplePathObject(SimpleObject):
         iobj.set('d', iobj.path.translate(dist[0], dist[1]))
         return self
 
-    def rotate_path(self, angle, around='center'):
+    def rotate_path(self, angle, anchor='center'):
         "Rotate a path's control points, optionally around a given point."
-        around = self._find_transform_point(around)
+        anchor = self._find_transform_point(anchor)
         iobj = self._inkscape_obj
-        iobj.set('d', iobj.path.rotate(angle, around))
+        iobj.set('d', iobj.path.rotate(angle, anchor))
         return self
 
-    def scale_path(self, factor, around='center'):
+    def scale_path(self, factor, anchor='center'):
         "Scale a path's control points, optionally around a given point."
         try:
             sx, sy = factor
         except (TypeError, ValueError):
             sx, sy = factor, factor
-        around = inkex.Vector2d(self._find_transform_point(around))
+        anchor = inkex.Vector2d(self._find_transform_point(anchor))
         iobj = self._inkscape_obj
-        iobj.set('d', iobj.path.scale(sx, sy, around))
+        iobj.set('d', iobj.path.scale(sx, sy, anchor))
         return self
 
-    def skew_path(self, angles, around='center'):
+    def skew_path(self, angles, anchor='center'):
         "Skew a path's control points, optionally around a given point."
-        around = inkex.Vector2d(self._find_transform_point(around))
+        anchor = inkex.Vector2d(self._find_transform_point(anchor))
         tr = inkex.Transform()
-        tr.add_translate(around)
+        tr.add_translate(anchor)
         tr.add_skewx(angles[0])
         tr.add_skewy(angles[1])
-        tr.add_translate(-around)
+        tr.add_translate(-anchor)
         iobj = self._inkscape_obj
         iobj.set('d', iobj.path.transform(tr))
         return self
