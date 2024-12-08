@@ -88,7 +88,7 @@ _common_shape_style = {'stroke': 'black',
 _default_transform = [None]
 
 # Retain a reference to the user script's global variables.
-_user_globals = []
+_user_globals = {}
 
 
 def _debug_print(*args):
@@ -3634,6 +3634,14 @@ def randcolor(range1=None, range2=None, range3=None, space='rgb'):
 class SimpleInkscapeScripting(inkex.EffectExtension):
     'Help the user create Inkscape objects with a simple API.'
 
+    def __init__(self, svg=None):
+        super().__init__()
+        self.options.user_args = []
+        self.options.encoding = ''
+        self.options.py_source = None
+        self.options.program = None
+        self.svg = svg
+
     def filename_arg(self, name):
         """Existing file to read or option used in script arguments"""
         if name == '-':
@@ -3694,6 +3702,14 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         # A very minimal SVG input may contain no layers at all.  In this case,
         # we return the top-level <svg> element.
         return self.svg
+
+    @property
+    def script_globals(self):
+        '''Return all global variables that are passed to user scripts.
+        This is intended for use by extensions that want to utilize
+        SimpleInkscapeScripting features.'''
+        global _user_globals
+        return _user_globals
 
     def effect(self):
         'Generate objects from user-provided Python code.'

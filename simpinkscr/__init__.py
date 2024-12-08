@@ -10,4 +10,5 @@ from .simple_inkscape_scripting import all_pages, all_shapes, \
     line, main, marker, mask, objects_from_svg_file, page, \
     path_effect, path, polygon, polyline, pop_defaults, push_defaults, \
     radial_gradient, randcolor, rect, regular_polygon, save_file, \
-    selected_shapes, star, style, text, transform, z_sort
+    selected_shapes, SimpleInkscapeScripting, star, style, text, transform, \
+    z_sort
