@@ -475,9 +475,9 @@ import datetime
 
 now = datetime.datetime.now()
 metadata.title = 'This, Too, is Not a Pipe'
-metadata.date = datetime.datetime(2024, 1, 9, 22, 2)
+metadata.date = datetime.datetime(2025, 1, 1, 15, 34)
 metadata.creator = 'John Doe'
-metadata.rights = 'Copyright (C) 2024 John Doe'
+metadata.rights = 'Copyright (C) 2025 John Doe'
 metadata.publisher = 'Awesome Artwork, Inc.'
 metadata.identifier = '10.5555/12345678'
 metadata.source = 'https://collections.lacma.org/node/239578'
