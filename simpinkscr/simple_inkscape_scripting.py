@@ -324,7 +324,7 @@ class SimpleTopLevel():
 
         # Elide the Simple Inkscape Scripting object and dissociate the
         # underlying inkex object from its parent.
-        self.simple_objs = [o for o in self.simple_objs if o is not obj]
+        self.simple_objs = [o for o in self.simple_objs if o != obj]
         if obj._inkscape_obj is not None:
             obj._inkscape_obj.delete()
 
