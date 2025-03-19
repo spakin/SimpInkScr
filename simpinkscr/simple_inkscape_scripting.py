@@ -2185,6 +2185,25 @@ class SimplePage(SVGOutputMixin, GenericReprMixin):
         wd, ht = self.size
         return inkex.BoundingBox((x, x + wd), (y, y + ht))
 
+    def all_shapes(self, strict=False):
+        """Return a list of all shapes that intersect the page.  If strict
+        is True, return only those shapes that lie entirely within the
+        page."""
+        shape_list = []
+        page_bbox = self.bounding_box()
+        empty_bbox = inkex.BoundingBox()
+        for obj in all_shapes():
+            obj_bbox = obj.bounding_box()
+            overlap = page_bbox & obj_bbox
+            if overlap == empty_bbox:
+                # The object does not touch the page at all.
+                continue
+            if strict == True and (page_bbox + obj_bbox) != page_bbox:
+                # The object is not contained entirely within the page.
+                continue
+            shape_list.append(obj)
+        return shape_list
+
 
 class RectangularForeignObject(inkex.ForeignObject,
                                inkex.Rectangle):
