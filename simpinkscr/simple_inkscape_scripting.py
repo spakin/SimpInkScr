@@ -157,7 +157,7 @@ def _svg_str_to_python(s):
     if len(fields) > 1:
         return [_svg_str_to_python(f) for f in fields]
 
-    # Specially handle numerical data types then fall back to strings.
+    # Specially handle numerical data types.
     try:
         return int(s)
     except ValueError:
@@ -166,6 +166,14 @@ def _svg_str_to_python(s):
         return float(s)
     except ValueError:
         pass
+
+    # Specially handle Booleans.
+    if s == 'true':
+        return True
+    elif s == 'false':
+        return False
+
+    # In all other cases, return the string as is.
     return s
 
 
@@ -2802,6 +2810,57 @@ class SimpleMetadata(GenericReprMixin):
             pass
 
 
+class SimpleUserInterface(GenericReprMixin, collections.abc.MutableMapping):
+    'Provide a simple means of accessing the Inkscape user interface.'
+
+    def __init__(self):
+        global _simple_top
+        svg_root = _simple_top.svg_root
+        self._namedview = svg_root.namedview
+
+    def __getitem__(self, key):
+        val = self._namedview.get(key, self)
+        if val is self:
+            raise KeyError(key)
+        return _svg_str_to_python(val)
+
+    def __setitem__(self, key, val):
+        self._namedview.set(key, _python_to_svg_str(val))
+
+    def __delitem__(self, key):
+        val = self._namedview.pop(key, self)
+        if val is self:
+            raise KeyError(key)
+
+    def __len__(self):
+        return len(self._namedview.attrib)
+
+    def __iter__(self):
+        self._attribs_remaining = self._namedview.attrib.items()
+        return self
+
+    def __next__(self):
+        # Extract the next key:value pair.
+        try:
+            key, val = self._attribs_remaining.pop()
+        except IndexError:
+            raise StopIteration
+
+        # Simplify the namespace representation.  For example,
+        # '{http://www.inkscape.org/namespaces/inkscape}zoom' becomes
+        # 'inkscape:zoom'.
+        ns, base = inkex.elements._utils.removeNS(key)
+        if ns == 'svg':
+            key = base
+        else:
+            key = ns + ':' + base
+        return key
+
+    def get_inkex_object(self):
+        "Return the SimpleUserInterface's underlying inkex object."
+        return self._namedview
+
+
 # ----------------------------------------------------------------------
 
 # The following functions represent the Simple Inkscape Scripting API
@@ -3750,6 +3809,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         _user_globals['extension'] = self
         _user_globals['canvas'] = _simple_top.canvas
         _user_globals['metadata'] = SimpleMetadata()
+        _user_globals['gui'] = SimpleUserInterface()
         _user_globals['script_filename'] = None    # Modified below.
         try:
             # Inkscape 1.2+
