@@ -369,6 +369,23 @@ class SimpleTopLevel():
         for obj in guides:
             nv.add(obj.get_inkex_object())
 
+    def get_existing_grids(self):
+        '''Return a list of existing Inkscape grids as Simple Inkscape
+        Scripting SimpleGrid objects.'''
+        grids = []
+        for iobj in self.svg_root.namedview.xpath('//inkscape:grid'):
+            grids.append(SimpleGrid(iobj))
+        return grids
+
+    def replace_all_grids(self, grids):
+        'Replace all grids in the document with those in the given list.'
+        nv = self.svg_root.namedview
+        for iobj in nv.getchildren():
+            if iobj.TAG == 'grid':
+                nv.remove(iobj)
+        for obj in grids:
+            nv.add(obj.get_inkex_object())
+
     def get_existing_pages(self):
         '''Return a list of existing Inkscape pages as Simple Inkscape
         Scripting SimplePage objects.'''
@@ -2206,7 +2223,7 @@ class SimplePage(SVGOutputMixin, GenericReprMixin):
             if overlap == empty_bbox:
                 # The object does not touch the page at all.
                 continue
-            if strict == True and (page_bbox + obj_bbox) != page_bbox:
+            if strict and (page_bbox + obj_bbox) != page_bbox:
                 # The object is not contained entirely within the page.
                 continue
             shape_list.append(obj)
@@ -2861,6 +2878,272 @@ class SimpleUserInterface(GenericReprMixin, collections.abc.MutableMapping):
         return self._namedview
 
 
+class SimpleGrid(GenericReprMixin):
+    'Abstract a grid in the Inkscape GUI.'
+
+    def __init__(self, iobj):
+        'Create a SimpleGrid from an inkex Grid.'
+        # Store the underlying inkex object.
+        self._grid_obj = iobj
+
+        # Define the default grid color, which changed from blue to
+        # turquoise in Inkscape 1.3.
+        self._default_major_color = '#0099e5'  # Turquoise
+        self._default_major_alpha = 0x4d/255
+        self._default_minor_color = '#0099e5'
+        self._default_minor_alpha = 0x26/255
+        try:
+            # TextDecorationValue was added in Inkscape 1.3.
+            _ = inkex.properties.TextDecorationValue
+        except AttributeError:
+            # Old Inkscape: use old default grid-line colors.
+            self._default_major_color = '#0000ff'  # Blue
+            self._default_major_alpha = 0x40/255
+            self._default_minor_color = '#0000ff'
+            self._default_minor_alpha = 0x20/255
+
+    def get_inkex_object(self):
+        "Return the SimpleGrid's underlying inkex object."
+        return self._grid_obj
+
+    def __repr__(self):
+        attr_strs = []
+        for k in [
+                'type',
+                'origin',
+                'visible',
+                'enabled',
+                'snap',
+                'draw_with',
+                'spacing',
+                'units',
+                'major_freq',
+                'major_color',
+                'minor_color',
+        ]:
+            attr_strs.append('%s=%s' % (k, repr(getattr(self, k))))
+        return '<%s %s>' % \
+            (self.__class__.__name__,
+             ' '.join(attr_strs))
+
+    @staticmethod
+    def _to_pixels(d):
+        '''Convert a distance to a floating-point number of pixels.  The
+        distance may be specified as either a floating-point number of
+        pixels or as a string comprising a float and a unit.'''
+        parsed = inkex.units.parse_unit(d)
+        if parsed is None:
+            raise ValueError('failed to parse %s as distance' % repr(d))
+        return inkex.units.convert_unit(d, 'px')
+
+    @property
+    def type(self):
+        'Return the type of grid.'
+        return self._grid_obj.get('type', 'xygrid')
+
+    @type.setter
+    def type(self, gtype):
+        'Assign a grid type.'
+        self._grid_obj.set('type', str(gtype))
+
+    @property
+    def origin(self):
+        "Return the grid's origin as a pair of distances in pixels."
+        x = self._to_pixels(self._grid_obj.get('originx', 0))
+        y = self._to_pixels(self._grid_obj.get('originy', 0))
+        return x, y
+
+    @origin.setter
+    def origin(self, xy):
+        '''Assign to the grid an origin, expressed as an (x, y) tuple.
+        Each component must be either a floating-point number of pixels
+        or a string comprising a distance and a unit.'''
+        x = self._to_pixels(xy[0])
+        y = self._to_pixels(xy[1])
+        self._grid_obj.set('originx', str(x))
+        self._grid_obj.set('originy', str(y))
+
+    @property
+    def visible(self):
+        "Return the grid's visibility."
+        return _svg_str_to_python(self._grid_obj.get('visible', 'true'))
+
+    @visible.setter
+    def visible(self, vis):
+        'Make the grid either visible or invisible.'
+        self._grid_obj.set('visible', _python_to_svg_str(vis))
+
+    @property
+    def enabled(self):
+        'Report whether the grid is enabled.'
+        return _svg_str_to_python(self._grid_obj.get('enabled', 'true'))
+
+    @enabled.setter
+    def enabled(self, vis):
+        'Enable or disable the grid.'
+        self._grid_obj.set('enabled', _python_to_svg_str(vis))
+
+    @property
+    def snap(self):
+        'Indicate whether snapping is to "all" or only "visible" grid lines.'
+        sn = self._grid_obj.get('snapvisiblegridlinesonly', 'true')
+        if sn == 'true':
+            return 'visible'
+        elif sn == 'false':
+            return 'all'
+        else:
+            raise ValueError('unexpected snapvisiblegridlinesonly of %s' %
+                             repr(sn))
+
+    @snap.setter
+    def snap(self, sn):
+        'Set snapping to either "all" or only "visible" grid lines.'
+        if sn == 'visible':
+            self._grid_obj.set('snapvisiblegridlinesonly', 'true')
+        elif sn == 'all':
+            self._grid_obj.set('snapvisiblegridlinesonly', 'false')
+        else:
+            raise ValueError('snap must be set to either "all" or "visible"')
+
+    @property
+    def draw_with(self):
+        'Indicate whether the grid is drawn with "lines" or "dots".'
+        dots = self._grid_obj.get('dotted', 'false')
+        if dots == 'true':
+            return 'dots'
+        elif dots == 'false':
+            return 'lines'
+        else:
+            raise ValueError('unexpected dotted of %s' % repr(dots))
+
+    @draw_with.setter
+    def draw_with(self, style):
+        'Draw the grid with either "lines" or "dots".'
+        if style == 'lines':
+            self._grid_obj.set('dotted', 'false')
+        elif style == 'dots':
+            self._grid_obj.set('dotted', 'true')
+        else:
+            raise ValueError('draw_with must be set to either'
+                             ' "lines" or "dots"')
+
+    @property
+    def spacing(self):
+        '''Return grid spacing as an (x, y) tuple in which each component is
+        a floating-point number of pixels.'''
+        # Determine the document unit.
+        gui = SimpleUserInterface()
+        doc_unit = gui['inkscape:document-units']
+
+        # Acquire the grid spacing, defaulting to one document unit.
+        one_unit = inkex.units.convert_unit(f'1{doc_unit}', 'px')
+        x = self._to_pixels(self._grid_obj.get('spacingx', one_unit))
+        y = self._to_pixels(self._grid_obj.get('spacingy', one_unit))
+        return x, y
+
+    @spacing.setter
+    def spacing(self, xy):
+        '''Specify grid spacing as an (x, y) tuple in which each component
+        is either a floating-point number of pixels or a string comprising
+        a distance with units.'''
+        x = self._to_pixels(xy[0])
+        y = self._to_pixels(xy[1])
+        self._grid_obj.set('spacingx', str(x))
+        self._grid_obj.set('spacingy', str(y))
+
+    @property
+    def units(self):
+        'Return the unit type shown in the Inkscape GUI.'
+        return self._grid_obj.get('units', 'px')
+
+    @units.setter
+    def units(self, u):
+        'Set the unit type shown in the Inkscape GUI.'
+        return self._grid_obj.set('units', str(u))
+
+    @property
+    def major_freq(self):
+        '''Return the frequency with which a grid line should be drawn as a
+        major grid line (alternatively, the number of grid cells that lie
+        between two major grid lines.'''
+        return int(self._grid_obj.get('empspacing', 5))
+
+    @major_freq.setter
+    def major_freq(self, sep):
+        '''Specify the frequency with which a grid line should be drawn as
+        a major grid line (alternatively, the number of grid cells that
+        should lie between two major grid lines.'''
+        self._grid_obj.set('empspacing', str(int(sep)))
+
+    @property
+    def major_color(self):
+        '''Return the color of major grid lines as an inkex.Color.
+        Caveat: Changes the resulting object are not reflected in the grid;
+        a color must be assigned to major_color to take effect.'''
+        base = self._grid_obj.get('empcolor', self._default_major_color)
+        alpha = float(self._grid_obj.get('empopacity',
+                                         self._default_major_alpha))
+        color = inkex.Color(base)
+        color.alpha = alpha
+        return color
+
+    @major_color.setter
+    def major_color(self, clr):
+        '''Set the color of major grid lines to an inkex.Color or a value
+        that can be converted to an inkex.Color.'''
+        # <inkscape:grid> separates opacity from color.
+        color = inkex.Color(clr)
+        self._grid_obj.set('empcolor', str(color.to('rgb')))
+        self._grid_obj.set('empopacity', str(float(color.alpha)))
+
+    @property
+    def minor_color(self):
+        '''Return the color of minor grid lines as an inkex.Color.
+        Caveat: Changes the resulting object are not reflected in the grid;
+        a color must be assigned to minor_color to take effect.'''
+        base = self._grid_obj.get('color', self._default_minor_color)
+        alpha = float(self._grid_obj.get('opacity',
+                                         self._default_minor_alpha))
+        color = inkex.Color(base)
+        color.alpha = alpha
+        return color
+
+    @minor_color.setter
+    def minor_color(self, clr):
+        '''Set the color of minor grid lines to an inkex.Color or a value
+        that can be converted to an inkex.Color.'''
+        # <inkscape:grid> separates opacity from color.
+        color = inkex.Color(clr)
+        self._grid_obj.set('color', str(color.to('rgb')))
+        self._grid_obj.set('opacity', str(float(color.alpha)))
+
+    def align_to_page(self, anchor):
+        'Align the grid to a specified page anchor.'
+        global _simple_top
+        width = _simple_top.canvas.true_width
+        height = _simple_top.canvas.true_height
+        if anchor in ['c', 'center']:
+            self.origin = (width/2, height/2)
+        elif anchor in ['ul', 'nw']:
+            self.origin = (0, 0)
+        elif anchor in ['ur', 'ne']:
+            self.origin = (width, 0)
+        elif anchor in ['ll', 'sw']:
+            self.origin = (0, height)
+        elif anchor in ['lr', 'se']:
+            self.origin = (width, height)
+        elif anchor == 'n':
+            self.origin = (width/2, 0)
+        elif anchor == 's':
+            self.origin = (width/2, height)
+        elif anchor == 'e':
+            self.origin = (width, height/2)
+        elif anchor == 'w':
+            self.origin = (0, height/2)
+        else:
+            _abend(_('Unexpected alignment argument %s') % repr(anchor))
+
+
 # ----------------------------------------------------------------------
 
 # The following functions represent the Simple Inkscape Scripting API
@@ -3436,6 +3719,14 @@ def guide(pos, angle, color=None, label=None):
     return SimpleGuide(pos, angle, color, label)
 
 
+def grid(**kwargs):
+    'Create a new grid without adding it to the document.'
+    g = SimpleGrid(inkex.Grid())
+    for k, v in kwargs.items():
+        setattr(g, k, v)
+    return g
+
+
 def page(name=None, pos=None, size=None):
     global _simple_top
     page = SimplePage(len(_simple_top.simple_pages) + 1, name, pos, size)
@@ -3804,6 +4095,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
         _user_globals = globals().copy()
         _user_globals['svg_root'] = self.svg
         _user_globals['guides'] = _simple_top.get_existing_guides()
+        _user_globals['grids'] = _simple_top.get_existing_grids()
         _user_globals['print'] = _debug_print
         _user_globals['user_args'] = self.options.user_args
         _user_globals['extension'] = self
@@ -3857,6 +4149,7 @@ from inkex.paths import curve, horz, move, quadratic, smooth, \
         except SystemExit:
             pass
         _simple_top.replace_all_guides(_user_globals['guides'])
+        _simple_top.replace_all_grids(_user_globals['grids'])
 
 
 def main():
