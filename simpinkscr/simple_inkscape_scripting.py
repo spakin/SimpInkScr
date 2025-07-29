@@ -302,14 +302,19 @@ class SimpleTopLevel():
         # we return the top-level <svg> element.
         return svg
 
+    class ObjAppendError(ValueError):
+        '''Report than a Simple Inkscape Scripting object could not be
+        appended to the document.'''
+        pass
+
     def append_obj(self, obj, to_root=False):
         'Append a Simple Inkscape Scripting object to the document.'
         # Check for a few error conditions.
         if not isinstance(obj, SimpleObject):
-            raise ValueError('Only Simple Inkscape Scripting objects '
-                             'can be appended')
+            raise self.ObjAppendError('Only Simple Inkscape Scripting'
+                                      ' objects can be appended')
         if obj in self.simple_objs:
-            raise ValueError('Object has already been appended')
+            raise self.ObjAppendError('Object already has been appended')
 
         # Attach the underlying inkex object to the SVG attachment point if
         # to_root is False or to the SVG root if to_root is True.  Append
@@ -426,6 +431,49 @@ class SimpleTopLevel():
                 all_objs.extend(self.all_known_objects(obj))
             all_objs.append(obj)
         return all_objs
+
+    def all_document_shapes(self):
+        '''Return a list of all shapes in the document, including those not
+        created by Simple Inkscape Scripting, as Simple Inkscape Scripting
+        objects.'''
+        # Acquire a mapping from inkex object ID to Simple Inkscape
+        # Scripting object for all objects created by Simple Inkscape
+        # Scripting.
+        id2obj = {obj.get_inkex_object().get_id(): obj
+                  for obj in self.all_known_objects()}
+
+        # Extend the mapping by recursively following all objects reachable
+        # from the root, ignoring those already in the mapping.
+        for iobj in self.svg_root.getchildren():
+            # Skip non-shapes and shapes we've already processed.
+            if not isinstance(iobj, inkex.ShapeElement):
+                continue
+            iobj_id = iobj.get_id()
+            if iobj_id in id2obj:
+                continue
+
+            # Recursively process all descendants of the current shape.
+            obj = inkex_object(iobj)
+            id2obj[iobj_id] = obj
+            self._add_descendants(id2obj, iobj)
+        return list(id2obj.values())
+
+    def _add_descendants(self, id2obj, iroot):
+        '''Given a mapping from inkex IDs to Simple Inkscape Scripting
+        objects and an inkex root object, populate the mapping with all
+        descendants of the root object.'''
+        try:
+            for iobj in iroot:
+                if not isinstance(iobj, inkex.ShapeElement):
+                    continue
+                iobj_id = iobj.get_id()
+                if iobj_id in id2obj:
+                    continue
+                id2obj[iobj_id] = inkex_object(iobj)
+                self._add_descendants(id2obj, iobj)
+        except TypeError:
+            # Not a group-like object.
+            pass
 
 
 class SVGOutputMixin():
@@ -3694,24 +3742,8 @@ def all_shapes():
     # Acquire the root of the SVG tree.
     global _simple_top
     svg = _simple_top.svg_root
-
-    # Find all ShapeElements whose parent is a layer.
-    layers = {g
-              for g in svg.xpath('//svg:g')
-              if g.get('inkscape:groupmode') == 'layer'}
-    layer_shapes = [inkex_object(obj)
-                    for lay in layers
-                    for obj in lay
-                    if isinstance(obj, inkex.ShapeElement)]
-
-    # Find all ShapeElements whose parent is the root.
-    root_shapes = [inkex_object(obj)
-                   for obj in svg
-                   if isinstance(obj, inkex.ShapeElement) and
-                   obj not in layers]
-
-    # Return the combination of the two.
-    return root_shapes + layer_shapes
+    shape_list = _simple_top.all_document_shapes()
+    return [obj for obj in shape_list if not isinstance(obj, SimpleLayer)]
 
 
 def guide(pos, angle, color=None, label=None):
