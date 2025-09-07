@@ -519,7 +519,14 @@ p = path(['M', 150, 50,
           'Z'],
          fill='#0055d4', stroke_width=3)
 p.to_path(all_curves=True)
-''',)
+''',),
+        ('''--program=
+for lnum in range(5):
+    layer('SIS Layer %d' % (lnum + 1))
+for i, lay in enumerate(all_layers()):
+    clr = inkex.colors.Color((i*255/5, 0, 0), 'rgb')
+    lay.append(circle((50, 100*i + 50), 50, fill=clr))
+''',),
     ]
     compare_file = 'svg/default-inkscape-SVG.svg'
 
