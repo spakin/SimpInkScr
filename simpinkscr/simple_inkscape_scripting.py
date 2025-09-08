@@ -251,9 +251,14 @@ def _run_inkscape_and_replace_svg(action_str):
         _user_globals['svg_root'] = ext.svg
 
 
+class SISException(inkex.AbortExtension):
+    'Define a normally fatal exceptional condition.'
+    pass
+
+
 def _abend(msg):
     'Abnormally end execution with an error message.'
-    raise inkex.AbortExtension(msg)
+    raise SISException(msg)
 
 
 class Mpath(inkex.Use):
@@ -269,7 +274,8 @@ class SimpleTopLevel():
         self.extension = ext_obj
         self.svg_attach = self.find_attach_point()
         self.canvas = SimpleCanvas(svg_root)
-        self.simple_objs = []
+        self.simple_objs = []  # All top-level shapes
+        self.id2obj = {}       # Map from inkex object ID to SIS object
 
     def find_attach_point(self):
         '''Return a suitable point in the SVG XML tree at which to attach
@@ -325,9 +331,14 @@ class SimpleTopLevel():
         else:
             self.svg_attach.append(obj._inkscape_obj)
         self.simple_objs.append(obj)
+        try:
+            self.id2obj[obj._inkscape_obj.get_id()] = obj
+        except inkex.utils.FragmentError:
+            pass
 
     def remove_obj(self, obj):
         'Remove a Simple Inkscape Scripting object from the document.'
+        global _simple_top
         # Check for a few error conditions.
         if not isinstance(obj, SimpleObject):
             raise ValueError('Only Simple Inkscape Scripting objects '
@@ -338,8 +349,13 @@ class SimpleTopLevel():
         # Elide the Simple Inkscape Scripting object and dissociate the
         # underlying inkex object from its parent.
         self.simple_objs = [o for o in self.simple_objs if o != obj]
-        if obj._inkscape_obj is not None:
-            obj._inkscape_obj.delete()
+        iobj = obj._inkscape_obj
+        if iobj is not None:
+            try:
+                del _simple_top.id2obj[iobj.get_id()]
+            except inkex.utils.FragmentError:
+                pass
+            iobj.delete()
 
     def last_obj(self):
         'Return the last Simple Inkscape Scripting object added by append_obj.'
@@ -432,6 +448,17 @@ class SimpleTopLevel():
             all_objs.append(obj)
         return all_objs
 
+    def _all_inkex_shapes(self, root):
+        '''Return a postorder traversal of all inkex shape objects
+        reachable from a given root.'''
+        all_iobjs = []
+        for iobj in root:
+            if not isinstance(iobj, inkex.ShapeElement):
+                continue
+            all_iobjs.extend(self._all_inkex_shapes(iobj))
+            all_iobjs.append(iobj)
+        return all_iobjs
+
     def all_document_shapes(self):
         '''Return a list of all shapes in the document, including those not
         created by Simple Inkscape Scripting, as Simple Inkscape Scripting
@@ -442,38 +469,44 @@ class SimpleTopLevel():
         id2obj = {obj.get_inkex_object().get_id(): obj
                   for obj in self.all_known_objects()}
 
-        # Extend the mapping by recursively following all objects reachable
-        # from the root, ignoring those already in the mapping.
-        for iobj in self.svg_root.getchildren():
-            # Skip non-shapes and shapes we've already processed.
-            if not isinstance(iobj, inkex.ShapeElement):
-                continue
+        # Acquire a postorder traversal of all inkex objects.
+        all_iobjs = self._all_inkex_shapes(self.svg_root)
+
+        # Convert each inkex object to a Simple Inkscape Scripting object.
+        all_objs = []
+        for iobj in all_iobjs:
             iobj_id = iobj.get_id()
-            if iobj_id in id2obj:
+            try:
+                # Object already is known to Simple Inkscape Scripting
+                all_objs.append(id2obj[iobj_id])
+            except KeyError:
+                # Object existed before the user's script began
+                obj = inkex_object(iobj)
+                all_objs.append(obj)
+                id2obj[iobj_id] = obj
+
+        # Propagate inkex's parent-child relationships to Simple
+        # Inkscape Scripting.
+        for obj in all_objs:
+            if obj.get_parent() is not None:
                 continue
+            iobj = obj.get_inkex_object()
+            try:
+                # Simple Inkscape Scripting parent
+                obj_parent = id2obj[iobj.getparent().get_id()]
+                obj_parent.append(obj)
+            except KeyError:
+                # Parent is inkex only.
+                pass
+            except AttributeError:
+                # Parent is a SimpleTextObject or some other type that
+                # lacks an append method.
+                pass
 
-            # Recursively process all descendants of the current shape.
-            obj = inkex_object(iobj)
-            id2obj[iobj_id] = obj
-            self._add_descendants(id2obj, iobj)
-        return list(id2obj.values())
-
-    def _add_descendants(self, id2obj, iroot):
-        '''Given a mapping from inkex IDs to Simple Inkscape Scripting
-        objects and an inkex root object, populate the mapping with all
-        descendants of the root object.'''
-        try:
-            for iobj in iroot:
-                if not isinstance(iobj, inkex.ShapeElement):
-                    continue
-                iobj_id = iobj.get_id()
-                if iobj_id in id2obj:
-                    continue
-                id2obj[iobj_id] = inkex_object(iobj)
-                self._add_descendants(id2obj, iobj)
-        except TypeError:
-            # Not a group-like object.
-            pass
+        # Update the global mapping of inkex IDs to Simple Inkscape
+        # Scripting objects then return the constructed object list.
+        self.id2obj.update(id2obj)
+        return all_objs
 
 
 class SVGOutputMixin():
@@ -560,6 +593,10 @@ class SimpleObject(SVGOutputMixin):
         if obj.getparent() is None and self._track:
             _simple_top.append_obj(self)
             _simple_top.svg_attach.append(obj)
+        try:
+            _simple_top.id2obj[obj.get_id()] = self
+        except inkex.utils.FragmentError:
+            pass
         self.parent = None
 
     def __repr__(self):
@@ -687,6 +724,12 @@ class SimpleObject(SVGOutputMixin):
         else:
             # Existing object wrapped by Simple Inkscape Scripting (e.g.,
             # returned by all_shapes)
+            try:
+                del _simple_top.id2obj[self._inkscape_obj.get_id()]
+            except (KeyError, inkex.utils.FragmentError):
+                # TODO: Confirm that inkex.utils.FragmentError still
+                # can be thrown here.
+                pass
             self._inkscape_obj.delete()
 
     def unremove(self):
@@ -3584,6 +3627,7 @@ def hyperlink(objs, href, title=None, target=None, mime_type=None,
 def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
                  mask=None, **style):
     'Expose an arbitrary inkex-created object to Simple Inkscape Scripting.'
+    # Prepare to apply the given transform and style.
     try:
         # Inkscape 1.2+
         merged_xform = inkex.Transform(transform) @ iobj.transform
@@ -3591,6 +3635,18 @@ def inkex_object(iobj, transform=None, conn_avoid=False, clip_path=None,
         # Inkscape 1.0 and 1.1
         merged_xform = inkex.Transform(transform) * iobj.transform
     base_style = dict(iobj.style)
+
+    # Return objects we've already encountered.
+    global _simple_top
+    try:
+        obj = _simple_top.id2obj[iobj.get_id()]
+        obj.svg_set('transform', merged_xform)
+        obj.style(**style)
+        return obj
+    except KeyError:
+        pass
+
+    # Create a new object, recursively if necessary.
     if isinstance(iobj, inkex.PathElement):
         return SimplePathObject(iobj, merged_xform, conn_avoid, clip_path,
                                 mask, base_style, style)
@@ -3911,7 +3967,7 @@ def apply_action(action, obj=None):
                 # convert the object as part of converting its parent.
                 continue
             new_sis_objs.append(inkex_object(iobj))
-        except inkex.AbortExtension:
+        except SISException:
             # Object type is not recognized by Simple Inkscape Scripting.
             pass
 
