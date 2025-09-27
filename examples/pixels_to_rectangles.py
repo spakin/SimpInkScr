@@ -39,8 +39,8 @@ def render_with_rectangles(obj):
 
 
 # Download a bitmapped image from the web.
-img_src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/' + \
-          'Gnome-emblem-web.svg/48px-Gnome-emblem-web.svg.png'
+img_src = 'https://www.python.org/static/community_logos/' + \
+    'python-powered-h-50x65.png'
 img = image(img_src, (20, 20), embed=True, transform='scale(2)')
 
 # Convert each pixel of the image to an SVG rectangle.
