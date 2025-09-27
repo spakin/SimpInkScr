@@ -9,5 +9,5 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"><rect x="100" y="0" width="50" height="50" style="stroke:black;fill:#fff6d5" id="rect5815"/><rect x="200" y="400" width="50" height="50" style="stroke:black;fill:#fff6d5" id="rect8555"/><path d="M 125,25 L 225,425" inkscape:connector-type="orthogonal" inkscape:connector-curvature="100" inkscape:connection-start="#rect5815" inkscape:connection-end="#rect8555" style="stroke:black;fill:none"/><circle cx="225" cy="225" r="25" inkscape:connector-avoid="true" style="stroke:black;fill:red"/></g>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"><rect x="100" y="0" width="50" height="50" style="stroke:black;fill:#fff6d5" id="rect5815"/><rect x="200" y="400" width="50" height="50" style="stroke:black;fill:#fff6d5" id="rect8555"/><path d="M 125,25 L 225,425" inkscape:connector-type="orthogonal" inkscape:connector-curvature="100" inkscape:connection-start="#rect5815" inkscape:connection-end="#rect8555" style="stroke:black;fill:none" id="path5392"/><circle cx="225" cy="225" r="25" inkscape:connector-avoid="true" style="stroke:black;fill:red" id="circle9603"/></g>
 </svg>
