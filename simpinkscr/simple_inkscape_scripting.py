@@ -466,7 +466,7 @@ class SimpleTopLevel():
         # Acquire a mapping from inkex object ID to Simple Inkscape
         # Scripting object for all objects created by Simple Inkscape
         # Scripting.
-        id2obj = {obj.get_inkex_object().get_id(): obj
+        id2obj = {obj.get_id(): obj
                   for obj in self.all_known_objects()}
 
         # Acquire a postorder traversal of all inkex objects.
@@ -1291,6 +1291,10 @@ class SimpleObject(SVGOutputMixin):
     def get_inkex_object(self):
         "Return the SimpleObject's underlying inkex object."
         return self._inkscape_obj
+
+    def get_id(self):
+        "Return the ID of the SimpleObject's underlying inkex object."
+        return self._inkscape_obj.get_id()
 
     def z_order(self, target, n=None):
         'Raise or lower the SimpleObject in the stacking order.'
@@ -3892,9 +3896,9 @@ def apply_action(action, obj=None):
     if obj is None:
         id_list = []
     elif isinstance(obj, collections.abc.Iterable):
-        id_list = [o.get_inkex_object().get_id() for o in obj]
+        id_list = [o.get_id() for o in obj]
     else:
-        id_list = [obj.get_inkex_object().get_id()]
+        id_list = [obj.get_id()]
 
     # Store a map from all object IDs that appear in the original image to
     # the object represented by that ID.
@@ -3948,7 +3952,7 @@ def apply_action(action, obj=None):
     # assumes that all_known_objects uses a postorder traversal.
     all_objs = _simple_top.all_known_objects()
     for obj in all_objs:
-        obj_id = obj.get_inkex_object().get_id()
+        obj_id = obj.get_id()
         if obj_id not in ids_after:
             obj.remove()
             obj._inkscape_obj = None
