@@ -3791,6 +3791,7 @@ def selected_shapes():
     '''Return a list of all directly selected shapes as Simple Inkscape
     Scripting objects.  Layers do not count as shapes in this context.'''
     global _simple_top
+    _simple_top.all_document_shapes()  # Force inkex-to-SIS object creation.
     return [inkex_object(o)
             for o in _simple_top.svg_root.selection
             if not isinstance(o, inkex.Layer)]
@@ -3800,7 +3801,6 @@ def all_layers():
     '''Return a list of all layers in the document as Simple Inkscape
     Scripting objects.'''
     global _simple_top
-    svg = _simple_top.svg_root
     shape_list = _simple_top.all_document_shapes()
     return [obj for obj in shape_list if isinstance(obj, SimpleLayer)]
 
@@ -3809,7 +3809,6 @@ def all_shapes():
     '''Return a list of all shapes in the document as Simple Inkscape
     Scripting objects.  Layers do not count as shapes in this context.'''
     global _simple_top
-    svg = _simple_top.svg_root
     shape_list = _simple_top.all_document_shapes()
     return [obj for obj in shape_list if not isinstance(obj, SimpleLayer)]
 
