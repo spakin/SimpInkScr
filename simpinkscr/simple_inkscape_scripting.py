@@ -24,6 +24,7 @@ import collections.abc
 import datetime
 import io
 import math
+import numbers
 import os
 import random
 import re
@@ -4095,6 +4096,134 @@ def randcolor(range1=None, range2=None, range3=None, space='rgb'):
         # Other
         raise ValueError('Unknown color space "%s"' % space)
     return inkex.colors.Color(color, space)
+
+
+def align(objs, alignment, anchor):
+    'Align a collection of objects.'
+    global _simple_top
+    if isinstance(objs, SimpleObject):
+        # Promote single objects to lists for consistency.
+        objs = [objs]
+    bboxes = [o.bounding_box() for o in objs]
+    orig_alignment = alignment
+    dxs, dys = None, None
+
+    # Handle the trivial, do-nothing case.
+    if len(objs) == 0:
+        return
+
+    # Expand the alignment into a list if it was provided as a string.
+    if isinstance(alignment, str):
+        if alignment in ['nw', 'ul']:
+            alignment = ['n', 'w']
+        elif alignment in ['ne', 'ur']:
+            alignment = ['n', 'e']
+        elif alignment in ['se', 'lr']:
+            alignment = ['s', 'e']
+        elif alignment in ['sw', 'll']:
+            alignment = ['s', 'w']
+        elif alignment == 'centroid':
+            alignment = ['center_x', 'center_y']
+        else:
+            alignment = [alignment]
+
+    # Determine a bounding box to which alignment should be relative.
+    try:
+        # Simple Inkscape Scripting object with bounding_box defined.
+        base_bbox = anchor.bounding_box()
+    except AttributeError:
+        if isinstance(anchor, inkex.BoundingBox):
+            # inkex BoundingBox
+            base_bbox = anchor
+        elif isinstance(anchor, tuple) and len(anchor) == 2 and \
+                isinstance(anchor[0], numbers.Number) and \
+                isinstance(anchor[1], numbers.Number):
+            # Point, specified as a tuple of numbers
+            base_bbox = inkex.BoundingBox((anchor[0], anchor[0]),
+                                          (anchor[1], anchor[1]))
+        elif isinstance(anchor, inkex.Vector2d):
+            # Point, specified as an inkex.Vector2d
+            base_bbox = inkex.BoundingBox((anchor.x, anchor.x),
+                                          (anchor.y, anchor.y))
+        elif (isinstance(anchor, collections.abc.Collection) and not
+              isinstance(anchor, (str, bytes, bytearray))):
+            # Collection of (we hope) Simple Inkscape Scripting shapes.
+            base_bbox = sum([a.bounding_box() for a in anchor],
+                            start=inkex.BoundingBox())
+        elif anchor == 'page':
+            # Page (or more precisely, the page's viewbox)
+            base_bbox = _simple_top.canvas.bounding_box()
+        elif anchor == 'drawing':
+            # All objects on the page
+            base_bbox = sum([o.bounding_box() for o in all_shapes()],
+                            start=inkex.BoundingBox())
+        elif anchor == 'selection':
+            # All selected objects
+            base_bbox = sum([o.bounding_box() for o in selected_shapes()],
+                            start=inkex.BoundingBox())
+        elif anchor in ['objects', 'shapes']:
+            # Provided list of objects
+            base_bbox = sum(bboxes, start=inkex.BoundingBox())
+        elif anchor in ['biggest', 'largest']:
+            # Biggest object in the provided list of objects
+            base_bbox = max(bboxes, key=lambda bb: bb.area)
+        elif anchor in ['littlest', 'smallest']:
+            # Smallest object in the provided list of objects
+            base_bbox = min(bboxes, key=lambda bb: bb.area)
+        else:
+            _abend(_('invalid anchor alignment %s' % repr(anchor)))
+
+    # Prepare to complain if multiple horizontal or multiple vertical
+    # alignments are specified.
+    def new_assign(var, value):
+        nonlocal dxs, dys
+        if var is None:
+            return value
+        elif var is dxs:
+            _abend(_('alignment type %s specifies'
+                     ' multiple horizontal anchors' %
+                     repr(orig_alignment)))
+        elif var is dys:
+            _abend(_('alignment type %s specifies'
+                     ' multiple vertical anchors' %
+                     repr(orig_alignment)))
+        else:
+            _abend(_('internal error: unexpected variable reference'))
+
+    # Compute the x and y deltas for each object.
+    for a in alignment:
+        if a in ['left', 'w']:
+            dxs = new_assign(dxs,
+                             [base_bbox.left - bb.left for bb in bboxes])
+        elif a in ['right', 'e']:
+            dxs = new_assign(dxs,
+                             [base_bbox.right - bb.right for bb in bboxes])
+        elif a in ['top', 'n']:
+            dys = new_assign(dys,
+                             [base_bbox.top - bb.top for bb in bboxes])
+        elif a in ['bottom', 's']:
+            dys = new_assign(dys,
+                             [base_bbox.bottom - bb.bottom for bb in bboxes])
+        elif a in ['center', 'center_x']:
+            dxs = new_assign(dxs,
+                             [base_bbox.center_x - bb.center_x
+                              for bb in bboxes])
+        elif a in ['middle', 'center_y']:
+            dys = new_assign(dys,
+                             [base_bbox.center_y - bb.center_y
+                              for bb in bboxes])
+        else:
+            _abend(_('invalid alignment type %s' % repr(orig_alignment)))
+    if dxs is None:
+        dxs = [0]*len(objs)
+    if dys is None:
+        dys = [0]*len(objs)
+
+    # Apply one or more transformations to each object.
+    # TODO: Allow, as an option, repositioning each object instead of
+    # transforming it.
+    for obj, dx, dy in zip(objs, dxs, dys):
+        obj.translate((dx, dy))
 
 
 # ----------------------------------------------------------------------
