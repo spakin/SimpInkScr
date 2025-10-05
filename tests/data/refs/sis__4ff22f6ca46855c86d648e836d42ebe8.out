@@ -1,0 +1,13 @@
+<!-- Created with Inkscape (http://www.inkscape.org/) --><svg xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:cc="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/" width="793.7007874" height="1122.519685">
+  <defs/>
+  <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="0.35" inkscape:cx="375" inkscape:cy="520" inkscape:document-units="px" inkscape:current-layer="layer1"/>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"><rect x="315" y="200" width="135" height="75" style="stroke:none;fill:#800080" id="rect5815" transform="matrix(0.891007 -0.45399 0.45399 0.891007 -225.8 226.094)"/><ellipse cx="160" cy="525" rx="40" ry="75" style="stroke:none;fill:#d40000" id="ellipse8555" transform="translate(100, -250)"/><path sodipodi:cx="584.28571" sodipodi:cy="350" sodipodi:r1="46.860626" sodipodi:r2="20.800316" sodipodi:arg1="0.65569563" sodipodi:arg2="1.2924963" sodipodi:sides="5" inkscape:rounded="0.0" inkscape:flatsided="false" sodipodi:type="star" d="m 621.429 378.571 l -31.4286 -8.57143 l -21.4096 24.154 l -1.56005 -32.5391 l -29.5877 -12.8977 l 30.4644 -11.5388 l 3.12333 -32.1252 l 20.3881 25.4077 l 31.5181 -6.95678 l -17.8639 27.2416 z" inkscape:randomized="0.0" transform="translate(-322.937, -105.053)" style="stroke:none;fill:#668000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" id="path5392"/><path d="M 440 540 C 415 540 393 546 418 571 C 458 611 448 601 418 641 C 388 681 438 691 488 691 C 496 691 504 687 511 682 C 502 669 494 654 488 641 C 471 607 468 602 514 572 C 506 559 494 549 478 541 C 470 541 454 539 440 540 Z" style="stroke:none;fill:#006680" id="path9603" transform="translate(-214, -339.72)"/><text x="311" y="750" xml:space="preserve" style="stroke:none;font-size:24px;line-height:1;font-family:FreeSerif;font-weight:bold;fill:#44aa00;text-align:center;text-anchor:middle" id="text4306" transform="translate(-94.376, -533.392)"><tspan style="stroke:none" x="311" y="750">Simple Inkscape</tspan><tspan style="stroke:none" x="311" y="775">Scripting</tspan></text></g>
+</svg>

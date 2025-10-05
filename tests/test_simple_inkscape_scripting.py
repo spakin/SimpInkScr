@@ -325,6 +325,29 @@ for c in ['beige', 'maroon', 'mediumslateblue', 'mediumseagreen', 'tan']:
     boxes.append(rect(ul, ul + (100, 60), fill=c, opacity=0.9))
     ul += (10, 10)
 '''
+    align_shapes = '''
+push_defaults()
+style(stroke='none')
+my_rect = rect((315, 200), (450, 275), fill='#800080').rotate(-27)
+my_ellipse = ellipse((160, 525), (40, 75), fill='#d40000')
+my_star = star(5, (584.28571, 350), (46.860626, 20.800316), angles=(0.65569563, 1.2924963), transform='translate(-10, 30)', stroke='none', fill='#668000', stroke_width=2, stroke_linecap='round', stroke_linejoin='round')
+my_path = path([
+    Move(440, 540),
+    Curve(415, 540, 393, 546, 418, 571),
+    Curve(458, 611, 448, 601, 418, 641),
+    Curve(388, 681, 438, 691, 488, 691),
+    Curve(496, 691, 504, 687, 511, 682),
+    Curve(502, 669, 494, 654, 488, 641),
+    Curve(471, 607, 468, 602, 514, 572),
+    Curve(506, 559, 494, 549, 478, 541),
+    Curve(470, 541, 454, 539, 440, 540),
+    ZoneClose()
+], fill='#006680')
+my_text = text('', (311, 750), font_size='24px', line_height=1, font_family='FreeSerif', font_weight='bold', fill='#44aa00', text_align='center', text_anchor='middle')
+my_text.add_text('Simple Inkscape', (311, 750))
+my_text.add_text('Scripting', (311, 775))
+pop_defaults()
+'''
 
     # Define a sequence of tests.
     comparisons = [
@@ -353,6 +376,25 @@ c.unremove()
         ("--program=%s\nboxes[2].z_order('raise')" % z_order,),
         ("--program=%s\nboxes[3].z_order('lower', 2)" % z_order,),
         ("--program=%s\nboxes[1].z_order('to', 3)" % z_order,),
+        (f'''--program=
+{align_shapes}
+shapes = [my_rect, my_ellipse, my_star, my_path, my_text]
+align(shapes, 'bottom', 'page')
+''',),
+        (f'''--program=
+{align_shapes}
+shapes = [my_rect, my_ellipse, my_star, my_path, my_text]
+align(shapes, 'right', my_path)
+''',),
+        (f'''--program=
+{align_shapes}
+align(my_star, 'centroid', [my_rect, my_ellipse, my_path, my_text])
+''',),
+        (f'''--program=
+{align_shapes}
+shapes = [my_rect, my_ellipse, my_star, my_path, my_text]
+align(shapes, 'ur', (300, 200))
+''',),
         (f'''--program=
 {z_order}
 for obj in z_sort(boxes):
