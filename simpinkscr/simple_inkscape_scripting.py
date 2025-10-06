@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 02110-1301, USA.
 '''
 
+# Note: numpy and PIL.Image are imported dynamically from
+# SimpleInkscapeScripting.effect.
 import base64
 import collections.abc
 import datetime
@@ -29,11 +31,7 @@ import os
 import random
 import re
 import string
-try:
-    import numpy
-except ModuleNotFoundError:
-    pass
-import PIL.Image
+import sys
 import lxml
 import inkex
 import inkex.command
@@ -4268,6 +4266,9 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
                           help='Python source file to execute')
         pars.add_argument('--encoding', type=str,
                           help='Character encoding for input code')
+        pars.add_argument('--import-workaround', type=inkex.Boolean,
+                          default=False,
+                          help='Ignore NumPy and Pillow import errors')
         pars.add_argument('user_args', nargs='*', metavar='USER_ARGS',
                           help='Additional arguments to pass to Python code'
                                ' via the user_args global variable')
@@ -4310,6 +4311,39 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
 
     def effect(self):
         'Generate objects from user-provided Python code.'
+        # Conditionally import problematic modules into global scope.
+        global numpy, PIL
+        # Based on Simple Inkscape Scripting's GitHub issues page, a number
+        # of Windows and macOS users don't have NumPy or Pillow installed
+        # and have trouble installing them where Inkscape can find them.
+        # As a workaround, we allow those imports to fail and simply throw
+        # an exception if the user's script accesses an unavailable
+        # feature.
+        if self.options.import_workaround:
+            # Allow failures with a warning.
+            import_failures = []
+            try:
+                import numpy
+            except ImportError:
+                import_failures.append('numpy')
+            try:
+                import PIL.Image
+            except ImportError:
+                import_failures.append('pillow')
+            if import_failures != []:
+                failure_str = ' '.join(import_failures)
+                inkex.utils.errormsg(_('Failed to import the following'
+                                       ' packages: %s' % failure_str))
+                inkex.utils.errormsg(_('Perhaps try running,'))
+                inkex.utils.errormsg(_('    %s -m pip install --upgrade %s' %
+                                       (sys.executable, failure_str)))
+                inkex.utils.errormsg(_('Some Simple Inkscape Scripting'
+                                       ' functionality will be unavailable.'))
+        else:
+            # Abort on import error (the default).
+            import numpy
+            import PIL.Image
+
         # Prepare global values we use internally.
         global _simple_top, _simple_pages, _user_globals
         _simple_top = SimpleTopLevel(self.svg, self)

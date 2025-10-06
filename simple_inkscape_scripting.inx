@@ -23,6 +23,11 @@
         <option value="utf-16">UTF-16</option>
         <option value="cp1252">Windows-1252</option>
       </param>
+      <param name="import-workaround" type="bool"
+	     gui-text="Ignore missing/broken Python packages"
+	     gui-description="Continue execution with degraded functionality if NumPy and/or PIL (Pillow) can't be loaded">
+	false
+      </param>
     </page>
 
     <page name="About" gui-text="About">
