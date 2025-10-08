@@ -250,6 +250,41 @@ def _run_inkscape_and_replace_svg(action_str):
         _user_globals['svg_root'] = ext.svg
 
 
+def _translate_inkex(iobj, delta):
+    '''Translate an inkex object's coordinates -- and recursively those of
+    its children -- by (x, y) tuple "delta".'''
+    dx, dy = delta
+
+    # Translate path objects.
+    if iobj.get('d') is not None:
+        iobj.set('d', iobj.path.translate(dx, dy))
+
+    # Translate polygons and polylines.
+    if iobj.get('points') is not None:
+        # Convert to a path so we can leverage inkex's points parser.
+        # Otherwise, we'd have to deal ourselves with annoying cases
+        # like parsing "10-5" into (10, -5).
+        coords = []
+        for seg in iobj.get_path():
+            for x, y in zip(seg.args[0::2], seg.args[1::2]):
+                coords.append('%.20g,%.20g' % (x + dx, y + dy))
+        iobj.set('points', ' '.join(coords))
+
+    # Translate most other shapes.
+    for key in ['x', 'cx', 'x1', 'x2', 'sodipodi:cx']:
+        x = iobj.get(key)
+        if x is not None:
+            iobj.set(key, '%.20g' % (float(x) + dx))
+    for key in ['y', 'cy', 'y1', 'y2', 'sodipodi:cy']:
+        y = iobj.get(key)
+        if y is not None:
+            iobj.set(key, '%.20g' % (float(y) + dy))
+
+    # Recursively translate the inkex object's children.
+    for kid in iobj:
+        _translate_inkex(kid, delta)
+
+
 class SISException(inkex.AbortExtension):
     'Define a normally fatal exceptional condition.'
     pass
