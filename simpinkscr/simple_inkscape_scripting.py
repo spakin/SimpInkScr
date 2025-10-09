@@ -956,8 +956,15 @@ class SimpleObject(SVGOutputMixin):
                 self._transform = tr * self._transform
         self._apply_transform()
 
-    def translate(self, dist, first=False):
+    def translate(self, dist, first=False, relocate=False):
         'Apply a translation transformation.'
+        # If relocate is True, change the shape's coordinates.
+        if relocate:
+            _translate_inkex(self.get_inkex_object(), dist)
+            return self
+
+        # If relocate is False, keep the shape's coordinates, but apply a
+        # transformation matrix to reposition it.
         tr = inkex.Transform()
         tr.add_translate(dist[0], dist[1])
         self._multiply_transform(tr, first)
