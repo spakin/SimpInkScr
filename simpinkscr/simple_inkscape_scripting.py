@@ -4138,7 +4138,7 @@ def randcolor(range1=None, range2=None, range3=None, space='rgb'):
     return inkex.colors.Color(color, space)
 
 
-def align(objs, alignment, anchor):
+def align(objs, alignment, anchor, transform=False):
     'Align a collection of objects.'
     global _simple_top
     if isinstance(objs, SimpleObject):
@@ -4259,11 +4259,23 @@ def align(objs, alignment, anchor):
     if dys is None:
         dys = [0]*len(objs)
 
-    # Apply one or more transformations to each object.
-    # TODO: Allow, as an option, repositioning each object instead of
-    # transforming it.
+    # Translate each object, either by altering its coordinates (the
+    # default) or by applying a transformation.  In all cases, the results
+    # are visually identical.
     for obj, dx, dy in zip(objs, dxs, dys):
-        obj.translate((dx, dy))
+        if transform:
+            # Case 1: Apply a transform to the otherwise unmodified object.
+            obj.translate((dx, dy))
+        elif obj.svg_get('transform') is None:
+            # Case 2: Relocate the object, which has no pre-existing
+            # transforms applied to it.
+            obj.translate((dx, dy), relocate=True)
+        else:
+            # Case 3: Relocate the object, modifying its transforms as
+            # needed.
+            obj.translate((-dx, -dy), first=True)
+            obj.translate((dx, dy), relocate=True)
+            obj.translate((dx, dy), first=False)
 
 
 # ----------------------------------------------------------------------
