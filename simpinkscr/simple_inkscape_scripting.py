@@ -1576,9 +1576,13 @@ class SimpleTextObject(SimpleObject):
         if all_curves:
             union.svg_set('d', self._path_to_curve(union._inkscape_obj))
 
-        # Restore the saved style and transform and return the new path.
+        # Copy over the original object's style, transform, and parent.
         union.svg_set('style', orig_style)
         union.svg_set('transform', orig_xform)
+        if self.parent is not None:
+            self.parent.append(p)
+
+        # Return the new path.
         return union
 
 
