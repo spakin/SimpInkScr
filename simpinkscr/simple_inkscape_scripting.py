@@ -1576,9 +1576,13 @@ class SimpleTextObject(SimpleObject):
         if all_curves:
             union.svg_set('d', self._path_to_curve(union._inkscape_obj))
 
-        # Restore the saved style and transform and return the new path.
+        # Copy over the original object's style, transform, and parent.
         union.svg_set('style', orig_style)
         union.svg_set('transform', orig_xform)
+        if self.parent is not None:
+            self.parent.append(p)
+
+        # Return the new path.
         return union
 
 
@@ -4037,8 +4041,9 @@ def apply_action(action, obj=None):
                 iobj_parent.append(obj)
         except KeyError:
             # The object's parent is not known to Simple Inkscape
-            # Scripting.  It may be the default layer, for instance.  Do
-            # nothing and hope for the best.
+            # Scripting.  It may be the default layer, for instance.  Move
+            # the object to the top level and hope for the best.
+            _simple_top.append_obj(obj)
             pass
 
     # Return the list of newly created objects, including all of their
