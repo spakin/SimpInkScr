@@ -372,7 +372,6 @@ class SimpleTopLevel():
 
     def remove_obj(self, obj):
         'Remove a Simple Inkscape Scripting object from the document.'
-        _debug_print('DEBUG: remove_obj is removing', obj.get_id())  # Temporary
         global _simple_top
         # Check for a few error conditions.
         if not isinstance(obj, SimpleObject):
@@ -389,16 +388,8 @@ class SimpleTopLevel():
             try:
                 del _simple_top.id2obj[iobj.get_id()]
             except inkex.utils.FragmentError:
-                _debug_print('DEBUG: Fragment error')  # Temporary
                 pass
-            #iobj.delete()
-
-            # Temporary
-            del_id = iobj.get_id()
-            _debug_print('DEBUG: remove_obj claims to be deleting', repr(iobj),
-                         'with ID', del_id)
             iobj.delete()
-
 
     def last_obj(self):
         'Return the last Simple Inkscape Scripting object added by append_obj.'
@@ -756,7 +747,6 @@ class SimpleObject(SVGOutputMixin):
 
     def remove(self):
         'Remove the current object from the list of rendered objects.'
-        _debug_print('DEBUG: remove is removing', self.get_id())  # Temporary
         try:
             self.parent.ungroup(self)
         except AttributeError:
@@ -774,19 +764,7 @@ class SimpleObject(SVGOutputMixin):
                 # TODO: Confirm that inkex.utils.FragmentError still
                 # can be thrown here.
                 pass
-            #self._inkscape_obj.delete()
-
-            # Temporary
-            iobj = self._inkscape_obj
-            iobj_id = iobj.get_id()
-            _debug_print('DEBUG: remove is removing existing object',
-                         _simple_top.svg_root.getElementById(iobj_id),
-                         'with ID', iobj_id,
-                         'and parent', iobj.getparent())
-            iobj.delete()
-            _debug_print('DEBUG: remove has removed existing object',
-                         _simple_top.svg_root.getElementById(iobj_id),
-                         'with ID', iobj_id)
+            self._inkscape_obj.delete()
 
     def unremove(self):
         'Replace a removed object, placing it at the top level.'
@@ -1645,15 +1623,9 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
         old_obj.remove()
 
     def insert(self, idx, obj):
-        _debug_print('DEBUG:', obj._inkscape_obj, 'has parent', obj._inkscape_obj.getparent())  # Temporary
         self._prepare_object(obj)
         self._children.insert(idx, obj)
         self._inkscape_obj.insert(idx, obj._inkscape_obj)
-
-        # Temporary
-        global _simple_top
-        _debug_print('DEBUG: %s' % _simple_top.svg_root.tostring())
-
 
     def _prepare_object(self, obj):
         'Prepare to add an object to the group.'
@@ -1670,7 +1642,6 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
                      f'or layer can be added to a {what}.'))
 
         # Remove the object from the top-level set of objects.
-        _debug_print('DEBUG: _prepare_object is removing', obj.get_id())  # Temporary
         obj.remove()
 
         # Mark the object as belonging to the group.
@@ -4014,7 +3985,7 @@ def apply_action(action, obj=None):
             old_iobj = id2iobj_before[new_id]
             old_tag = old_iobj.tag_name
             if new_tag != old_tag:
-                new_iobj.set_random_id(prefix='pakin', backlinks=True)  # Temporary prefix
+                new_iobj.set_random_id(backlinks=True)
         except KeyError:
             pass
     ids_before = {iobj.get_id() for iobj in id2iobj_before.values()}
@@ -4027,7 +3998,6 @@ def apply_action(action, obj=None):
     for obj in all_objs:
         obj_id = obj.get_id()
         if obj_id not in ids_after:
-            _debug_print('DEBUG: apply_action wants to remove ID', obj_id)  # Temporary
             obj.remove()
             obj._inkscape_obj = None
         else:
@@ -4073,7 +4043,6 @@ def apply_action(action, obj=None):
             # The object's parent is not known to Simple Inkscape
             # Scripting.  It may be the default layer, for instance.  Move
             # the object to the top level and hope for the best.
-            _debug_print("DEBUG: SIS doesn't have a parent for object", repr(obj))  # Temporary
             _simple_top.append_obj(obj)
             pass
 
