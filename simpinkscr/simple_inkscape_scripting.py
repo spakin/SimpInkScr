@@ -3576,6 +3576,83 @@ def image(fname, ul, embed=True, transform=None, conn_avoid=False,
                         transform, conn_avoid, clip_path, mask, {}, style)
 
 
+def formula(latex_code, pos, preamble=None, fontsize=12, scale=1.0,
+            display_math=False, transform=None, conn_avoid=False,
+            clip_path=None, mask=None, **style):
+    '''Render a LaTeX formula as SVG objects.
+
+    Args:
+        latex_code: LaTeX formula code (without $ delimiters)
+        pos: (x, y) position for the formula
+        preamble: Optional LaTeX preamble string for additional packages
+        fontsize: Base font size in pt (default 12)
+        scale: Additional scaling factor
+        display_math: Use display math mode ($$) instead of inline ($)
+
+    Returns:
+        SimpleGroup containing the rendered formula as vector paths
+    '''
+    import subprocess
+
+    # Build the LaTeX document using article class with preview package
+    # (more universally available than standalone.cls)
+    math_delim = '$$' if display_math else '$'
+    preamble_text = preamble or ''
+    tex_content = rf'''\documentclass[{fontsize}pt]{{article}}
+\usepackage[active,tightpage]{{preview}}
+\usepackage{{amsmath,amssymb,amsfonts}}
+{preamble_text}
+\begin{{document}}
+\begin{{preview}}
+{math_delim}{latex_code}{math_delim}
+\end{{preview}}
+\end{{document}}
+'''
+
+    with TemporaryDirectory(prefix='simpinkscr-formula-') as tmpdir:
+        # Write LaTeX file
+        tex_path = os.path.join(tmpdir, 'formula.tex')
+        with open(tex_path, 'w') as f:
+            f.write(tex_content)
+
+        # Compile with pdflatex
+        try:
+            result = subprocess.run(
+                ['pdflatex', '-interaction=nonstopmode', 'formula.tex'],
+                cwd=tmpdir, check=True, capture_output=True
+            )
+        except subprocess.CalledProcessError as e:
+            _abend(_('pdflatex failed. Check your LaTeX code.\n%s')
+                   % e.stdout.decode())
+        except FileNotFoundError:
+            _abend(_('pdflatex not found. Please install a TeX distribution.'))
+
+        pdf_path = os.path.join(tmpdir, 'formula.pdf')
+        svg_path = os.path.join(tmpdir, 'formula.svg')
+
+        # Convert PDF to SVG using Inkscape's built-in capabilities
+        inkex.command.inkscape(pdf_path,
+                               export_filename=svg_path,
+                               export_type='svg')
+
+        # Import the SVG objects
+        objs = objects_from_svg_file(svg_path)
+
+        # Create a positioned group with optional transform.
+        # PDF uses bottom-up Y coordinates while SVG uses top-down,
+        # so we apply scale(1,-1) to flip the content vertically.
+        xform_parts = [f'translate({pos[0]},{pos[1]})', 'scale(1,-1)']
+        if scale != 1.0:
+            xform_parts.append(f'scale({scale})')
+        if transform:
+            xform_parts.append(str(transform))
+        combined_xform = ' '.join(xform_parts)
+
+        grp = group(objs, transform=combined_xform, conn_avoid=conn_avoid,
+                    clip_path=clip_path, mask=mask, **style)
+        return grp
+
+
 def foreign(pt1, pt2, xml='', transform=None, conn_avoid=False,
             clip_path=None, mask=None, **style):
     'Insert a foreign XML object into the SVG file.'
