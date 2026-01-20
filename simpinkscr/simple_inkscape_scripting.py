@@ -1689,7 +1689,7 @@ class SimpleGroup(SimpleObject, collections.abc.MutableSequence):
         self._children = [ch for ch in self._children if ch not in obj_set]
 
         # If the group is empty, remove it entirely.
-        if self._children == []:
+        if self._children == [] and not isinstance(self, SimpleLayer):
             self.remove()
 
         # Return the set of objects that were ungrouped.
@@ -3949,6 +3949,7 @@ def apply_action(action, obj=None):
     global _simple_top
     svg_root = _simple_top.svg_root
     id2iobj_before = {iobj.get_id(): iobj for iobj in svg_root.iter()}
+    all_doc_shapes = _simple_top.all_document_shapes()
 
     # Construct an Inkscape action string.  As a special case, if the first
     # character of the operation is uppercase, assume we're using an older
@@ -3992,23 +3993,23 @@ def apply_action(action, obj=None):
     ids_after = {iobj.get_id() for iobj in id2iobj_after.values()}
 
     # Update existing objects, removing them and setting their underlying
-    # inkex object is None if the object has been deleted.  This code
+    # inkex object to None if the object has been deleted.  This code
     # assumes that all_known_objects uses a postorder traversal.
     all_objs = _simple_top.all_known_objects()
     for obj in all_objs:
         obj_id = obj.get_id()
-        if obj_id not in ids_after:
+        if obj_id in ids_after:
+            obj._inkscape_obj = svg_root.getElementById(obj_id)
+        else:
             obj.remove()
             obj._inkscape_obj = None
-        else:
-            obj._inkscape_obj = svg_root.getElementById(obj_id)
 
     # Acquire a list of newly created objects, each converted to a Simple
     # Inkscape Scripting object.
     new_sis_objs = []
     new_ids = ids_after.difference(ids_before)
-    for oid in new_ids:
-        iobj = svg_root.getElementById(oid)
+    for nid in new_ids:
+        iobj = svg_root.getElementById(nid)
         try:
             if iobj.getparent().get_id() in new_ids:
                 # If the object's parent is also new, inkex_object will
@@ -4026,7 +4027,8 @@ def apply_action(action, obj=None):
     new_sis_objs.sort(key=lambda k: svg_order[k.get_inkex_object()])
 
     # Assign a parent to each created object.
-    iobj2obj = {o.get_inkex_object(): o for o in all_objs + new_sis_objs}
+    iobj2obj = {o.get_inkex_object(): o
+                for o in all_objs + new_sis_objs + all_doc_shapes}
     for obj in new_sis_objs:
         # Identify a mismatch between the SIS object's parent and the SIS
         # object corresponding to the SIS object's inkex object's parent.
@@ -4370,6 +4372,7 @@ class SimpleInkscapeScripting(inkex.EffectExtension):
 
     def effect(self):
         'Generate objects from user-provided Python code.'
+
         # Conditionally import problematic modules into global scope.
         global numpy, PIL
         # Based on Simple Inkscape Scripting's GitHub issues page, a number
