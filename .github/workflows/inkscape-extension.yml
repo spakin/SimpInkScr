@@ -18,17 +18,24 @@ jobs:
       with:
         python-version: 3.x
 
-    - name: Install dependencies
+    - name: Install root dependencies
       run: |
         sudo add-apt-repository ppa:inkscape.dev/stable
         sudo apt update
         sudo apt install -y inkscape python3-lxml python3-pytest python3-pil python3-pytest-cov pycodestyle
 
+    - name: Create a virtual environment
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install lxml numpy pillow tinycss2 cssselect
+
     - name: Report software versions
       run: |
         inkscape --debug-info
         lsb_release -a
-        python -V
+        python3 -V
 
     - name: Ensure consistent style
       run: |
@@ -38,3 +45,24 @@ jobs:
       run: |
         export PYTHONPATH=/usr/share/inkscape/extensions:$PYTHONPATH
         pytest-3 -v --cov=$(pwd) tests/test_simple_inkscape_scripting.py
+
+    - name: Run all examples
+      run: |
+        source .venv/bin/activate
+        export PYTHONPATH=/usr/share/inkscape/extensions:$PYTHONPATH
+        for ex in examples/*.py ; do
+          if [ "$ex" != examples/mask.py ] ; then
+            echo "Testing $ex ..."
+            echo "    Python --> SVG"
+            python3 simpinkscr/simple_inkscape_scripting.py --py-source="$ex" \
+              --output=one-example.svg \
+              /usr/share/inkscape/templates/default.svg || exit 1
+            echo "    SVG --> Python"
+            python3 simpinkscr/svg_to_simp_ink_script.py \
+              --output=one-example.py one-example.svg || exit 1
+            echo "    Python --> SVG"
+            python3 simpinkscr/simple_inkscape_scripting.py --py-source=one-example.py \
+              --output=/dev/null \
+              /usr/share/inkscape/templates/default.svg || exit 1
+          fi
+        done
