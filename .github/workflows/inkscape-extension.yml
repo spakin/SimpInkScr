@@ -1,4 +1,4 @@
-name: Inkscape extension
+name: Simple Inkscape Scripting
 
 on:
   push:
@@ -7,62 +7,159 @@ on:
     branches: '**'
 
 jobs:
-  build:
+  # Job 1: pycodestyle and pytest tests of the Simple Inkscape Scripting core
+  test-sis-core:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v6
       with:
         python-version: 3.x
 
-    - name: Install root dependencies
+    - name: Restore the .deb cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/apt-cache
+        key: ${{ runner.os }}-apt-test-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-apt-test-
+
+    - name: Install Debian packages
       run: |
+        # Restore any cached .deb files.
+        if [ -d "${{ github.workspace }}/apt-cache" ] && compgen -G "${{ github.workspace }}/apt-cache/*.deb" > /dev/null ; then
+          sudo cp ${{ github.workspace }}/apt-cache/*.deb /var/cache/apt/archives/
+        fi
+
+        # Install all package dependencies.
         sudo add-apt-repository ppa:inkscape.dev/stable
-        sudo apt update
-        sudo apt install -y inkscape python3-lxml python3-pytest python3-pil python3-pytest-cov pycodestyle
+        sudo apt-get update
+        sudo apt-get install -y inkscape python3-lxml python3-pytest python3-pil python3-pytest-cov pycodestyle
 
-    - name: Create a virtual environment
-      run: |
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install --upgrade pip
-        pip install lxml numpy pillow tinycss2 cssselect
-
-    - name: Report software versions
-      run: |
-        inkscape --debug-info
-        lsb_release -a
-        python3 -V
+        # Cache only the .deb files from the APT directory.
+        mkdir -p ${{ github.workspace }}/apt-cache
+        if compgen -G "/var/cache/apt/archives/*.deb" > /dev/null ; then
+          cp /var/cache/apt/archives/*.deb ${{ github.workspace }}/apt-cache/
+        fi
 
     - name: Ensure consistent style
-      run: |
-        pycodestyle simpinkscr/*.py examples/*.py
+      run: pycodestyle simpinkscr/*.py examples/*.py
 
     - name: Test with pytest
       run: |
         export PYTHONPATH=/usr/share/inkscape/extensions:$PYTHONPATH
         pytest-3 -v --cov=$(pwd) tests/test_simple_inkscape_scripting.py
 
-    - name: Run all examples
+  # Job 2: Concurrent execution of Simple Inkscape Scripting examples
+  run-sis-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example:
+          - animation
+          - binary_tree
+          - boolean_ops
+          - brick_pyramid
+          - chalkboard
+          - clipping_path
+          - clone_wave
+          - drop_shadow
+          - ellipses
+          - gradient_template
+          - guides
+          - holes
+          - html
+          - hyperlinks
+          - image_spiral
+          - inkex_paths
+          - linear_gradient
+          - markers
+          - metadata
+          - move_rectangles
+          - new_layer
+          - overlapping_circles
+          - path_effects
+          - pixels_to_rectangles
+          - poly_by_angle
+          - screen_vs_print
+          - sierpinski_triangle
+          - speedometer
+          - star_groups
+          - stroke_to_path
+          - text_flow
+          - text_path
+          - turtle_spiral
+          - units
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: 3.x
+
+    - name: Restore the .deb cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/apt-cache
+        key: ${{ runner.os }}-apt-matrix-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-apt-matrix-
+
+    - name: Install Debian packages
+      run: |
+        # Restore any cached .deb files.
+        if [ -d "${{ github.workspace }}/apt-cache" ] && compgen -G "${{ github.workspace }}/apt-cache/*.deb" > /dev/null ; then
+          sudo cp ${{ github.workspace }}/apt-cache/*.deb /var/cache/apt/archives/
+        fi
+
+        # Install all package dependencies.
+        sudo add-apt-repository ppa:inkscape.dev/stable
+        sudo apt-get update
+        sudo apt-get install -y inkscape python3-lxml python3-pil
+
+        # Cache only the .deb files from the APT directory.
+        mkdir -p ${{ github.workspace }}/apt-cache
+        if compgen -G "/var/cache/apt/archives/*.deb" > /dev/null ; then
+          cp /var/cache/apt/archives/*.deb ${{ github.workspace }}/apt-cache/
+        fi
+
+    - name: Restore the .venv cache
+      id: cache-venv
+      uses: actions/cache@v5
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-v1
+        restore-keys: |
+          ${{ runner.os }}-venv-
+
+    # Create a virtual environment only if cache-venv missed in the cache.
+    - name: Create a virtual environment
+      if: steps.cache-venv.outputs.cache-hit != 'true'
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install lxml numpy pillow tinycss2 cssselect
+
+    - name: Run one example
       run: |
         source .venv/bin/activate
         export PYTHONPATH=/usr/share/inkscape/extensions:$PYTHONPATH
-        for ex in examples/*.py ; do
-          if [ "$ex" != examples/mask.py ] ; then
-            echo "Testing $ex ..."
-            echo "    Python --> SVG"
-            python3 simpinkscr/simple_inkscape_scripting.py --py-source="$ex" \
-              --output=one-example.svg \
-              /usr/share/inkscape/templates/default.svg || exit 1
-            echo "    SVG --> Python"
-            python3 simpinkscr/svg_to_simp_ink_script.py \
-              --output=one-example.py one-example.svg || exit 1
-            echo "    Python --> SVG"
-            python3 simpinkscr/simple_inkscape_scripting.py --py-source=one-example.py \
-              --output=/dev/null \
-              /usr/share/inkscape/templates/default.svg || exit 1
-          fi
-        done
+
+        echo "Testing examples/${{ matrix.example }}.py ..."
+        echo "    Python --> SVG"
+        python3 simpinkscr/simple_inkscape_scripting.py --py-source="examples/${{ matrix.example }}.py" \
+          --output=one-example.svg \
+          /usr/share/inkscape/templates/default.svg
+
+        echo "    SVG --> Python"
+        python3 simpinkscr/svg_to_simp_ink_script.py \
+          --output=one-example.py one-example.svg
+
+        echo "    Python --> SVG"
+        python3 simpinkscr/simple_inkscape_scripting.py --py-source=one-example.py \
+          --output=/dev/null \
+          /usr/share/inkscape/templates/default.svg
