@@ -44,7 +44,7 @@ arc((cx, cy), r2, (ang1, ang2),
 ang = pi*1.3
 x = r3*cos(ang) + cx
 y = r3*sin(ang) + cy
-line((cx, cy), (x, y), stroke_width=8, stroke='orange')
+l = line((cx, cy), (x, y), stroke_width=8, stroke='orange')
 l.svg_set("inkscape:transform-center-y",-(cy-y)/2)
 l.svg_set("inkscape:transform-center-x",(cx-x)/2)
 circle((cx, cy), r5, fill='#303030')
