@@ -22,13 +22,17 @@ jobs:
       run: |
         sudo add-apt-repository ppa:inkscape.dev/stable
         sudo apt update
-        sudo apt install -y inkscape python3-lxml python3-pytest python3-pil python3-pytest-cov
+        sudo apt install -y inkscape python3-lxml python3-pytest python3-pil python3-pytest-cov pycodestyle
 
     - name: Report software versions
       run: |
         inkscape --debug-info
         lsb_release -a
         python -V
+
+    - name: Ensure consistent style
+      run: |
+        pycodestyle simpinkscr/*.py examples/*.py
 
     - name: Test with pytest
       run: |
