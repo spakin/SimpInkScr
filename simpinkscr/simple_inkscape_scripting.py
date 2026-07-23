@@ -3948,7 +3948,11 @@ def apply_action(action, obj=None):
     # the object represented by that ID.
     global _simple_top
     svg_root = _simple_top.svg_root
-    id2iobj_before = {iobj.get_id(): iobj for iobj in svg_root.iter()}
+    id2iobj_before = {
+        iobj.get_id(): iobj
+        for iobj in svg_root.iter()
+        if not isinstance(iobj, lxml.etree._Comment)
+    }
     all_doc_shapes = _simple_top.all_document_shapes()
 
     # Construct an Inkscape action string.  As a special case, if the first
@@ -3976,7 +3980,11 @@ def apply_action(action, obj=None):
     # Store a map from all object IDs that appear in the new image to the
     # object represented by that ID.
     svg_root = _simple_top.svg_root
-    id2iobj_after = {iobj.get_id(): iobj for iobj in svg_root.iter()}
+    id2iobj_after = {
+        iobj.get_id(): iobj
+        for iobj in svg_root.iter()
+        if not isinstance(iobj, lxml.etree._Comment)
+    }
 
     # Replace IDs for all objects that persisted across the call but
     # changed object type.  This will cause them to appear as new objects.
