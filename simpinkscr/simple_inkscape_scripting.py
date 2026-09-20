@@ -4469,10 +4469,10 @@ from inkex.paths import curve, horz, move, quadratic, smooth, \
         if self.options.program is not None:
             code += self.options.program.replace(r'\n', '\n')
 
-        # Remove an unnecessary import that may be introduced when
+        # Remove an unnecessary self-import that may be introduced when
         # running from Visual Studio Code.
-        pattern = r"^[ \t]*(import\s+(inkex|simpinkscr).*|" \
-            r"(from\s+(inkex|simpinkscr)\s+import).*)[\r\n]"
+        pattern = r"^[ \t]*(import\s+simpinkscr.*|" \
+            r"(from\s+simpinkscr\s+import).*)[\r\n]"
         code = re.sub(pattern, "", code, flags=re.MULTILINE)
 
         # Launch the user's script.
